@@ -38,12 +38,15 @@ thresh<-function(asvTab, phenoCols, asvCols=NULL, model="hinge", cores=getOption
     thresh_df<-do.call(rbind, parallel::mclapply(asvCols, function(asv_col){
       
       if(model == "hinge" | model == "M01"){
+        model="hinge"
         f1<-as.formula(paste0(phenotype,"~1"))
         f2<-as.formula(paste0("~",asv_col))
       } else if (model == "upperhinge" | model == "M10"){
+        model="upperhinge"
         f1<-as.formula(paste0("~",asv_col))
         f2<-as.formula(paste0(phenotype,"~1"))
       } else if(model == "segmented"| model == "M11"){
+        model="segmented"
         f1<-as.formula(paste0(phenotype,"~1"))
         f2<-as.formula(paste0("~", asv_col))
       }
