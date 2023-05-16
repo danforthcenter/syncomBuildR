@@ -14,7 +14,7 @@
 #' "Nodes" is a dataframe of nodes and their metadata
 #' "Edges" is a dataframe of edges connecting nodes.
 #' "graph" is the igraph object used to generate the dataframes.
-#' .
+#'
 #' 
 #' @examples 
 #' 
@@ -25,7 +25,7 @@
 #' taxa<-as.data.frame(taxa_rdp)
 #' taxa$asv<-rownames(taxa_rdp)
 #' rownames(taxa)<-NULL
-#' net_data<-asvNet(asv, taxa, edge="spearman", thresh=threshMods)
+#' net_data<-asvNet(sp_dist, taxa, edge="spearman", thresh=threshMods)
 #' 
 #' @export
 
