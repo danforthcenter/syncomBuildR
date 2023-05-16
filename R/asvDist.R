@@ -19,117 +19,101 @@
 #' 
 #' # a<-qc(); b<-cal(a); c<-thresh(b); d<-asvDist(a)
 #' print(load("/home/jsumner/Desktop/stargate/SINC/sincUtils/syncomBuilder/threshOutput.rdata"))
-#' 
-#' 
+#' sp_dist<-asvDist(asv, method="spearman", clr_transform=T, edgeFilter=0.5)
+#' unfiltered_sp_dist<-asvDist(asv, method="spearman", clr_transform=T, edgeFilter=NULL)
+#' dim(sp_dist)
+#' euc<-asvDist(asv, method="euclidean", clr_transform=F, edgeFilter=NULL)
+#' bray<-asvDist(asv, method="bray", clr_transform=F, edgeFilter=NULL)
 #' 
 #' @export
 
-asvDist<-function(){}
-
-#* [args]
-asvTab = asv
-asvCols = colnames(asvTab)[grepl("ASV", colnames(asvTab))]
-method = "euclidean" # distance or correlation type or function?
-parallel=getOption("mc.cores",1)
-transform = "clr" # center log transform or bust? Are there other options I'd want?
-plot=T
-#des = c("tissue", "plot", "genotype")
-
-#* `calculated values`
-
-if(parallel > 1){innerLapply <- function(...){parallel::mclapply(..., mc.cores=parallel)}}else{innerLapply<-lapply}
-
-vegan_distances<-c("manhattan", "euclidean", "canberra", "clark", "bray", "kulczynski", "jaccard", "gower", 
-                   "altGower", "morisita", "horn", "mountford", "raup", "binomial", "chao", "cao", "mahalanobis",
-                   "chisq", "chord", "aitchison", "robust.aitchison")
-correlation_coefficients<-c("spearman", "pearson")
-
-#* `make sim matrix`
-method="spearman"
-method="euclidean"
-
-if(method %in% vegan_distances){
-  mat<-as.matrix(t(asvTab[,asvCols]))
-  mat[rowSums(mat)>0, colSums(mat)>0] #* `check that matrix is not too sparse, colsum 0 would kill?`
-  dist_mat<-as.matrix(vegan::vegdist(mat, method=method))
-  sim_mat<-1/dist_mat
-  # if(!is.null(des)){
-  #   colnames(sim_mat)<-rownames(sim_mat)<-as.character(interaction(asvTab[,des]))
-  # }
-} else if (method %in% correlation_coefficients){
-  mat<-as.matrix(asvTab[,asvCols])
-  mat[rowSums(mat)>0, colSums(mat)>0]
-  M<-Hmisc::rcorr(mat, type=method) # review structure 
-  rhos<-M[["r"]]
-  sim_mat <- (1 - rhos) / 2 # turn correlation into a distance
-} else if(is.function(method)){
-  sim_mat<-method(asvTab[,asvCols], ...)
+asvDist<-function(asvTab, asvCols = NULL, method="spearman",
+                  parallel=getOption("mc.cores", 1), clr_transform = T, 
+                  edgeFilter = NULL, plot=F, outputname = NULL){
+    #* `calculated values`
+    
+    if(is.null(asvCols)){asvCols=colnames(asvTab)[grepl("ASV", colnames(asvTab))]}
+    if(parallel > 1){innerLapply <- function(...){parallel::mclapply(..., mc.cores=parallel)}}else{innerLapply<-lapply}
+    vegan_distances<-c("manhattan", "euclidean", "canberra", "clark", "bray", "kulczynski", "jaccard", "gower", 
+                       "altGower", "morisita", "horn", "mountford", "raup", "binomial", "chao", "cao", "mahalanobis",
+                       "chisq", "chord", "aitchison", "robust.aitchison")
+    correlation_coefficients<-c("spearman", "pearson")
+    
+    #* *pull asvs as matrix* [same for all options]
+    
+    mat<-as.matrix(t(asvTab[,asvCols]))
+    old_dim<-dim(mat)
+    mat<-mat[rowSums(mat)>0, colSums(mat)>0]
+    new_dim<-dim(mat)
+    if(any(old_dim!=new_dim)){warning("Rows and Columns that summed to 0 have been removed.")}
+    
+    #* *apply transformations* [CLR makes most sense, but there could be others in the future]
+    
+    if(clr_transform){mat<-compositions::clr(mat)}
+    
+    #* *make long data* [from similarity matrices]
+    
+    if(method %in% vegan_distances){
+      dist_mat<-as.matrix(vegan::vegdist(mat, method=method))
+      sim_mat<-as.data.frame(1/dist_mat)
+      sim_mat$c1<-rownames(sim_mat)
+      ldf<-data.table::melt(data.table::as.data.table(sim_mat), id.vars = c("c1"), variable.name="c2", value.name=method)
+      cor_method=F
+      } else if (method %in% correlation_coefficients){
+      M<-Hmisc::rcorr(mat, type=method)
+      M[[method]] <- (1 - M[["r"]]) / 2 # turn correlation into a distance
+      ldf <- do.call(rbind,lapply(1:length(M), function(m) { 
+        x<-as.data.frame(M[[m]])
+        x$rowname<-rownames(x)
+        x$trait<-names(M)[[m]]
+        data.table::melt(data.table::as.data.table(x), id.vars = c("rowname", "trait"))
+      }))
+      ldf<-as.data.frame(data.table::dcast(ldf, ... ~ trait))
+      colnames(ldf)<-c("c1", "c2", names(M))
+      cor_method=T
+    } else if(is.function(method)){
+      ldf<-method(asvTab[,asvCols], ...)
+      cor_method=F
+      method=newMethodNameFrom_ldf
+    }
+    
+    #* *plotting*
+    if(plot){
+      # consider grouping things here maybe with hclust.
+    p<-ggplot2::ggplot(ldf, ggplot2::aes(x=c1,y=c2,fill=ldf[[method]]))+
+      ggplot2::geom_tile(color=NA,linewidth=0)+
+      viridis::scale_fill_viridis(na.value = "grey100")+
+      ggplot2::labs(fill=method)+
+      ggplot2::theme(axis.title=ggplot2::element_blank(),
+                     axis.text=ggplot2::element_blank(),
+                     axis.line=ggplot2::element_blank())+
+      ggplot2::theme_minimal()
+    print(p)
+    }
+    
+    #* *filter long data* [based on strength or P value or both]
+    #* First remove NA/Inf values since those are bad for us
+    
+    ldf[[method]][is.na(ldf[[method]]) | is.infinite(ldf[[method]])]<-NA
+    ldf<-ldf[!is.na(ldf[[method]]), ]
+    if(!is.null(edgeFilter)){
+      if(is.character(edgeFilter)){
+        cutoff<-quantile(ldf[[method]], probs = as.numeric(edgeFilter))
+        ldf<-ldf[ldf[[method]] >= as.numeric(cutoff), ]
+      } else if(is.numeric(edgeFilter)){
+        ldf<-ldf[ldf[[method]] >= edgeFilter, ]
+      } else{stop("edgeFilter must be character or numeric, see ?asvDist for details.")}
+    }
+    #* *return data*
+    return(ldf)
 }
 
-sim_mat[1:10,1:10]
-#* control for NAs and INFs in any of the matrices
-sim_mat[is.na(sim_mat) | is.infinite(sim_mat)]<-NA
 
 
 
 
 
 
-
-
-
-
-rcors <- function(df, method="spearman", transform="clr", colPattern="ASV", list=NULL) { # Correlation based
-  if(is.numeric(df) && length(df)==1){
-    i=df
-    df<-list[[i]]
-    group<-names(list)[i]
-  } else{
-    group<-"grp"
-  }
-  df<-df[,grepl(colPattern, colnames(df))]
-  mat<-as.matrix(df)
-  mat<-mat[, colSums(mat)>0]
-  if(transform=="clr"){df<-compositions::clr(df)}
-  if(method %in% c("spearman", "pearson")){
-    mat<-as.matrix(df)
-    mat<-mat[, colSums(mat)>0]
-    M <- Hmisc::rcorr(mat,type=method)
-    rhos<-M[["r"]] # get correlation coeffients
-    dd <- stats::as.dist((1 - rhos) / 2)  # rescale so Rho = 1 is 0 for hclust-ing
-  } else {stop("method must be one of spearman or pearson to make a network by correlations")}
-  hc <- stats::hclust(dd, method = "complete")
-  K=floor(length(hc$order)/15)
-  x<-rhos[hc$order, hc$order]
-  clusts<-cutree(hc,k=K)
-  cList<-lapply(unique(clusts), function(i){
-    nm<-names(clusts[clusts==i])
-    x[nm,nm]
-  })
-  cList<-cList[order(unlist(lapply(cList,mean)),decreasing=T)]
-  colOrder<-unlist(lapply(cList,colnames))
-  out <- do.call(rbind,lapply(1:length(M), function(m) { 
-    x<-as.data.frame(M[[m]])
-    x$rowname<-rownames(x)
-    x$trait<-names(M)[[m]]
-    l<-tidyr::pivot_longer(x, cols = contains("ASV"))
-    as.data.frame(l)
-  }))
-  out<-as.data.frame(tidyr::pivot_wider(out, names_from=trait, values_from=value))
-  colnames(out)<-c("asv1", "asv2", names(M))
-  head(out)
-  out$p_sig<-ifelse(out$P<=0.05 & !is.na(out$P), out$P, NA)
-  out$rho_strong<-ifelse(abs(out$r)>0.5 & !is.na(out$r) & !is.na(out$p_sig), out$r, NA)
-  out$group<-group
-  if(any(!unique(out$asv2)%in%colOrder) | any(!unique(out$asv1)%in%colOrder)){
-    addAsvs<-unique( unique(out$asv1)[which(!unique(out$asv1)%in%colOrder)],
-                     unique(out$asv1)[which(!unique(out$asv1)%in%colOrder)] )
-    colOrder<-c(colOrder,addAsvs)
-  }
-  out$asv1 <- factor(out$asv1,levels=colOrder)
-  out$asv2 <- factor(out$asv2,levels=colOrder)
-  return(out)
-}
 
 
 
