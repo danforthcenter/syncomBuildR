@@ -9,12 +9,8 @@
 #' @param edgeFilter Optional value to filter edges for. If non-NULL then only edges with edgeWeight greater than this value are kept. This can be a character vector or a numeric. Character vectors are interpreted as quantiles ("0.5" corresponds to the top 50% are kept).
 #' @param thresh_below Significant cutoff if p-value columns are used for fill or shape. Defaults to 0.05.
 #' @keywords network, changepoint
-#' @import igraph
-#' @import data.table
-#' @return A named list with three elements:
-#' "Nodes" is a dataframe of nodes and their metadata
-#' "Edges" is a dataframe of edges connecting nodes.
-#' "graph" is the igraph object used to generate the dataframes.
+#' @import ggplot2
+#' @return A ggplot object.
 #' 
 #' 
 #' @examples 

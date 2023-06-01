@@ -1,29 +1,5 @@
 #' Function to aggregate clustered networks overall phenotypic impacts.
 #' 
-#' This should take a network, a phenotype/list of phenotypes to consider the network against,
-#' the asv table that the network was generated from, 
-#' 
-#' This might actually be a method to call with thresh, not its own standalone thing.
-#' in that case it would need to take a network as an additional argument (clustered), with an optional colname of clusters,
-#' then it'd group ASVs by community, summarize them similar to taxonomic clustering for dirichlet,
-#' and regress changepoints for each sample's community in cluster vs phenotypes.
-#' 
-#' This would mean that I can turn the current thresh() function into a new file called asvThresh
-#' then just call asvThresh or netThresh in a new thresh() function.
-#' The question becomes how much effort does that save? Maybe none?
-#' It would be kind of clean looking but I don't think it actually helps user side.
-#' And writing side it only helps in one very specific way but I can probably use the different situation well here.
-#' 
-#' So if it's a new function then:
-#' get network (clustered) [arg: net]
-#' get cluster to regress (default to NULL for all clusters, analogous to asvCols) [arg: cluster ]
-#' take phenoCols (probably can't default very well)[arg: phenoCols]
-#' take model type (default to "hinge") [arg: model]
-#' get number of cores (default to options)[arg: cores]
-#' whether/how to calibrate a phenotype [arg: calibratePheno]
-#' phenoCols, asvCols=NULL, model="hinge", cores=getOption("mc.cores",1), calibratePheno = NULL
-#' 
-#' 
 #' 
 #' @param net Object returned from \code{\link{asvNet}} with clusters added using \code{\link{netClust}}
 #' @param asvTab An asv table with phenotypes joined.
@@ -40,10 +16,11 @@
 #' @import parallel
 #' @import chngpt
 #' @return A named list (same as net) with three elements:
-#' "Nodes" is a dataframe of nodes and their metadata, now with an added cluster.
-#' "Edges" is a dataframe of edges connecting nodes.
-#' "graph" is the igraph object used to generate the dataframes.
-#' 
+#' \itemize{
+#'    \item{"Nodes" is a dataframe of nodes and their metadata}
+#'    \item{"Edges" is a dataframe of edges connecting nodes.}
+#'    \item{"graph" is the igraph object used to generate the dataframes.}
+#' }
 #' @examples 
 #' 
 #' # a<-qc(); b<-cal(a); c<-thresh(b); d<-asvDist(a) ; e<-net(d, thresh = c)

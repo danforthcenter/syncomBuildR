@@ -10,8 +10,9 @@
 #' @keywords changepoint, threshold, regression, phenotype, ggplot
 #' 
 #' @import ggplot2
+#' @import viridis
 #' 
-#' @return An ASV table as a wide dataframe
+#' @return A ggplot or list of ggplots showing changepoint models against some set of phenotypes.
 #' 
 #' 
 #' @examples 
@@ -40,7 +41,7 @@ threshPlot<-function(thresh, asv, asvCols=NULL, phenotype=NULL){
       }
       interceptData<-thresh_sub[thresh_sub$Source =="(Intercept)", ]
       chngptData<-thresh_sub[thresh_sub$Source != "(Intercept)", ]
-      postCptCol<-if(chngptData$p.value < 0.05){plasma(1, begin=0.7)}else{"black"}
+      postCptCol<-if(chngptData$p.value < 0.05){viridis::plasma(1, begin=0.7)}else{"black"}
       
       p<-ggplot2::ggplot(chngptData)+
         ggplot2::geom_point(data=asv_sub[asv_sub[[microbe]] < chngptData$changePoint,],

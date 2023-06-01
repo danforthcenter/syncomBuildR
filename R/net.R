@@ -11,9 +11,11 @@
 #' @import igraph
 #' @import data.table
 #' @return A named list with three elements:
-#' "Nodes" is a dataframe of nodes and their metadata
-#' "Edges" is a dataframe of edges connecting nodes.
-#' "graph" is the igraph object used to generate the dataframes.
+#' \itemize{
+#'    \item{"Nodes" is a dataframe of nodes and their metadata}
+#'    \item{"Edges" is a dataframe of edges connecting nodes.}
+#'    \item{"graph" is the igraph object used to generate the dataframes.}
+#' }
 #'
 #' 
 #' @examples 

@@ -7,15 +7,20 @@
 #' @keywords network, changepoint
 #' @import igraph
 #' @import dbscan
-#' @return A named list (same as net) with three elements:
-#' "Nodes" is a dataframe of nodes and their metadata, now with an added cluster.
-#' "Edges" is a dataframe of edges connecting nodes.
-#' "graph" is the igraph object used to generate the dataframes.
+#' @return A named list (same as net) with three elements, same as \code{\link{net}}:
+#' \itemize{
+#'    \item{"Nodes" is a dataframe of nodes and their metadata}
+#'    \item{"Edges" is a dataframe of edges connecting nodes.}
+#'    \item{"graph" is the igraph object used to generate the dataframes.}
+#' }
 #' 
 #' @details Each method will use a different function to cluster data according to the layout in the graph. Note that layouts in the graph are determined by \code{igraph::layout.auto}.
-#' "component" uses \code{igraph::components} to cluster data and requires no additional arguments.
-#' "dbscan" uses \code{dbscan::dbscan} to cluster data. This requires at least that the eps argument is set. See \code{?dbscan::dbscan}.
-#' "kmeans" uses \code{stats::kmeans} to cluster data. This requires at least that the centers argument is set.
+#' \itemize{
+#'    \item{"component" uses \code{igraph::components} to cluster data and requires no additional arguments.}
+#'    \item{"dbscan" uses \code{dbscan::dbscan} to cluster data. This requires at least that the eps argument is set. See \code{?dbscan::dbscan}.}
+#'    \item{"kmeans" uses \code{stats::kmeans} to cluster data. This requires at least that the centers argument is set.}
+#' }
+#' 
 #' 
 #' @examples 
 #' 

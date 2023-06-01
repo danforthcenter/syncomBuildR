@@ -28,9 +28,11 @@ asvNet(
 }
 \value{
 A named list with three elements:
-"Nodes" is a dataframe of nodes and their metadata
-"Edges" is a dataframe of edges connecting nodes.
-"graph" is the igraph object used to generate the dataframes.
+\itemize{
+   \item{"Nodes" is a dataframe of nodes and their metadata}
+   \item{"Edges" is a dataframe of edges connecting nodes.}
+   \item{"graph" is the igraph object used to generate the dataframes.}
+}
 }
 \description{
 Function to perform network analysis on a distance/dissimilarity matrix of a microbial community.

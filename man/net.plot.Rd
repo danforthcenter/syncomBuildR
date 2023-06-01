@@ -30,10 +30,7 @@ net.plot(
 \item{thresh_below}{Significant cutoff if p-value columns are used for fill or shape. Defaults to 0.05.}
 }
 \value{
-A named list with three elements:
-"Nodes" is a dataframe of nodes and their metadata
-"Edges" is a dataframe of edges connecting nodes.
-"graph" is the igraph object used to generate the dataframes.
+A ggplot object.
 }
 \description{
 Function to plot networks generated from \code{asvNet} with various emphases.

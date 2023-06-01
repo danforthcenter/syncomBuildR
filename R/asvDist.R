@@ -1,19 +1,21 @@
 #' Function to make distance/dissimilarity data from an ASV table.
 #' 
-#' I should inform this function using emd from pcvr.
-#' That pipeline is probably really similar to what I want to have happen here.
-#' In that case this should be ready to take either a dist object or a dataframe or a matrix similar to dist object
-#' That way I can support all of vegdist.
 #' 
-#' So I need two functions here, asvDist and net
-#' 
-#' 
-#' 
-#' 
-#' @param data 
+#' @param asvTab ASV table to use. Should have rows as samples and columns representing ASVs.
+#' @param asvCols Either column names, positions, or a single character string to use as regex to find all asv columns.
+#' @param method A distance method compatible with \code{\link{vegan::vegdist}}, a correlation coefficient (spearman or pearson), or a custom function that returns a matrix of pairwise distances.
+#' @param parallel How many cores to use in parallel. The parallelized component only comes into play with correlation coefficient methods and is not particularly heavy, so more cores will have a minimal speed improvement.
+#' @param clr_transform Should ASV counts be transformed with a centered log ratio? This defaults to TRUE to alleviate the compositional nature of the data.
+#' @param edgeFilter A filter for the edges returned. This defaults to NULL where no filtering is done. Optionally this can be numeric, in which case distances/correlations below that number are removed, or it can be a number as a string in which case that quantile is used (ie, "0.5" filters for above the median.).
+#' @param plot Logical, should the data be plotted? Defaults to FALSE.
+#' @param returnASVs Should ASVs or samples be considered the experimental unit? Defaults to TRUE in which case distances/correlations between ASVs across samples are returned. If FALSE then samples are compared by their ASV composition. Note that different methods are appropriate depending on whether samples or ASVs are being considered "nodes".
 #' @keywords changepoint, threshold, regression, phenotype
 #' @import chngpt
-#' @return A dataframe summarizing changepoint models for individual ASVs vs phenotypes.
+#' @import vegan
+#' @import parallel
+#' @import data.table
+#' @import ggplot2
+#' @return A dataframe showing pairwise correlations between individual ASVs/samples.
 #' 
 #' @examples 
 #' 
@@ -31,19 +33,21 @@
 
 asvDist<-function(asvTab, asvCols = NULL, method="spearman",
                   parallel=getOption("mc.cores", 1), clr_transform = T, 
-                  edgeFilter = NULL, plot=F, outputname = NULL){
+                  edgeFilter = NULL, plot=F, returnASVs =T){
     #* `calculated values`
     
     if(is.null(asvCols)){asvCols=colnames(asvTab)[grepl("ASV", colnames(asvTab))]}
-    if(parallel > 1){innerLapply <- function(...){parallel::mclapply(..., mc.cores=parallel)}}else{innerLapply<-lapply}
+    #if(parallel > 1){innerLapply <- function(...){parallel::mclapply(..., mc.cores=parallel)}}else{innerLapply<-lapply}
     vegan_distances<-c("manhattan", "euclidean", "canberra", "clark", "bray", "kulczynski", "jaccard", "gower", 
                        "altGower", "morisita", "horn", "mountford", "raup", "binomial", "chao", "cao", "mahalanobis",
                        "chisq", "chord", "aitchison", "robust.aitchison")
     correlation_coefficients<-c("spearman", "pearson")
     
     #* *pull asvs as matrix* [same for all options]
-    
+    if(returnASVs){
     mat<-as.matrix(t(asvTab[,asvCols]))
+    } else{mat<-as.matrix(asvTab[,asvCols])
+    }
     old_dim<-dim(mat)
     mat<-mat[rowSums(mat)>0, colSums(mat)>0]
     new_dim<-dim(mat)
@@ -64,12 +68,12 @@ asvDist<-function(asvTab, asvCols = NULL, method="spearman",
       } else if (method %in% correlation_coefficients){
       M<-Hmisc::rcorr(t(mat), type=method)
       M[[method]] <- (1 - M[["r"]]) / 2 # turn correlation into a distance
-      ldf <- do.call(rbind,lapply(1:length(M), function(m) { 
+      ldf <- do.call(rbind,parallel::mclapply(1:length(M), function(m) { 
         x<-as.data.frame(M[[m]])
         x$rowname<-rownames(x)
         x$trait<-names(M)[[m]]
         data.table::melt(data.table::as.data.table(x), id.vars = c("rowname", "trait"))
-      }))
+      }, mc.cores=parallel))
       ldf<-as.data.frame(data.table::dcast(ldf, ... ~ trait))
       colnames(ldf)<-c("c1", "c2", names(M))
       cor_method=T

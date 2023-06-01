@@ -1,7 +1,5 @@
 #' Function to calibrate asv counts for some set of confounder variables
 #' 
-#' Note: this should be pretty soft and take input from `qc` and calibrate ZINB ASVs into a more normal shape.
-#' 
 #' @param asvTab ASV table similar to that returned by \code{\link{qc}}, often with additional metadata joined.
 #' @param asvCols Numeric index of columns representing ASVs in asvTab. Defaults to all columns containing "ASV" in their column name. Note that missing values in these columns will be treated as 0s.
 #' @param cal Vector of columns to use to calibrate asv counts. These can be categorical or continuous and are passed to MASS::glm.nb or pscl::zeroinfl, depending on the presense of 0s in the data.

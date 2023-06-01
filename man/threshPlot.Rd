@@ -16,7 +16,7 @@ threshPlot(thresh, asv, asvCols = NULL, phenotype = NULL)
 \item{phenotype}{A vector of phenotype names in \code{thresh}. Defaults to NULL where all phenotypes are used and a list of plots is returned per ASV.}
 }
 \value{
-An ASV table as a wide dataframe
+A ggplot or list of ggplots showing changepoint models against some set of phenotypes.
 }
 \description{
 Function to plot results of a changepoint model with data returned from \code{thresh}

@@ -32,7 +32,7 @@ cal(
 An ASV table as a wide dataframe with effects from some variables modeled out.
 }
 \description{
-Note: this should be pretty soft and take input from `qc` and calibrate ZINB ASVs into a more normal shape.
+Function to calibrate asv counts for some set of confounder variables
 }
 \examples{
 
