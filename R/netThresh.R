@@ -36,7 +36,7 @@
 #' 
 #' @export
 
-netThresh<-function(net, asvTab, asvCols=NULL, clusterCol = NULL, phenoCols=NULL,
+netThresh<-function(net, asvTab, asvCols=NULL, clusterCol = NULL, cluster = NULL, phenoCols=NULL,
                     model="hinge", cores = getOption("mc.cores",1), calibratePheno=NULL){
   #* `example args for testing`
   # net = net_data ; asvTab=asv; asvCols=NULL; clusterCol = "kmeans_cluster"; cluster=NULL; phenoCols = "biomass"

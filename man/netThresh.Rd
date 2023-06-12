@@ -9,6 +9,7 @@ netThresh(
   asvTab,
   asvCols = NULL,
   clusterCol = NULL,
+  cluster = NULL,
   phenoCols = NULL,
   model = "hinge",
   cores = getOption("mc.cores", 1),
@@ -24,6 +25,8 @@ netThresh(
 
 \item{clusterCol}{The column name to use for clusters. If NULL then the first column name containing the string "cluster" is used.}
 
+\item{cluster}{A vector of clusters to be regressed against. By default this is NULL and all clusters will be used.}
+
 \item{phenoCols}{A vector of phenotype columns to use in changepoint regression. These should be column names in the ASV table}
 
 \item{model}{Type of changepoint model in chngpt::chngptm labeling convention. Currently hinge, upperhinge, and segmented are supported. See Figure 2.1 of the \link{[chngpt vignette](https://cran.r-project.org/web/packages/chngpt/vignettes/chngpt-vignette.pdf)}}
@@ -31,8 +34,6 @@ netThresh(
 \item{cores}{Number of cores to run in parallel, defaults to 1 if "mc.cores" option is not set.}
 
 \item{calibratePheno}{An optional vector of column names to calibrate the phenotypes by. This should generally correspond to those used in `cal` if the ASV table has been calibrated or just represent confounders that you wish to remove effects from in the changepoint regression. /code{lm} is used to get residuals of the phenotype after these effects are regressed out.}
-
-\item{cluster}{A vector of clusters to be regressed against. By default this is NULL and all clusters will be used.}
 }
 \value{
 A named list (same as net) with three elements:

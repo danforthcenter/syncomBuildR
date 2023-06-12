@@ -23,7 +23,7 @@
 #' 
 #' print(load("/home/jsumner/Desktop/stargate/SINC/sincUtils/syncomBuilder/field_2021_small_ex.rdata")) 
 #' separate<-data.frame(tissue = stringr::str_extract(samps, "[:alpha:]+"))
-#' metadata = cbind(separate, data.frame(plot = stringr::str_extract(samps, "[0-9]+")))
+#' metadata = cbind(separate, data.frame(sample = samps, plot = stringr::str_extract(samps, "[0-9]+")))
 #' 
 #' file=NULL; asvTab = seqtab.print; taxa=NULL; asvAbnd = 100; sampleAbnd=1000; rescale=T
 #' rmTx=list("Order in Chloroplast", "Phylum in Plantae"); separate=separate; metadata=cbind(separate, data.frame(plot = stringr::str_extract(samps, "[0-9]+")))
