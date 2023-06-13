@@ -13,7 +13,7 @@ pcadf(df = NULL, cols = NULL, color = NULL, returnData = T, ncp = NULL)
 
 \item{color}{column name used to color points in the pca plot.}
 
-\item{returnData}{Logical, should data be returned? Defaults to TRUE where data nd a ggplot are returned.}
+\item{returnData}{Logical, should data be returned? Defaults to TRUE where data and a ggplot are returned.}
 
 \item{ncp}{Optional, number of principal components to return attached to dataframe if data is returned. Defaults to all.}
 }
@@ -25,7 +25,8 @@ print(load("/home/jsumner/Desktop/stargate/SINC/sincUtils/syncomBuilder/cal_outp
 asv<-are_c[[1]]
 zinbCalibrated = are_c[[2]][are_c[[2]]$model=="ZINB", "asv"]
 asv<-are_c[[1]][, c("tissue","plot","row","genotype", "biomass","sd", zinbCalibrated)]
-pcadf(df=asv, cols=NULL, color=c("tissue", "genotype"), returnData=T, ncp=NULL)
+x<-pcadf(df=asv, cols=NULL, color=c("tissue", "genotype"), returnData=T, ncp=NULL)
+x$plot
 
 }
 \keyword{pca}

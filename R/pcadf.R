@@ -3,7 +3,7 @@
 #' @param df Dataframe to ordinate
 #' @param cols columns to reduce dimensions of. Can be specified with names or positions. Defaults to all column names containing "ASV".
 #' @param color column name used to color points in the pca plot.
-#' @param returnData Logical, should data be returned? Defaults to TRUE where data nd a ggplot are returned.
+#' @param returnData Logical, should data be returned? Defaults to TRUE where data and a ggplot are returned.
 #' @param ncp Optional, number of principal components to return attached to dataframe if data is returned. Defaults to all.
 #' @keywords pca
 #' 
@@ -15,13 +15,18 @@
 #' asv<-are_c[[1]]
 #' zinbCalibrated = are_c[[2]][are_c[[2]]$model=="ZINB", "asv"]
 #' asv<-are_c[[1]][, c("tissue","plot","row","genotype", "biomass","sd", zinbCalibrated)]
-#' pcadf(df=asv, cols=NULL, color=c("tissue", "genotype"), returnData=T, ncp=NULL)
+#' x<-pcadf(df=asv, cols=NULL, color=c("tissue", "genotype"), returnData=T, ncp=NULL)
+#' x$plot
 #' 
 #' @export
 
 pcadf<-function(df=NULL, cols=NULL, color=NULL, returnData=T, ncp=NULL){
   # df=asv; cols=NULL; color=c("tissue", "genotype"); returnData=T; ncp=NULL
-  if(is.null(cols)){cols=which(grepl("ASV",colnames(df)))}
+  if(is.null(cols)){cols=which(grepl("ASV",colnames(df)))
+  }else if(is.character(cols) & length(cols)==1){
+    cols = which(grepl(cols,colnames(df)))
+  } else if(!is.numeric(cols)){
+    cols<-which(colnames(df) %in% cols) }
   if(is.null(ncp)){ncp=min(dim(df[,cols]))-1}
   pca<-FactoMineR::PCA(df[,cols], ncp=ncp, graph=F)
   pc1Var<-round(pca$eig[1,2], 3)
@@ -29,7 +34,6 @@ pcadf<-function(df=NULL, cols=NULL, color=NULL, returnData=T, ncp=NULL){
   coords<-as.data.frame(pca$ind)
   coords<-coords[,grepl("coord", colnames(coords))]
   colnames(coords)<-gsub("coord.Dim.", "pc", colnames(coords))
-  if(!is.numeric(cols)){ cols<-which(colnames(df) %in% cols) }
   pca.df<-cbind(df[, -cols], coords)
   if(length(color)>1){
     pca.df[[paste0(color, collapse=".")]] = interaction(pca.df[,c(color)])
