@@ -21,19 +21,19 @@
 #' 
 #' # a<-qc(); b<-cal(a); c<-thresh(b); d<-asvDist(a)
 #' print(load("/home/jsumner/Desktop/stargate/SINC/sincUtils/syncomBuilder/threshOutput.rdata"))
-#' sp_dist<-asvDist(asv, method="spearman", clr_transform=T, edgeFilter=0.5)
-#' unfiltered_sp_dist<-asvDist(asv, method="spearman", clr_transform=T, edgeFilter=NULL)
+#' sp_dist<-asvDist(asv, method="spearman", clr_transform=TRUE, edgeFilter=0.5)
+#' unfiltered_sp_dist<-asvDist(asv, method="spearman", clr_transform=TRUE, edgeFilter=NULL)
 #' dim(sp_dist)
-#' euc<-asvDist(asv, method="euclidean", clr_transform=F, edgeFilter=NULL)
-#' bray<-asvDist(asv, method="bray", clr_transform=F, edgeFilter=NULL)
+#' euc<-asvDist(asv, method="euclidean", clr_transform=FALSE, edgeFilter=NULL)
+#' bray<-asvDist(asv, method="bray", clr_transform=FALSE, edgeFilter=NULL)
 #' save(sp_dist, euc, bray, file="/home/jsumner/Desktop/stargate/SINC/sincUtils/syncomBuilder/asvDist_output.rdata")
 #' 
 #' 
 #' @export
 
 asvDist<-function(asvTab, asvCols = NULL, method="spearman",
-                  parallel=getOption("mc.cores", 1), clr_transform = T, 
-                  edgeFilter = NULL, plot=F, returnASVs =T){
+                  parallel=getOption("mc.cores", 1), clr_transform = TRUE, 
+                  edgeFilter = NULL, plot=FALSE, returnASVs =TRUE){
     #* `calculated values`
     
     if(is.null(asvCols)){asvCols=colnames(asvTab)[grepl("ASV", colnames(asvTab))]}
