@@ -35,12 +35,13 @@ threshPlot<-function(thresh, asv, asvCols=NULL, phenotype=NULL){
   outList<-lapply(asvCols, function(microbe){
     thresh_sub<-thresh[thresh$asv == microbe, ]
     asv_sub<-asv[, colnames(asv) %in% c(phenotype, microbe, cal)]
-    phenoPlots<-lapply(phenotype, function(pheno){
+    phenoPlots<-lapply(unique(thresh_sub$phenotype), function(pheno){
+      #print(c(pheno, microbe))
       if(!is.null(cal)){
         asv_sub[[pheno]]<-residuals(lm(as.formula(thresh_sub[1,"calibratePheno"]), data=asv_sub))
       }
-      interceptData<-thresh_sub[thresh_sub$Source =="(Intercept)", ]
-      chngptData<-thresh_sub[thresh_sub$Source != "(Intercept)", ]
+      interceptData<-thresh_sub[thresh_sub$Source =="(Intercept)" & thresh_sub$phenotype==pheno, ]
+      chngptData<-thresh_sub[thresh_sub$Source != "(Intercept)" & thresh_sub$phenotype==pheno, ]
       postCptCol<-if(chngptData$p.value < 0.05){viridis::plasma(1, begin=0.7)}else{"black"}
       
       p<-ggplot2::ggplot(chngptData)+
