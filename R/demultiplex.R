@@ -10,7 +10,9 @@
 #' each row of the barcodes dataframe and the files will be named using the name argument. If mode is "general" then each input fastq file will yield one
 #' output fastq file with sample names in that file corresponding to the name argument. Defaults to "dada".
 #' @param cores Optionally the number of cores to run in parallel. This defaults to 1 if the "mc.cores" option is not set.
-#' @param writeOut Logical, should fastq/stats files be written out. Defaults to TRUE. This can also be a path where data should be written to.
+#' @param writeOut Logical, should fastq/stats files be written out. Defaults to TRUE.
+#' This can also be a path where data should be written to. Note that files are written as mode "w" and this will 
+#' throw an error if the file already exists.
 #' @param stat Logical, should stats files be generated if writeOut is TRUE. Defaults to FALSE.
 #' 
 #' 
@@ -28,21 +30,25 @@
 #' ## Not Run:
 #' if(FALSE){
 #' 
+#' library(ShortRead)
+#' library(Biostrings)
+#' library(parallel)
 #' setwd("~/Desktop/stargate/SINC/sincUtils/syncomBuilder/nastya96WellEx")
 #' 
 #' barcodes <- read.delim("barcode_tab.tsv")
 #' name = c("Name", "Well")
 #' reads <- ShortRead::readFastq("Plate11_R1_001.fastq.gz")
 #' 
-#' demultiplex(reads, barcodes, mode = "dada", parallel = 10)
+#' demultiplex(reads, barcodes[1:10,], fwd="FWD", rev="REV",
+#' name = name, mode = "dada", cores = 10, writeOut = "tests", stat = FALSE)
 #' 
 #' path <- '/run/user/1000/gvfs/smb-share:server=nas01,share=research/bart_lab/Previous_people/Mingsheng_Qi/research_dr/SINC/limiting_dilution/20210314/p2p11_rawseq'
 #' barcodes = read.csv(paste0(path,"/barcodetable1.csv"))
 #' barcodes$exp <- "exp"
 #' reads <- ShortRead::readFastq(paste0(path, "/210314S05P10_merge.fq"))
 #' 
-#' x<-demultiplex(reads, barcodes, fwd="FWD_primer", rev="REV_primer",name = c("exp"), mode = "dada",
-#'                writeOut = TRUE, stat=TRUE)
+#' x<-demultiplex(reads, barcodes, fwd="FWD_primer", rev="REV_primer",name = c("exp"), mode = "general",
+#'                writeOut = TRUE, stat=TRUE, cores=10)
 #' x
 #' 
 #' 
@@ -81,6 +87,7 @@ demultiplex <- function(reads, barcodes, fwd="FWD", rev="REV",name = c("Name", "
   } else {
     stop("mode must be one of 'dada' or 'general'")
   }
+  if(!is.logical(writeOut)){writeOut = TRUE}
   if(stat & writeOut){
     out
   }
@@ -132,12 +139,13 @@ demultiplex <- function(reads, barcodes, fwd="FWD", rev="REV",name = c("Name", "
     if(stat & writeOut){
       stats <- data.frame(name = name,
                          totalReads = length(reads),
-                         groupedReads = countFastq::countFastq(paste0(name, ".fq"))[1,1])
-      stats$ratio <- signif(stat$groupedReads/stat$totalReads, digits = 4)
+                         groupedReads = ShortRead::countFastq(paste0(name, ".fq"))[1,1])
+      stats$ratio <- signif(stats$groupedReads/stats$totalReads, digits = 4)
       write.csv(stats, file=paste0(name, ".csv"), row.names = FALSE)
       return(stats)
     }
   }, mc.cores = cores)
+  if(!is.logical(writeOut)){writeOut = TRUE}
   if(stat & writeOut){
     return(do.call(rbind, test))
   }
@@ -157,7 +165,7 @@ demultiplex <- function(reads, barcodes, fwd="FWD", rev="REV",name = c("Name", "
   barcodes[[fwd]] <- toupper(barcodes[[fwd]])
   barcodes[[rev]] <- toupper(barcodes[[rev]])
   # per barcode write out a fq and optionally a summary table
-  test<-parallel::mclapply(1:nrow(barcodes), function(i){
+  test<-lapply(1:nrow(barcodes), function(i){
     # get a name for the sub sample
     name <- paste(barcodes[i, c(name)], collapse=".")
     # get barcodes
@@ -184,15 +192,15 @@ demultiplex <- function(reads, barcodes, fwd="FWD", rev="REV",name = c("Name", "
         write = NULL
       }
     if(writeOut){
-      if(i==1){mode="w"}else{mode="a"}
-      ShortRead::writeFastq(object = Clone, file =paste0(write, name, ".fq"),mode = mode, compress = T)
+      if(i==1){md = "w"}else{md="a"}
+      ShortRead::writeFastq(object = Clone, file =paste0(write, name, ".fq"), mode = md, compress = T)
     }
-  }, mc.cores = cores)
+  })
   if(stat & writeOut){
     stats <- data.frame(name = name,
                        totalReads = length(reads),
                        groupedReads = ShortRead::countFastq(paste0(name, ".fq"))[1,1])
-    stats$ratio <- signif(stat$groupedReads/stat$totalReads, digits = 4)
+    stats$ratio <- signif(stats$groupedReads/stats$totalReads, digits = 4)
     write.csv(stats, file=paste0(name, ".csv"), row.names = FALSE)
     return(stats)
   }
