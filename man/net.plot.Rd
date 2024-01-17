@@ -11,13 +11,15 @@ net.plot(
   size = 3,
   edgeWeight = NULL,
   edgeFilter = NULL,
-  thresh_below = 0.05
+  thresh_below = 0.05,
+  facet = NULL
 )
 }
 \arguments{
-\item{net}{Object returned from \code{\link{asvNet}}}
+\item{net}{Object returned from \link{asvNet}.}
 
-\item{fill}{Optional column name to fill points by. Accepts single column names, vectors of p-value columns, or "thresh" which will match all p-value columns if the network was fit with threshold model data from \link{\code{thresh}}.}
+\item{fill}{Optional column name to fill points by. Accepts single column names, vectors of p-value columns,
+or "thresh" which will match all p-value columns if the network was fit with threshold model data from \link{thresh}.}
 
 \item{shape}{Optional column name to use for node shapes. Accepts the same options as fill.}
 
@@ -25,9 +27,14 @@ net.plot(
 
 \item{edgeWeight}{Optional weighting for edges. Must be present in the "edges" of net. Default of NULL will show equal size edges between all connected nodes.}
 
-\item{edgeFilter}{Optional value to filter edges for. If non-NULL then only edges with edgeWeight greater than this value are kept. This can be a character vector or a numeric. Character vectors are interpreted as quantiles ("0.5" corresponds to the top 50% are kept).}
+\item{edgeFilter}{Optional value to filter edges for. If non-NULL then only edges with edgeWeight greater than this value are kept.
+This can be a character vector or a numeric.
+Character vectors are interpreted as quantiles ("0.5" corresponds to the top 50% are kept).}
 
 \item{thresh_below}{Significant cutoff if p-value columns are used for fill or shape. Defaults to 0.05.}
+
+\item{facet}{Optionally a variable to facet the plot on. This is meant to be used to separate multiple networks created from \link{netcomi2scb}
+in which case "netNumber" should be used.}
 }
 \value{
 A ggplot object.
@@ -52,5 +59,3 @@ net.plot(net, fill="thresh", shape, size, edgeWeight, edgeFilter, thresh_below)
 
 
 }
-\keyword{changepoint}
-\keyword{network,}

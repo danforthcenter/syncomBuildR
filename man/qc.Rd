@@ -10,7 +10,7 @@ qc(
   taxa = NULL,
   asvAbnd = 100,
   sampleAbnd = 1000,
-  rescale = T,
+  normalize = "rescale",
   rmTx = list("Order in Chloroplast", "Phylum in Plantae"),
   separate = NULL,
   metadata = NULL
@@ -27,7 +27,9 @@ qc(
 
 \item{sampleAbnd}{Lower bound on sum of all microbes per sample, samples with fewer total counts than this number will be removed. Note this filtering happens before `asvAbnd` filtering.}
 
-\item{rescale}{Logical, should samples be rescaled (normalized) to a common total abundance?}
+\item{normalize}{Method for normalization, currently supported options are NULL (where no normalization is done),
+"rescale" (the default) where samples are rescaled to have the same sample abundance using the exponent of the mean log sample sum,
+ and "pqn" where probabilistic quotient normalization is used.}
 
 \item{rmTx}{A list of taxa filters. Each element in the list should specify a level of the taxonomy, an affector, and a comma separated string of values to filter that taxonomy for. See details.}
 
@@ -48,15 +50,19 @@ In that case the string "Class contains plant, other" would search for matches t
 }
 \examples{
 
-print(load("/home/jsumner/Desktop/stargate/SINC/sincUtils/syncomBuilder/field_2021_small_ex.rdata")) 
+print(load("~/Desktop/stargate/SINC/sincUtils/syncomBuilder/field_2021_small_ex.rdata"))
 separate<-data.frame(tissue = stringr::str_extract(samps, "[:alpha:]+"))
-metadata = cbind(separate, data.frame(sample = samps, plot = stringr::str_extract(samps, "[0-9]+")))
+metadata = cbind(separate, data.frame(sample = samps,
+  plot = stringr::str_extract(samps, "[0-9]+")))
 
-file=NULL; asvTab = seqtab.print; taxa=NULL; asvAbnd = 100; sampleAbnd=1000; rescale=T
-rmTx=list("Order in Chloroplast", "Phylum in Plantae"); separate=separate; metadata=cbind(separate, data.frame(plot = stringr::str_extract(samps, "[0-9]+")))
+file=NULL; asvTab = seqtab.print; taxa=NULL; asvAbnd = 100; sampleAbnd=1000; normalize="pqn"
+rmTx=list("Order in Chloroplast", "Phylum in Plantae"); separate=separate
+metadata=cbind(separate, data.frame(plot = stringr::str_extract(samps, "[0-9]+")))
 
-asv<-qc(asvTab = seqtab.print, taxa=taxa_rdp, asvAbnd = 100, sampleAbnd=1000, rescale=T, rmTx=list("Order in Chloroplast", "Phylum in Plantae"), separate=NULL)
-asv<-qc(asvTab = seqtab.print, taxa=taxa_rdp, asvAbnd = 100, sampleAbnd=1000, rescale=T,rmTx=list("Order in Chloroplast", "Phylum in Plantae"), separate=separate, metadata=metadata)
+asv<-qc(asvTab = seqtab.print, taxa=taxa_rdp, asvAbnd = 100, sampleAbnd=1000, rescale=T, 
+rmTx=list("Order in Chloroplast", "Phylum in Plantae"), separate=NULL)
+asv<-qc(asvTab = seqtab.print, taxa=taxa_rdp, asvAbnd = 100, sampleAbnd=1000, rescale=T,
+rmTx=list("Order in Chloroplast", "Phylum in Plantae"), separate=separate, metadata=metadata)
 save(asv, file="../qc_output.rdata")
 
 }

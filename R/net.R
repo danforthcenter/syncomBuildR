@@ -1,14 +1,14 @@
 #' Function to perform network analysis on a distance/dissimilarity matrix of a microbial community.
 #' 
 #' 
-#' @param df Long dataframe such as that returned from \link{\code{asvDist}}.
+#' @param df Long dataframe such as that returned from \code{\link{asvDist}}.
 #' @param metadata Optional dataframe of metadata to attach to nodes. Metadata should belong to data at the node level, so taxonomy for ASV nodes or genotype per sample nodes, but not genotype per ASV since an ASV is present in many samples.
 #' @param edge Column name of df to use for edge weighting. Typically this is the same as \code{method} from \code{asvDist} used to make df.
-#' @param thresh Optional output from \link{\code{thresh}}. If provided then P values of changepoints will be added as node metadata.
+#' @param thresh Optional output from \code{\link{thresh}}. If provided then P values of changepoints will be added as node metadata.
 #' @param metadata_join Column name of metadata that identifies nodes. Defaults to "asv".
 #' @param thresh_join Column name of thresh that identifies nodes. Defaults to "asv" and there are no cases currently where we expect it to be a good idea to change this.
 #' @keywords network, changepoint
-#' @import igraph
+#' @importFrom igraph graph_from_data_frame graph_from_adjacency_matrix layout.auto get.data.frame as_data_frame betweenness degree E strength harmonic_centrality eigen_centrality authority_score page_rank 
 #' @import data.table
 #' @return A named list with three elements:
 #' \itemize{
@@ -40,8 +40,8 @@ asvNet<-function(df, metadata=NULL, edge=NULL, thresh=NULL, metadata_join="asv",
   nd<-as.data.frame(igraph::layout.auto(g))
   eg<-igraph::get.data.frame(g)
   #* link metadata to nodes
+  nd[[metadata_join]]<-igraph::as_data_frame(g, "vertices")$name
   if(!is.null(metadata)){
-    nd[[metadata_join]]<-igraph::as_data_frame(g, "vertices")$name
     nd<-merge(nd, metadata, by=metadata_join) 
   }
   #* link thresh to nodes

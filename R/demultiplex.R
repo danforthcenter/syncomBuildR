@@ -18,8 +18,8 @@
 #' 
 #' @keywords demultiplex, dada2
 #' 
-#' @import ShortRead
-#' @import Biostrings
+#' @importFrom ShortRead readFastq sread writeFastq countFastq 
+#' @importFrom Biostrings reverseComplement DNAString
 #' @import parallel
 #' 
 #' @return Writes out fq files and summary statistics depending on writeOut and stat arguments.

@@ -8,7 +8,7 @@
 #' @keywords pca
 #' 
 #' @import ggplot2
-#' @import FactoMinerR
+#' @import FactoMineR
 #' 
 #' @examples
 #' print(load("/home/jsumner/Desktop/stargate/SINC/sincUtils/syncomBuilder/cal_output.rdata"))

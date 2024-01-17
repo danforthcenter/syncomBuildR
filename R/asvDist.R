@@ -60,6 +60,9 @@ asvDist<-function(asvTab, asvCols = NULL, method="spearman",
     #* *make long data* [from similarity matrices]
     
     if(method %in% vegan_distances){
+      # if(method %in% questionable_distances){
+      #   warning(paste0(method, " distance is dubiously applicable in the microbiome context, consider the interpretation of this distance metric."))
+      # }
       dist_mat<-as.matrix(vegan::vegdist(mat, method=method))
       sim_mat<-as.data.frame(1/dist_mat)
       sim_mat$c1<-rownames(sim_mat)

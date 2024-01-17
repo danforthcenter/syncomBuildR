@@ -1,14 +1,18 @@
 #' Function to plot networks generated from \code{asvNet} with various emphases.
 #' 
 #' 
-#' @param net Object returned from \code{\link{asvNet}}
-#' @param fill Optional column name to fill points by. Accepts single column names, vectors of p-value columns, or "thresh" which will match all p-value columns if the network was fit with threshold model data from \link{\code{thresh}}.
+#' @param net Object returned from \link{asvNet}.
+#' @param fill Optional column name to fill points by. Accepts single column names, vectors of p-value columns,
+#' or "thresh" which will match all p-value columns if the network was fit with threshold model data from \link{thresh}.
 #' @param shape Optional column name to use for node shapes. Accepts the same options as fill. 
 #' @param size Size for points. Passed to ggplot2::geom_point.
 #' @param edgeWeight Optional weighting for edges. Must be present in the "edges" of net. Default of NULL will show equal size edges between all connected nodes.
-#' @param edgeFilter Optional value to filter edges for. If non-NULL then only edges with edgeWeight greater than this value are kept. This can be a character vector or a numeric. Character vectors are interpreted as quantiles ("0.5" corresponds to the top 50% are kept).
+#' @param edgeFilter Optional value to filter edges for. If non-NULL then only edges with edgeWeight greater than this value are kept.
+#' This can be a character vector or a numeric.
+#' Character vectors are interpreted as quantiles ("0.5" corresponds to the top 50% are kept).
 #' @param thresh_below Significant cutoff if p-value columns are used for fill or shape. Defaults to 0.05.
-#' @keywords network, changepoint
+#' @param facet Optionally a variable to facet the plot on. This is meant to be used to separate multiple networks created from \link{netcomi2scb}
+#' in which case "netNumber" should be used.
 #' @import ggplot2
 #' @return A ggplot object.
 #' 
@@ -32,7 +36,7 @@
 #' @export
 #' 
 
-net.plot<-function(net, fill=NULL, shape=NULL, size = 3, edgeWeight=NULL, edgeFilter = NULL, thresh_below=0.05){
+net.plot<-function(net, fill=NULL, shape=NULL, size = 3, edgeWeight=NULL, edgeFilter = NULL, thresh_below=0.05, facet = NULL){
   
   nodes<-net[["nodes"]]
   edges<-net[["edges"]]
@@ -102,5 +106,11 @@ net.plot<-function(net, fill=NULL, shape=NULL, size = 3, edgeWeight=NULL, edgeFi
   if(fill=="NOFILL"){ p<-p+ggplot2::guides(color="none")+ggplot2::scale_color_manual(values="gray80") }
   if(shape=="NOSHAPE"){ p<-p+ggplot2::guides(shape="none") }
   if(fill=="significantThresholdModels"){p<-p+ggplot2::scale_color_continuous(breaks=seq(0,max(nodes$significantThresholdModels, na.rm=T),1)) }
+  if(!is.null(facet)){
+    p <- p + ggplot2::facet_wrap(as.formula(paste0("~", facet)))+
+      ggplot2::theme(panel.background = element_rect(color="black"),
+                     strip.background = element_rect(fill="gray40"),
+                     strip.text = element_text(color="white", size=12))
+  }
   return(p)
 }

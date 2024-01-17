@@ -25,7 +25,7 @@ A named list (same as net) with three elements, same as \code{\link{net}}:
 Function to cluster networks generated from \code{asvNet}.
 }
 \details{
-Each method will use a different function to cluster data according to the layout in the graph. Note that layouts in the graph are determined by \code{igraph::layout.auto}.
+Each method will use a different function to cluster data according to the layout in the graph. Note that layouts in the graph are determined by \code{igraph::layout_nicely}.
 \itemize{
    \item{"component" uses \code{igraph::components} to cluster data and requires no additional arguments.}
    \item{"dbscan" uses \code{dbscan::dbscan} to cluster data. This requires at least that the eps argument is set. See \code{?dbscan::dbscan}.}

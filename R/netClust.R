@@ -5,8 +5,8 @@
 #' @param method Method to use for clustering. Current supported options are components, dbscan, and kmeans. See details.
 #' @param ... Additional arguments passed to function picked by method.
 #' @keywords network, changepoint
-#' @import igraph
-#' @import dbscan
+#' @importFrom igraph components
+#' @importFrom dbscan dbscan
 #' @return A named list (same as net) with three elements, same as \code{\link{net}}:
 #' \itemize{
 #'    \item{"Nodes" is a dataframe of nodes and their metadata}
@@ -14,7 +14,7 @@
 #'    \item{"graph" is the igraph object used to generate the dataframes.}
 #' }
 #' 
-#' @details Each method will use a different function to cluster data according to the layout in the graph. Note that layouts in the graph are determined by \code{igraph::layout.auto}.
+#' @details Each method will use a different function to cluster data according to the layout in the graph. Note that layouts in the graph are determined by \code{igraph::layout_nicely}.
 #' \itemize{
 #'    \item{"component" uses \code{igraph::components} to cluster data and requires no additional arguments.}
 #'    \item{"dbscan" uses \code{dbscan::dbscan} to cluster data. This requires at least that the eps argument is set. See \code{?dbscan::dbscan}.}

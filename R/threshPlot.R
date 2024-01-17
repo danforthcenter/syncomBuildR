@@ -58,11 +58,12 @@ threshPlot<-function(thresh, asv, asvCols=NULL, phenotype=NULL){
                          y=mean(interceptData$est),
                          yend=mean(interceptData$est)),
                      color="black")+
-        geom_segment(aes(x=changePoint,
-                         xend=max(asv_sub[[microbe]]),
-                         y=interceptData$est,
-                         yend=interceptData$est + est*(max(asv_sub[[microbe]])-interceptData$est)),
+        geom_segment(data=chngptData, x=chngptData$changePoint,
+                     xend=max(asv_sub[[microbe]]),
+                     y=interceptData$est,
+                     yend=interceptData$est + chngptData$est*(max(asv_sub[[microbe]])-chngptData$changePoint ),
                      color= postCptCol )+
+        
        ylab(paste0(ifelse(is.null(cal), "","Calibrated "), pheno))+
         xlab(microbe)+
         ggtitle(paste0("ASV ",sub("ASV","",chngptData[1,"asv"])))+
