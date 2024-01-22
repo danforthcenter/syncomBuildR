@@ -5,10 +5,12 @@
 #' @param color column name used to color points in the pca plot.
 #' @param returnData Logical, should data be returned? Defaults to TRUE where data and a ggplot are returned.
 #' @param ncp Optional, number of principal components to return attached to dataframe if data is returned. Defaults to all.
-#' @keywords pca
+#' @param umap Logical, should a UMAP also be performed? Defaults to FALSE. If TRUE then UAMP1 and 2 columns will be added and a list of 2 ggplots will be returned.
+#' @keywords pca umap
 #' 
 #' @import ggplot2
 #' @import FactoMineR
+#' @importFrom uwot umap
 #' 
 #' @examples
 #' print(load("/home/jsumner/Desktop/stargate/SINC/sincUtils/syncomBuilder/cal_output.rdata"))
@@ -20,7 +22,7 @@
 #' 
 #' @export
 
-pcadf<-function(df=NULL, cols=NULL, color=NULL, returnData=T, ncp=NULL){
+pcadf<-function(df=NULL, cols=NULL, color=NULL, returnData=TRUE, ncp=NULL, umap=FALSE){
   # df=asv; cols=NULL; color=c("tissue", "genotype"); returnData=T; ncp=NULL
   if(is.null(cols)){cols=which(grepl("ASV",colnames(df)))
   }else if(is.character(cols) & length(cols)==1){
@@ -52,6 +54,29 @@ pcadf<-function(df=NULL, cols=NULL, color=NULL, returnData=T, ncp=NULL){
   if(color=="dummyVariableForColor"){
    p<-p+ggplot2::theme(legend.position="none")
   }
+  if(umap){
+    pca.umap<-uwot::umap(pca.df[, grepl("pc", colnames(pca.df))])
+    umap.df<-cbind(pca.df, as.data.frame(pca.umap))
+    colnames(umap.df)<-c(colnames(pca.df), "UMAP1", "UMAP2")
+    pca.df <- umap.df
+    
+    p2<-ggplot2::ggplot(pca.df, ggplot2::aes(x=UMAP1, y=UMAP2, color = .data[[color]]))+
+      ggplot2::geom_point(alpha=0.85)+
+      ggplot2::labs(x="UMAP1",y="UMAP2")+
+      ggplot2::guides(color=ggplot2::guide_legend(override.aes=list(alpha=1)))+
+      ggplot2::theme_minimal()+
+      ggplot2::theme(legend.position="bottom",
+                     plot.title = ggplot2::element_text(size=14),
+                     axis.line.y.left = ggplot2::element_line(),
+                     axis.line.x.bottom = ggplot2::element_line())
+    if(color=="dummyVariableForColor"){
+      p2<-p2+ggplot2::theme(legend.position="none")
+    }
+    p <- list("pca"=p, "umap"=p2)
+    }
+  
+  
+  
   if(returnData){return(list("data"=pca.df, "plot"=p))}else{return(p)}
 }
 

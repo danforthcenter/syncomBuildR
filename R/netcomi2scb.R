@@ -122,6 +122,9 @@ netcomi2scb <- function(microNetObj, microNetProps=NULL, microNetComp=NULL, cuto
   }
   allNodes <- do.call(rbind, lapply(nets, function(net){net$nodes}))
   allEdges <- do.call(rbind, lapply(nets, function(net){net$edges}))
+  
+  nets[[length(nets)+1]]<-list("nodes" = allNodes, "edges"=allEdges, "graph" = NULL)
+  
   return(nets)
   
 }

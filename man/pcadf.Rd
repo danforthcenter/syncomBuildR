@@ -4,7 +4,14 @@
 \alias{pcadf}
 \title{Function to run a PCA, plot and return the data with PC coordinates}
 \usage{
-pcadf(df = NULL, cols = NULL, color = NULL, returnData = T, ncp = NULL)
+pcadf(
+  df = NULL,
+  cols = NULL,
+  color = NULL,
+  returnData = TRUE,
+  ncp = NULL,
+  umap = FALSE
+)
 }
 \arguments{
 \item{df}{Dataframe to ordinate}
@@ -16,6 +23,8 @@ pcadf(df = NULL, cols = NULL, color = NULL, returnData = T, ncp = NULL)
 \item{returnData}{Logical, should data be returned? Defaults to TRUE where data and a ggplot are returned.}
 
 \item{ncp}{Optional, number of principal components to return attached to dataframe if data is returned. Defaults to all.}
+
+\item{umap}{Logical, should a UMAP also be performed? Defaults to FALSE. If TRUE then UAMP1 and 2 columns will be added and a list of 2 ggplots will be returned.}
 }
 \description{
 Function to run a PCA, plot and return the data with PC coordinates
@@ -30,3 +39,4 @@ x$plot
 
 }
 \keyword{pca}
+\keyword{umap}
