@@ -10,7 +10,7 @@ cal(
   cal = NULL,
   ZI_cutoff = 0.9,
   cores = getOption("mc.cores", 1),
-  verbose = T
+  verbose = TRUE
 )
 }
 \arguments{
@@ -42,7 +42,7 @@ print(load("/home/jsumner/Desktop/stargate/SINC/sincUtils/syncomBuilder/biomass.
 agBiomass<-aggregate(biomass ~ plot+row+genotype, biomass, mean)
 agBiomass$sd<-aggregate(biomass ~ plot+row+genotype, biomass, sd)$biomass
 asv_joined<-plyr::join(asv, agBiomass, by="plot")
-are_c<-cal(asv_joined[asv_joined$tissue=="ARE", ], cal="genotype", cores=10)\
+are_c<-cal(asv_joined[asv_joined$tissue=="ARE", ], cal="genotype", cores=10)
 table(are_c[[2]]$model)
 dim(are_c[[1]])
 

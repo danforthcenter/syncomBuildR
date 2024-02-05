@@ -7,6 +7,7 @@
 #' @param ncp Optional, number of principal components to return attached to dataframe if data is returned. Defaults to all.
 #' @param umap Logical, should a UMAP also be performed? Defaults to FALSE. If TRUE then UAMP1 and 2 columns will be added and a list of 2 ggplots will be returned.
 #' @keywords pca umap
+#' @return a ggplot, optionally a dataframe and FactoMineR::PCA output if returnData is TRUE.
 #' 
 #' @import ggplot2
 #' @import FactoMineR
@@ -77,7 +78,7 @@ pcadf<-function(df=NULL, cols=NULL, color=NULL, returnData=TRUE, ncp=NULL, umap=
   
   
   
-  if(returnData){return(list("data"=pca.df, "plot"=p))}else{return(p)}
+  if(returnData){return(list("data"=pca.df, "plot"=p, "pca"=pca))}else{return(p)}
 }
 
 

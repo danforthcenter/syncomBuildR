@@ -21,7 +21,7 @@
 #' agBiomass<-aggregate(biomass ~ plot+row+genotype, biomass, mean)
 #' agBiomass$sd<-aggregate(biomass ~ plot+row+genotype, biomass, sd)$biomass
 #' asv_joined<-plyr::join(asv, agBiomass, by="plot")
-#' are_c<-cal(asv_joined[asv_joined$tissue=="ARE", ], cal="genotype", cores=10)\
+#' are_c<-cal(asv_joined[asv_joined$tissue=="ARE", ], cal="genotype", cores=10)
 #' table(are_c[[2]]$model)
 #' dim(are_c[[1]])
 #' 
@@ -30,7 +30,7 @@
 
 
 cal<-function(asvTab=NULL, asvCols=which(grepl("ASV", colnames(asvTab))),
-              cal = NULL, ZI_cutoff=0.9, cores=getOption("mc.cores",1), verbose=T){
+              cal = NULL, ZI_cutoff=0.9, cores=getOption("mc.cores",1), verbose=TRUE){
   if(is.null(cal)){stop("Argument 'cal' is NULL but requires a value")}
   x<-parallel::mclapply(asvCols, function(i){
     sub<-asvTab[,-asvCols]
@@ -73,11 +73,17 @@ cal<-function(asvTab=NULL, asvCols=which(grepl("ASV", colnames(asvTab))),
       out
     }
   }, mc.cores = cores)
-  
+  names(x)<-colnames(asvTab)[asvCols]
   modelErrors<-which(unlist(lapply(x,is.null)))
-  modelErrorsCols<-colnames(asvTab)[asvCols][modelErrors]
-  fitCols<-colnames(asvTab)[asvCols][-modelErrors]
-  dfs<-x[-modelErrors]
+  if(length(modelErrors)>0){
+    modelErrorsCols<-colnames(asvTab)[asvCols][modelErrors]
+    fitCols<-colnames(asvTab)[asvCols][-modelErrors]
+    dfs<-x[-modelErrors]
+  } else{
+    modelErrorsCols<-character(0)
+    fitCols<-colnames(asvTab)[asvCols]
+    dfs<-x
+  }
   
   first<-dfs[[1]][, c(colnames(asvTab[,-asvCols]), 'ASVnew')]
   colnames(first)[ncol(first)]<-dfs[[1]][1,"asvName"]
@@ -88,7 +94,7 @@ cal<-function(asvTab=NULL, asvCols=which(grepl("ASV", colnames(asvTab))),
     metrics<-rbind(do.call(rbind, lapply(dfs, function(d){
       data.frame(asv = d[1,"asvName"], model = d[1,"model"], nonZeroPct = d[1,'nonZero'])
     })),
-    data.frame(asv=modelErrorsCols, model="error",
+    data.frame(asv=modelErrorsCols, model=rep("error", length(modelErrorsCols)),
                nonZeroPct = unlist(lapply(modelErrorsCols, function(e) mean(asvTab[[e]]==0) ))))
     outList<-list("asvTab" = newAsvTab, "details"=metrics)
   } else{

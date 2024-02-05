@@ -26,6 +26,9 @@ pcadf(
 
 \item{umap}{Logical, should a UMAP also be performed? Defaults to FALSE. If TRUE then UAMP1 and 2 columns will be added and a list of 2 ggplots will be returned.}
 }
+\value{
+a ggplot, optionally a dataframe and FactoMineR::PCA output if returnData is TRUE.
+}
 \description{
 Function to run a PCA, plot and return the data with PC coordinates
 }

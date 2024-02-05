@@ -13,6 +13,10 @@ taxaAg(x = NULL, tx = NULL, taxaLevel = "Class")
 
 \item{taxaLevel}{A level of the taxonomy in `tx` to aggregate data to. Must match a colname of `tx`.}
 }
+\value{
+A list of two dataframes. "data" is similar to an ASV table but aggregated to the given taxaLevel.
+"meta" is a summary of the aggregation containing the number of ASVs and the total number of counts in each family in long format.
+}
 \description{
 Aggregate an ASV table to some taxonomic level
 }

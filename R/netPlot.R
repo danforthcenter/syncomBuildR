@@ -9,7 +9,7 @@
 #' @param edgeWeight Optional weighting for edges. Must be present in the "edges" of net. Default of NULL will show equal size edges between all connected nodes.
 #' @param edgeFilter Optional value to filter edges for. If non-NULL then only edges with edgeWeight greater than this value are kept.
 #' This can be a character vector or a numeric.
-#' Character vectors are interpreted as quantiles ("0.5" corresponds to the top 50% are kept).
+#' Character vectors are interpreted as quantiles ("0.5" corresponds to the top 50 percent are kept).
 #' @param thresh_below Significant cutoff if p-value columns are used for fill or shape. Defaults to 0.05.
 #' @param facet Optionally a variable to facet the plot on. This is meant to be used to separate multiple networks created from \link{netcomi2scb}
 #' in which case "netNumber" should be used.
