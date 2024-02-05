@@ -25,10 +25,9 @@ pullNode <- function(net, node, edge = NULL, edgeFilter=NULL, plot=TRUE, nodeCol
   #* grab network components
   nodes <- net$nodes
   edges <- net$edges
-  #* filter nodes for the desired node
+  #* filter edges for node connection
   edges_sub <- edges[edges$from == node | edges$to ==node, ]
-  nodes_sub <- nodes[nodes[[nodeCol]] == node | nodes[[nodeCol]] %in% edges_sub$to, ]
-  #* filter and sort edges
+  #* filter and sort edges by some metric/value
   if(!is.null(edge)){
     edges_sub <- edges_sub[order(edges_sub[[edge]], decreasing = TRUE), ]
     if(!is.null(edgeFilter)){
@@ -40,6 +39,9 @@ pullNode <- function(net, node, edge = NULL, edgeFilter=NULL, plot=TRUE, nodeCol
       } else{stop("edgeFilter must be character or numeric.")}
     }
   }
+  #* filter nodes for the desired node
+  nodes_sub <- rbind(nodes[nodes[[nodeCol]] == node,],
+        nodes[nodes[[nodeCol]] %in% edges_sub$to, ] )
   #* plotting
   if(plot){
     if("netNumber" %in% colnames(nodes_sub) && length(unique(nodes_sub$netNumber))>1 ){
