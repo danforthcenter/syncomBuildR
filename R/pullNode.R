@@ -8,6 +8,8 @@
 #' This can be a character vector or a numeric.
 #' Character vectors are interpreted as quantiles ("0.5" corresponds to the top 50 percent are kept).
 #' @param plot Logical, should data be plotted using \link{net.plot}.
+#' @param keepNames Logical, should other nodes be filled in the plot as their node name (TRUE) or all as "other" (FALSE)?
+#' Defaults to FALSE.
 #' 
 #' @return A list with a subset network and optionally a ggplot.
 #' 
@@ -21,7 +23,7 @@
 #' 
 #' @export
 
-pullNode <- function(net, node, edge = NULL, edgeFilter=NULL, plot=TRUE, nodeCol = "name"){
+pullNode <- function(net, node, edge = NULL, edgeFilter=NULL, plot=TRUE, nodeCol = "name", keepNames = FALSE){
   #* grab network components
   nodes <- net$nodes
   edges <- net$edges
@@ -41,15 +43,18 @@ pullNode <- function(net, node, edge = NULL, edgeFilter=NULL, plot=TRUE, nodeCol
   }
   #* filter nodes for the desired node
   nodes_sub <- rbind(nodes[nodes[[nodeCol]] == node,],
-        nodes[nodes[[nodeCol]] %in% edges_sub$to, ] )
+                     nodes[nodes[[nodeCol]] %in% c(edges_sub$to, edges_sub$from), ])
+  nodes_sub <- nodes_sub[!duplicated(nodes_sub),]
   #* plotting
   if(plot){
     if("netNumber" %in% colnames(nodes_sub) && length(unique(nodes_sub$netNumber))>1 ){
       facet <- "netNumber"
     } else {facet <- NULL}
-    nodes_sub$fill <- ifelse(nodes_sub[[nodeCol]]==node, node, "other")
+    if(keepNames){
+      nodes_sub$fill <- nodes_sub[[nodeCol]]
+    } else { nodes_sub$fill <- ifelse(nodes_sub[[nodeCol]]==node, node, "other") }
     p <- net.plot(list("nodes"=nodes_sub, "edges"=edges_sub), fill = "fill", size=3, edgeWeight=edge,
-                  edgeFilter = edgeFilter, facet = facet)
+                  edgeFilter = NULL, facet = facet)
     out <- list("net" = list("nodes"=nodes_sub, "edges"=edges_sub), "plot"=p)
   } else {
     out <- list("nodes"=nodes_sub, "edges"=edges_sub)

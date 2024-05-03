@@ -11,6 +11,7 @@
 #' @param rmTx A list of taxa filters. Each element in the list should specify a level of the taxonomy, an affector, and a comma separated string of values to filter that taxonomy for. See details.
 #' @param separate An optional dataframe or vector of the same length as the number of samples in asvTab. If provided then this separates the asvTab by these groupings and abundance filtering will be done separately in each subset of the data. Subsets will be bound together and missing values will be filled with NA should subsets contain different selections of ASVs.
 #' @param metadata An optional dataframe of metadata to add to the asv table. If left NULL while `separate` is a dataframe then this will include that data as metadata.
+#' @param return_removed Logical, abundance filtered data be returned? Defaults to FALSE. If TRUE then a list is returned.
 #' @keywords DADA2
 #' @importFrom plyr rbind.fill
 #' @return An ASV table as a wide dataframe
@@ -23,25 +24,25 @@
 #'
 #' @examples 
 #' 
-#' print(load("~/Desktop/stargate/SINC/sincUtils/syncomBuilder/field_2021_small_ex.rdata"))
+#' print(load("~/scripts/SINC/sincUtils/syncomBuilder/field_2021_small_ex.rdata"))
 #' separate<-data.frame(tissue = stringr::str_extract(samps, "[:alpha:]+"))
 #' metadata = cbind(separate, data.frame(sample = samps,
 #'   plot = stringr::str_extract(samps, "[0-9]+")))
 #' 
 #' file=NULL; asvTab = seqtab.print; taxa=NULL; asvAbnd = 100; sampleAbnd=1000; normalize="pqn"
 #' rmTx=list("Order in Chloroplast", "Phylum in Plantae"); separate=separate
-#' metadata=cbind(separate, data.frame(plot = stringr::str_extract(samps, "[0-9]+")))
+#' metadata=cbind(separate, data.frame(plot = stringr::str_extract(samps, "[0-9]+"))), return_removed=TRUE
 #' 
-#' asv<-qc(asvTab = seqtab.print, taxa=taxa_rdp, asvAbnd = 100, sampleAbnd=1000, rescale=T, 
+#' asv<-qc(asvTab = seqtab.print, taxa=taxa_rdp, asvAbnd = 100, sampleAbnd=1000, normalize = "rescale", 
 #' rmTx=list("Order in Chloroplast", "Phylum in Plantae"), separate=NULL)
-#' asv<-qc(asvTab = seqtab.print, taxa=taxa_rdp, asvAbnd = 100, sampleAbnd=1000, rescale=T,
-#' rmTx=list("Order in Chloroplast", "Phylum in Plantae"), separate=separate, metadata=metadata)
+#' asv<-qc(asvTab = seqtab.print, taxa=taxa_rdp, asvAbnd = 100, sampleAbnd=1000, normalize = "rescale", 
+#' rmTx=list("Order in Chloroplast", "Phylum in Plantae"), separate=separate, metadata=metadata, return_removed=TRUE)
 #' save(asv, file="../qc_output.rdata")
 #' 
 #' @export
 
 qc<-function(file=NULL, asvTab = NULL, taxa=NULL, asvAbnd = 100, sampleAbnd=1000, normalize="rescale",
-             rmTx=list("Order in Chloroplast", "Phylum in Plantae"), separate=NULL, metadata=NULL){
+             rmTx=list("Order in Chloroplast", "Phylum in Plantae"), separate=NULL, metadata=NULL, return_removed=FALSE){
   if(!is.null(file)){load(file)}
   if(is.null(taxa)){taxa<-taxa_rdp}
   if(is.null(asvTab)){asvTab<-seqtab.print}
@@ -77,37 +78,46 @@ qc<-function(file=NULL, asvTab = NULL, taxa=NULL, asvAbnd = 100, sampleAbnd=1000
   if(!is.null(sampleAbnd)){
     originalRowNames<-rownames(asvTab)
     if(!split){
-    asvTab<-asvTab[rowSums(asvTab) >= sampleAbnd, ]
+    asvTab_sampFilt<-asvTab[rowSums(asvTab) >= sampleAbnd, ]
     }else{
-      asvTab<-do.call(rbind, 
+      asvTab_sampFilt<-do.call(rbind, 
               lapply(split(asvTab, interaction(separate, drop=T) ), function(d){
                 d[rowSums(d) >= sampleAbnd, ] }))
-    rownames(asvTab)<-sub( paste0(levels(interaction(separate, drop=T)),".", collapse="|"),"",rownames(asvTab))
+    rownames(asvTab_sampFilt)<-sub( paste0(levels(interaction(separate, drop=T)),".", collapse="|"),"",rownames(asvTab_sampFilt))
     sepColNames<-colnames(separate)
-    separate<-as.data.frame(separate[which(rownames(asvTab) %in% originalRowNames),])
+    separate<-as.data.frame(separate[which(rownames(asvTab_sampFilt) %in% originalRowNames),])
     colnames(separate)<-sepColNames
     }
     if(!is.null(metadata)){
       metadata<-metadata[which(rownames(asvTab) %in% originalRowNames),]
     }
+    if(return_removed){
+      removed <- list()
+      removed$rows <- asvTab[-which(rownames(asvTab) %in% originalRowNames),]
+    }
+    
     
   }
   if(!is.null(asvAbnd)){
-    if(!split){asvTab<-asvTab[, colSums(asvTab)>=asvAbnd]
+    if(!split){asvTab_filt<-asvTab_sampFilt[, colSums(asvTab_sampFilt)>=asvAbnd]
     }else{
-      asvTab<-do.call(plyr::rbind.fill, 
-                      lapply(split(asvTab, interaction(separate, drop=T)), function(d){
+      asvTab_filt<-do.call(plyr::rbind.fill, 
+                      lapply(split(asvTab_sampFilt, interaction(separate, drop=T)), function(d){
                         d[,colSums(d)>=asvAbnd] }))
+    }
+    if(return_removed){
+      removed <- list()
+      removed$cols <- asvTab[,-which(colnames(asvTab_filt) %in% colnames(asvTab))]
     }
   }
   if(!is.null(normalize)){
     if(normalize == "rescale"){
-      scaleFactor<-exp(mean(log(rowSums(asvTab, na.rm=T))))
-      asvTab<-as.data.frame(t(apply(asvTab ,MARGIN=1, FUN = function(i) round(scaleFactor*i/sum(i, na.rm=T)) )))
+      scaleFactor<-exp(mean(log(rowSums(asvTab_filt, na.rm=T))))
+      asvTab_filt<-as.data.frame(t(apply(asvTab_filt ,MARGIN=1, FUN = function(i) round(scaleFactor*i/sum(i, na.rm=T)) )))
     } else if (normalize == "pqn"){
-      median_vec <- apply(asvTab / rowMeans(asvTab, na.rm = TRUE), 2, median, na.rm = TRUE)+1
-      normalized_asvTab <- t(apply(asvTab, 1, function(x) x/median_vec))
-      rownames(normalized_asvTab) <- rownames(asvTab)
+      median_vec <- apply(asvTab_filt / rowMeans(asvTab, na.rm = TRUE), 2, median, na.rm = TRUE)+1
+      normalized_asvTab <- t(apply(asvTab_filt, 1, function(x) x/median_vec))
+      rownames(normalized_asvTab) <- rownames(asvTab_filt)
       asvTab <- normalized_asvTab
     } else{
       warning(paste0("Available options for normalization are NULL, 'pqn', and 'rescale', ", normalize, " is not implemented"))
@@ -117,5 +127,8 @@ qc<-function(file=NULL, asvTab = NULL, taxa=NULL, asvAbnd = 100, sampleAbnd=1000
   if(!is.null(metadata)){
     asvTab<-cbind(metadata, asvTab)
   }
-  return(asvTab)
+  if(return_removed){
+    out <- list("asv" = asvTab, "removed"= removed)
+  } else {out <- asvTab}
+  return(out)
 }
