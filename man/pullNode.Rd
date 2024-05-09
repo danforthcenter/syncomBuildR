@@ -10,7 +10,8 @@ pullNode(
   edge = NULL,
   edgeFilter = NULL,
   plot = TRUE,
-  nodeCol = "name"
+  nodeCol = "name",
+  keepNames = FALSE
 )
 }
 \arguments{
@@ -25,6 +26,9 @@ This can be a character vector or a numeric.
 Character vectors are interpreted as quantiles ("0.5" corresponds to the top 50 percent are kept).}
 
 \item{plot}{Logical, should data be plotted using \link{net.plot}.}
+
+\item{keepNames}{Logical, should other nodes be filled in the plot as their node name (TRUE) or all as "other" (FALSE)?
+Defaults to FALSE.}
 }
 \value{
 A list with a subset network and optionally a ggplot.

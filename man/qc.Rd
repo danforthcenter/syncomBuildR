@@ -13,7 +13,8 @@ qc(
   normalize = "rescale",
   rmTx = list("Order in Chloroplast", "Phylum in Plantae"),
   separate = NULL,
-  metadata = NULL
+  metadata = NULL,
+  return_removed = FALSE
 )
 }
 \arguments{
@@ -36,6 +37,8 @@ qc(
 \item{separate}{An optional dataframe or vector of the same length as the number of samples in asvTab. If provided then this separates the asvTab by these groupings and abundance filtering will be done separately in each subset of the data. Subsets will be bound together and missing values will be filled with NA should subsets contain different selections of ASVs.}
 
 \item{metadata}{An optional dataframe of metadata to add to the asv table. If left NULL while `separate` is a dataframe then this will include that data as metadata.}
+
+\item{return_removed}{Logical, abundance filtered data be returned? Defaults to FALSE. If TRUE then a list is returned.}
 }
 \value{
 An ASV table as a wide dataframe
@@ -50,19 +53,19 @@ In that case the string "Class contains plant, other" would search for matches t
 }
 \examples{
 
-print(load("~/Desktop/stargate/SINC/sincUtils/syncomBuilder/field_2021_small_ex.rdata"))
+print(load("~/scripts/SINC/sincUtils/syncomBuilder/field_2021_small_ex.rdata"))
 separate<-data.frame(tissue = stringr::str_extract(samps, "[:alpha:]+"))
 metadata = cbind(separate, data.frame(sample = samps,
   plot = stringr::str_extract(samps, "[0-9]+")))
 
 file=NULL; asvTab = seqtab.print; taxa=NULL; asvAbnd = 100; sampleAbnd=1000; normalize="pqn"
 rmTx=list("Order in Chloroplast", "Phylum in Plantae"); separate=separate
-metadata=cbind(separate, data.frame(plot = stringr::str_extract(samps, "[0-9]+")))
+metadata=cbind(separate, data.frame(plot = stringr::str_extract(samps, "[0-9]+"))), return_removed=TRUE
 
-asv<-qc(asvTab = seqtab.print, taxa=taxa_rdp, asvAbnd = 100, sampleAbnd=1000, rescale=T, 
+asv<-qc(asvTab = seqtab.print, taxa=taxa_rdp, asvAbnd = 100, sampleAbnd=1000, normalize = "rescale", 
 rmTx=list("Order in Chloroplast", "Phylum in Plantae"), separate=NULL)
-asv<-qc(asvTab = seqtab.print, taxa=taxa_rdp, asvAbnd = 100, sampleAbnd=1000, rescale=T,
-rmTx=list("Order in Chloroplast", "Phylum in Plantae"), separate=separate, metadata=metadata)
+asv<-qc(asvTab = seqtab.print, taxa=taxa_rdp, asvAbnd = 100, sampleAbnd=1000, normalize = "rescale", 
+rmTx=list("Order in Chloroplast", "Phylum in Plantae"), separate=separate, metadata=metadata, return_removed=TRUE)
 save(asv, file="../qc_output.rdata")
 
 }
