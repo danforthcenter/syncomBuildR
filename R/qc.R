@@ -95,8 +95,8 @@ qc<-function(file=NULL, asvTab = NULL, taxa=NULL, asvAbnd = 100, sampleAbnd=1000
       removed <- list()
       removed$rows <- asvTab[-which(rownames(asvTab) %in% originalRowNames),]
     }
-    
-    
+  } else {
+    asvTab_sampFilt <- asvTab
   }
   if(!is.null(asvAbnd)){
     if(!split){asvTab_filt<-asvTab_sampFilt[, colSums(asvTab_sampFilt)>=asvAbnd]
@@ -109,6 +109,8 @@ qc<-function(file=NULL, asvTab = NULL, taxa=NULL, asvAbnd = 100, sampleAbnd=1000
       removed <- list()
       removed$cols <- asvTab[,-which(colnames(asvTab_filt) %in% colnames(asvTab))]
     }
+  } else {
+    asvTab_filt <- asvTab_sampFilt
   }
   if(!is.null(normalize)){
     if(normalize == "rescale"){
@@ -125,7 +127,7 @@ qc<-function(file=NULL, asvTab = NULL, taxa=NULL, asvAbnd = 100, sampleAbnd=1000
   }
   
   if(!is.null(metadata)){
-    asvTab<-cbind(metadata, asvTab)
+    asvTab<-cbind(metadata, asvTab_filt)
   }
   if(return_removed){
     out <- list("asv" = asvTab, "removed"= removed)
