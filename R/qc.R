@@ -89,11 +89,11 @@ qc<-function(file=NULL, asvTab = NULL, taxa=NULL, asvAbnd = 100, sampleAbnd=1000
     colnames(separate)<-sepColNames
     }
     if(!is.null(metadata)){
-      metadata<-metadata[which(rownames(asvTab) %in% originalRowNames),]
+      metadata<-metadata[rowSums(asvTab) >= sampleAbnd,]
     }
     if(return_removed){
       removed <- list()
-      removed$rows <- asvTab[-which(rownames(asvTab) %in% originalRowNames),]
+      removed$rows <- asvTab[rowSums(asvTab) < sampleAbnd,]
     }
   } else {
     asvTab_sampFilt <- asvTab
