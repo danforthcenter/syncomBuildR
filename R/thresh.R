@@ -29,14 +29,15 @@
 thresh<-function(asvTab, phenoCols, asvCols=NULL, model="hinge", cores=getOption("mc.cores",1), calibratePheno = NULL){
   if(is.null(asvCols)){asvCols<-colnames(asvTab)[grepl("ASV",colnames(asvTab))]}
   threshOut<-do.call(rbind, lapply(phenoCols, function(phenotype){
+    print(phenotype)
     if(!is.null(calibratePheno)){
       formString<-paste0(phenotype,"~",paste0(calibratePheno, collapse="+"))
-      asvTab[[phenotype]]<-residuals(lm(as.formula(formString), data=asvTab))
+      asvTab[[phenotype]]<-residuals(lm(as.formula(formString), data=asvTab, na.action = na.exclude))
     } else {
       asvTab[[phenotype]]<-asvTab[[phenotype]]
     }
     thresh_df<-do.call(rbind, parallel::mclapply(asvCols, function(asv_col){
-      
+
       if(model == "hinge" | model == "M01"){
         model="hinge"
         f1<-as.formula(paste0(phenotype,"~1"))
