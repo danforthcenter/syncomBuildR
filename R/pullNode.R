@@ -2,7 +2,7 @@
 #' 
 #' 
 #' @param net Network list returned from \link{asvNet} or \link{netcomi2scb}.
-#' @param node A node name to extract connections to.
+#' @param node A node name (or vector of names) to extract connections to.
 #' @param edge Optional weighting for edges. Must be present in the "edges" of net. Default of NULL will show equal size edges between all connected nodes.
 #' @param edgeFilter Optional value to filter edges for. If non-NULL then only edges with edgeWeight greater than this value are kept.
 #' This can be a character vector or a numeric.
@@ -23,12 +23,12 @@
 #' 
 #' @export
 
-pullNode <- function(net, node, edge = NULL, edgeFilter=NULL, plot=TRUE, nodeCol = "name", keepNames = FALSE){
+pullNode <- function(net, node, edge = NULL, edgeFilter=NULL, plot=TRUE, nodeCol = "asv", keepNames = FALSE){
   #* grab network components
   nodes <- net$nodes
   edges <- net$edges
   #* filter edges for node connection
-  edges_sub <- edges[edges$from == node | edges$to ==node, ]
+  edges_sub <- edges[edges$from %in% node | edges$to %in% node, ]
   #* filter and sort edges by some metric/value
   if(!is.null(edge)){
     edges_sub <- edges_sub[order(edges_sub[[edge]], decreasing = TRUE), ]
@@ -42,7 +42,7 @@ pullNode <- function(net, node, edge = NULL, edgeFilter=NULL, plot=TRUE, nodeCol
     }
   }
   #* filter nodes for the desired node
-  nodes_sub <- rbind(nodes[nodes[[nodeCol]] == node,],
+  nodes_sub <- rbind(nodes[nodes[[nodeCol]] %in% node,],
                      nodes[nodes[[nodeCol]] %in% c(edges_sub$to, edges_sub$from), ])
   nodes_sub <- nodes_sub[!duplicated(nodes_sub),]
   #* plotting
@@ -52,7 +52,8 @@ pullNode <- function(net, node, edge = NULL, edgeFilter=NULL, plot=TRUE, nodeCol
     } else {facet <- NULL}
     if(keepNames){
       nodes_sub$fill <- nodes_sub[[nodeCol]]
-    } else { nodes_sub$fill <- ifelse(nodes_sub[[nodeCol]]==node, node, "other") }
+    } else { nodes_sub$fill <- ifelse(nodes_sub[[nodeCol]] %in% node,
+                                      paste0(node, collapse = ", "), "other") }
     p <- net.plot(list("nodes"=nodes_sub, "edges"=edges_sub), fill = "fill", size=3, edgeWeight=edge,
                   edgeFilter = NULL, facet = facet)
     out <- list("net" = list("nodes"=nodes_sub, "edges"=edges_sub), "plot"=p)

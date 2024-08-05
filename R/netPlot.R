@@ -36,7 +36,8 @@
 #' @export
 #' 
 
-net.plot<-function(net, fill=NULL, shape=NULL, size = 3, edgeWeight=NULL, edgeFilter = NULL, thresh_below=0.05, facet = NULL){
+net.plot<-function(net, fill=NULL, shape=NULL, size = 3, edgeWeight=NULL,
+                   edgeFilter = NULL, thresh_below=0.05, facet = NULL){
   
   nodes<-net[["nodes"]]
   edges<-net[["edges"]]
@@ -57,7 +58,9 @@ net.plot<-function(net, fill=NULL, shape=NULL, size = 3, edgeWeight=NULL, edgeFi
     single_thresh_fill=T
   }
   if(multi_thresh_fill | single_thresh_fill){
-    nodes[[paste0(fill, "_bin")]]<-unlist(lapply(fill, function(col){ as.numeric(nodes[[col]]<=thresh_below) }))
+    nodes[[paste0(fill, "_bin")]]<-unlist(lapply(fill, function(col){
+      as.numeric(nodes[[col]]<=thresh_below)
+      }))
     nodes[["significantThresholdModels"]]<-rowSums(as.data.frame(nodes[[paste0(fill, "_bin")]]))
     fill="significantThresholdModels"
   }
@@ -74,7 +77,9 @@ net.plot<-function(net, fill=NULL, shape=NULL, size = 3, edgeWeight=NULL, edgeFi
     single_thresh_shape=T
   }
   if(multi_thresh_shape | single_thresh_shape){
-    nodes[[paste0(shape, "_bin")]]<-unlist(lapply(shape, function(col){ as.numeric(nodes[[col]]<=thresh_below) }))
+    nodes[[paste0(shape, "_bin")]]<-unlist(lapply(shape, function(col){
+      as.numeric(nodes[[col]]<=thresh_below)
+      }))
     nodes[["significantThresholdModels"]]<-factor(rowSums(as.data.frame(nodes[[paste0(shape, "_bin")]])))
     shape="significantThresholdModels"
   }
@@ -92,10 +97,12 @@ net.plot<-function(net, fill=NULL, shape=NULL, size = 3, edgeWeight=NULL, edgeFi
   }
   p<-ggplot2::ggplot(nodes)+
     ggplot2::geom_segment(data=edges, ggplot2::aes(x=from.x, xend = to.x, y=from.y,
-                                                   yend = to.y, linewidth=.data[[edgeWeight]]),colour="black",alpha=0.1) +
+                                                   yend = to.y, linewidth=.data[[edgeWeight]]),
+                          colour="black",alpha=0.1) +
     ggplot2::geom_point(data=nodes, size=size, ggplot2::aes(x=V1,y=V2,
                                                             fill = .data[[fill]], color=.data[[fill]],
-                                                            shape=.data[[shape]]), alpha=1, show.legend=T)+
+                                                            shape=.data[[shape]]),
+                        alpha=1, show.legend=T)+
     ggplot2::scale_linewidth(range=c(0.1,1.5))+
     #* note that scaling shape should work, but there is a documented ggplot2 bug where this messes up the legend, so 
     #* until that is fixed I will not specify fillable shapes.
@@ -103,9 +110,15 @@ net.plot<-function(net, fill=NULL, shape=NULL, size = 3, edgeWeight=NULL, edgeFi
     ggplot2::guides(linewidth="none", shape=ggplot2::guide_legend(nrow=1), fill="none")+
     ggplot2::theme_void()+
     ggplot2::theme(legend.position="bottom")
-  if(fill=="NOFILL"){ p<-p+ggplot2::guides(color="none")+ggplot2::scale_color_manual(values="gray80") }
-  if(shape=="NOSHAPE"){ p<-p+ggplot2::guides(shape="none") }
-  if(fill=="significantThresholdModels"){p<-p+ggplot2::scale_color_continuous(breaks=seq(0,max(nodes$significantThresholdModels, na.rm=T),1)) }
+  if(fill=="NOFILL"){
+    p<-p+ggplot2::guides(color="none")+ggplot2::scale_color_manual(values="gray80")
+    }
+  if(shape=="NOSHAPE"){
+    p<-p+ggplot2::guides(shape="none")
+    }
+  if(fill=="significantThresholdModels"){
+    p<-p+ggplot2::scale_color_continuous(breaks=seq(0,max(nodes$significantThresholdModels, na.rm=T),1))
+    }
   if(!is.null(facet)){
     p <- p + ggplot2::facet_wrap(as.formula(paste0("~", facet)))+
       ggplot2::theme(panel.background = element_rect(color="black"),

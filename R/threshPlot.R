@@ -5,7 +5,8 @@
 #' @param asv The asv table used in making \code{thresh} object.
 #' @param asvCols A vector of ASV column names. Defaults to NULL in which case all columns containing "ASV" are used and a list of ggplots is returned.
 #' @param phenotype A vector of phenotype names in \code{thresh}. Defaults to NULL where all phenotypes are used and a list of plots is returned per ASV.
-#' 
+#' @param unit The unit or scale of the changepoint models. This defaults to "asv" for use with thresh and "cluster" should be used with netThresh output.
+#' @param net The asvNet object if netThresh output is being plotted.
 #' 
 #' @keywords changepoint, threshold, regression, phenotype, ggplot
 #' 
@@ -26,22 +27,34 @@
 #' 
 #' @export
 
-threshPlot<-function(thresh, asv, asvCols=NULL, phenotype=NULL){
-  if(is.null(asvCols)){ asvCols<-colnames(asv)[grepl("ASV", colnames(asv))] }
+threshPlot<-function(thresh, asv, asvCols=NULL, phenotype=NULL, unit = "asv", net = NULL){
+  if(is.null(asvCols)){ asvCols <- unique(thresh[[unit]])}
+  if(!is.null(net)) {
+    #* calculate a summarized ASV table by clusters
+    nodes <- net[["nodes"]]
+    clusterCol <- thresh$clusterType[1]
+    clusters <- unique(nodes[[clusterCol]])
+    clust_ag <- do.call(cbind, lapply(clusters, function(clust){
+      asvs_in_cluster<-nodes[nodes[[clusterCol]] == clust, "asv"]
+      setNames(data.frame(rowSums(asv[,c(asvs_in_cluster)])), c(paste0("cluster_",clust)))
+    }))
+    clusterColumns<-colnames(clust_ag)
+    asv<-cbind(asv[,-which(grepl("ASV", colnames(asv)))], clust_ag)
+  }
   if(is.null(phenotype)){phenotype<-unique(thresh$phenotype)}
   if("calibratePheno" %in% colnames(thresh)){
     cal<-unlist(lapply(unique(thresh$calibratePheno), function(s) {as.character(as.formula(s))[3]}))
   } else{cal=NULL}
   outList<-lapply(asvCols, function(microbe){
-    thresh_sub<-thresh[thresh$asv == microbe, ]
+    thresh_sub<-thresh[thresh[[unit]] == microbe, ]
     asv_sub<-asv[, colnames(asv) %in% c(phenotype, microbe, cal)]
-    phenoPlots<-lapply(unique(thresh_sub$phenotype), function(pheno){
+    phenoPlots<-lapply(phenotype, function(pheno){
       #print(c(pheno, microbe))
       if(!is.null(cal)){
         asv_sub[[pheno]]<-residuals(lm(as.formula(
           paste0(pheno, "~",
                  gsub(".*~", "",thresh_sub[1,"calibratePheno"]))),
-          data=asv_sub))
+          data=asv_sub, na.action = na.exclude))
       }
       interceptData<-thresh_sub[thresh_sub$Source =="(Intercept)" & thresh_sub$phenotype==pheno, ]
       chngptData<-thresh_sub[thresh_sub$Source != "(Intercept)" & thresh_sub$phenotype==pheno, ]
@@ -69,7 +82,7 @@ threshPlot<-function(thresh, asv, asvCols=NULL, phenotype=NULL){
         
        ylab(paste0(ifelse(is.null(cal), "","Calibrated "), pheno))+
         xlab(microbe)+
-        ggtitle(paste0("ASV ",sub("ASV","",chngptData[1,"asv"])))+
+        ggtitle(paste0(unit ,sub(unit,"",chngptData[1,unit], ignore.case = TRUE)))+
         labs(subtitle = paste0("P-value: ", round(chngptData$p.value, 3)))+
         theme_light()+
         theme(axis.text = element_text(size = 8),

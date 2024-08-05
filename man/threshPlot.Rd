@@ -4,7 +4,14 @@
 \alias{threshPlot}
 \title{Function to plot results of a changepoint model with data returned from \code{thresh}}
 \usage{
-threshPlot(thresh, asv, asvCols = NULL, phenotype = NULL)
+threshPlot(
+  thresh,
+  asv,
+  asvCols = NULL,
+  phenotype = NULL,
+  unit = "asv",
+  net = NULL
+)
 }
 \arguments{
 \item{thresh}{Output from \code{\link{thresh}}}
@@ -14,6 +21,10 @@ threshPlot(thresh, asv, asvCols = NULL, phenotype = NULL)
 \item{asvCols}{A vector of ASV column names. Defaults to NULL in which case all columns containing "ASV" are used and a list of ggplots is returned.}
 
 \item{phenotype}{A vector of phenotype names in \code{thresh}. Defaults to NULL where all phenotypes are used and a list of plots is returned per ASV.}
+
+\item{unit}{The unit or scale of the changepoint models. This defaults to "asv" for use with thresh and "cluster" should be used with netThresh output.}
+
+\item{net}{The asvNet object if netThresh output is being plotted.}
 }
 \value{
 A ggplot or list of ggplots showing changepoint models against some set of phenotypes.

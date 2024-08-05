@@ -42,8 +42,8 @@ netThresh<-function(net, asvTab, asvCols=NULL, clusterCol = NULL, cluster = NULL
   # net = net_data ; asvTab=asv; asvCols=NULL; clusterCol = "kmeans_cluster"; cluster=NULL; phenoCols = "biomass"
   # model = "hinge"; cores = getOption("mc.cores",1); calibratePheno="genotype"
   #* `calculated values`
-  nodes<-net_data[["nodes"]]
-  if(is.null(cluster)){cluster=unique(net_data[["nodes"]][[clusterCol]])}
+  nodes<-net[["nodes"]]
+  if(is.null(cluster)){cluster=unique(net[["nodes"]][[clusterCol]])}
   if(is.null(asvCols)){asvCols = colnames(asvTab)[grepl("ASV", colnames(asvTab))] }
   if(is.null(clusterCol)){clusterCol=colnames(nodes)[grepl("cluster", colnames(nodes))][1]}
   #* `take nodes in a given cluster and aggregate a count in the asv table`

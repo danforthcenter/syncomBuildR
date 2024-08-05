@@ -10,14 +10,14 @@ pullNode(
   edge = NULL,
   edgeFilter = NULL,
   plot = TRUE,
-  nodeCol = "name",
+  nodeCol = "asv",
   keepNames = FALSE
 )
 }
 \arguments{
 \item{net}{Network list returned from \link{asvNet} or \link{netcomi2scb}.}
 
-\item{node}{A node name to extract connections to.}
+\item{node}{A node name (or vector of names) to extract connections to.}
 
 \item{edge}{Optional weighting for edges. Must be present in the "edges" of net. Default of NULL will show equal size edges between all connected nodes.}
 

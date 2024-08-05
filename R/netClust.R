@@ -41,11 +41,11 @@
 netClust<-function(net, method="components", ...){
   method=match.arg(method, c("components", "dbscan", "kmeans"))
   if(method == "components"){
-    net[["nodes"]]$component_cluster<-igraph::components(net[["graph"]], ...)$membership 
+    net[["nodes"]]$component_cluster<-as.character(igraph::components(net[["graph"]], ...)$membership)
   } else if(method=="dbscan"){
-    net[["nodes"]]$dbscan_cluster<-dbscan::dbscan( net[["nodes"]][,c("V1", "V2")], ...)$cluster 
+    net[["nodes"]]$dbscan_cluster<-as.character(dbscan::dbscan( net[["nodes"]][,c("V1", "V2")], ...)$cluster)
   } else if(method == "kmeans"){
-    net[["nodes"]]$kmeans_cluster<-kmeans(net[["nodes"]][,c("V1", "V2")], ...)$cluster
+    net[["nodes"]]$kmeans_cluster<-as.character(kmeans(net[["nodes"]][,c("V1", "V2")], ...)$cluster)
   }
   return(net)
 }
