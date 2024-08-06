@@ -3,9 +3,11 @@
 #' @param df ASV table with metadata and counts
 #' @param col ASV column to model
 #' @param predictors Column names of predictors, can be discrete or continuous.
-#' @param zi_cutoff Proportion of zeros to consider the distribution to be zero inflated, defaults to 0.1.
-#' @param priors Prior distributions as \code{brmsprior} objects, defaults are shown in details. If left NULL
-#' (the default) then wide student priors will be used (\code{brms::set_prior('student_t(3,0,5)',  class="b")}).
+#' @param zi_cutoff Proportion of zeros to consider the distribution to be zero inflated,
+#' defaults to 0.1.
+#' @param priors Prior distributions as \code{brmsprior} objects, defaults are shown in details.
+#' If left NULL (the default) then wide student priors will be used
+#' (\code{brms::set_prior('student_t(3,0,5)',  class="b")}).
 #' @param intercept Logical, should an intercept be used? Defaults to TRUE.
 #' @param backend Argument to control \code{brms::brm()} backend interface to Stan.
 #' @param chains Argument to control number of chains used by \code{brms::brm()}.
@@ -36,9 +38,9 @@
 #'   df <- asv[, 1:20]
 #'   sapply(df[, 3:20], function(c) mean(c == 0))
 #'
-#'   col = "ASV9"
-#'   predictors = "tissue"
-#'   zi_cutoff = 0.1
+#'   col <- "ASV9"
+#'   predictors <- "tissue"
+#'   zi_cutoff <- 0.1
 #'
 #'   df[[predictors]] <- relevel(factor(df[[predictors]]), "AS")
 #'
@@ -51,13 +53,13 @@ b_da <- function(df, col, predictors, zi_cutoff = 0.1, intercept = TRUE,
     stop("df, col, and predictors must be specified")
   }
   if (mean(df[[col]] == 0) > zi_cutoff) {
-    mod_type = "zinb"
+    mod_type <- "zinb"
   } else {
-    mod_type = "nb"
+    mod_type <- "nb"
   }
 
   if (is.null(priors)) {
-    priors <- brms::set_prior('student_t(3,0,5)', class = "b")
+    priors <- brms::set_prior("student_t(3,0,5)", class = "b")
   }
 
   if (!intercept) {
@@ -66,7 +68,7 @@ b_da <- function(df, col, predictors, zi_cutoff = 0.1, intercept = TRUE,
 
   if (mod_type == "zinb") {
     form <- brms::bf(as.formula(paste0(col, "~", paste(predictors, collapse = "+"))),
-      family = zero_inflated_negbinomial
+      family = "zero_inflated_negbinomial"
     )
     mod <- brms::brm(form, df,
       prior = priors, backend = backend, chains = chains, cores = cores,
@@ -74,7 +76,7 @@ b_da <- function(df, col, predictors, zi_cutoff = 0.1, intercept = TRUE,
     )
   } else {
     form <- brms::bf(as.formula(paste0(col, "~", paste(predictors, collapse = "+"))),
-      family = negbinomial
+      family = "negbinomial"
     )
     mod <- brms::brm(form, df,
       prior = priors, backend = backend, chains = chains, cores = cores,
