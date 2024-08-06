@@ -2,13 +2,20 @@
 #'
 #'
 #' @param df Long dataframe such as that returned from \code{\link{asvDist}}.
-#' @param metadata Optional dataframe of metadata to attach to nodes. Metadata should belong to data at the node level, so taxonomy for ASV nodes or genotype per sample nodes, but not genotype per ASV since an ASV is present in many samples.
-#' @param edge Column name of df to use for edge weighting. Typically this is the same as \code{method} from \code{asvDist} used to make df.
-#' @param thresh Optional output from \code{\link{thresh}}. If provided then P values of changepoints will be added as node metadata.
+#' @param metadata Optional dataframe of metadata to attach to nodes. Metadata should belong to data at
+#' the node level, so taxonomy for ASV nodes or genotype per sample nodes, but not genotype per ASV
+#' since an ASV is present in many samples.
+#' @param edge Column name of df to use for edge weighting. Typically this is the same as \code{method}
+#' from \code{asvDist} used to make df.
+#' @param thresh Optional output from \code{\link{thresh}}. If provided then P values of changepoints
+#' will be added as node metadata.
 #' @param metadata_join Column name of metadata that identifies nodes. Defaults to "asv".
-#' @param thresh_join Column name of thresh that identifies nodes. Defaults to "asv" and there are no cases currently where we expect it to be a good idea to change this.
+#' @param thresh_join Column name of thresh that identifies nodes. Defaults to "asv" and there are no
+#' cases currently where we expect it to be a good idea to change this.
 #' @keywords network, changepoint
-#' @importFrom igraph graph_from_data_frame graph_from_adjacency_matrix layout.auto get.data.frame as_data_frame betweenness degree E strength harmonic_centrality eigen_centrality authority_score page_rank
+#' @importFrom igraph graph_from_data_frame graph_from_adjacency_matrix layout.auto get.data.frame
+#' as_data_frame betweenness degree E strength harmonic_centrality eigen_centrality
+#' authority_score page_rank
 #' @import data.table
 #' @return A named list with three elements:
 #' \itemize{
@@ -31,9 +38,10 @@
 #'
 #' @export
 
-asvNet <- function(df, metadata = NULL, edge = NULL, thresh = NULL, metadata_join = "asv", thresh_join = "asv") {
+asvNet <- function(df, metadata = NULL, edge = NULL, thresh = NULL,
+                   metadata_join = "asv", thresh_join = "asv") {
   if (is.data.frame(df)) {
-    g <- igraph::graph_from_data_frame(df, directed = F)
+    g <- igraph::graph_from_data_frame(df, directed = FALSE)
   } else if (is.matrix(df)) {
     g <- igraph::graph_from_adjacency_matrix(df, "undirected")
   }
@@ -46,8 +54,10 @@ asvNet <- function(df, metadata = NULL, edge = NULL, thresh = NULL, metadata_joi
   }
   #* link thresh to nodes
   if (!is.null(thresh)) {
-    agThresh <- aggregate(p.value. ~ asv + phenotype + model, thresh[thresh$Source != "(Intercept)", ], FUN = identity)
-    subThresh <- data.table::dcast(data.table::as.data.table(agThresh), asv ~ phenotype + model, value.var = 'p.value.')
+    agThresh <- aggregate(p.value. ~ asv + phenotype + model, thresh[thresh$Source != "(Intercept)", ],
+                          FUN = identity)
+    subThresh <- data.table::dcast(data.table::as.data.table(agThresh), asv ~ phenotype + model,
+                                   value.var = "p.value.")
     colnames(subThresh)[2:ncol(subThresh)] <- paste0(colnames(subThresh)[2:ncol(subThresh)], "_p")
     nd <- merge(nd, subThresh, by = thresh_join)
   }
