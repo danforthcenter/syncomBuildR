@@ -1,5 +1,5 @@
 #' Ease of use quality control function for DADA2 output.
-#' 
+#'
 #' @param file A file path to an Rdata object containing DADA2 output in such as that from DADA2 examples (function?)
 #' @param asvTab ASV table from DADA2. If a file path is given then this defaults to seqtab.print if left NULL for consistency with common DADA2 examples and previous SINC work.
 #' @param taxa A taxonomy file for the ASVs in asvTab. This defaults to taxa_rdp if left NULL.
@@ -15,122 +15,150 @@
 #' @keywords DADA2
 #' @importFrom plyr rbind.fill
 #' @return An ASV table as a wide dataframe
-#' @details 
-#' 
+#' @details
+#'
 #' The `rmTx` argument specifies a list of filters, with one element per each level of taxonomy that should be filtered. Each element in the list should take the form of "Taxalevel in example, example2".
 #' Which will remove ASVs where their "Taxalevel" is "example" or "example2". Alternatively the affector can be "contains" in which case regex is used.
-#' In that case the string "Class contains plant, other" would search for matches to "plant|other" in the Class column of the taxonomy. More general regex patterns are supported. 
-#' 
+#' In that case the string "Class contains plant, other" would search for matches to "plant|other" in the Class column of the taxonomy. More general regex patterns are supported.
 #'
-#' @examples 
-#' 
+#'
+#' @examples
+#'
 #' print(load("~/scripts/SINC/sincUtils/syncomBuilder/field_2021_small_ex.rdata"))
-#' separate<-data.frame(tissue = stringr::str_extract(samps, "[:alpha:]+"))
-#' metadata = cbind(separate, data.frame(sample = samps,
-#'   plot = stringr::str_extract(samps, "[0-9]+")))
-#' 
-#' file=NULL; asvTab = seqtab.print; taxa=NULL; asvAbnd = 100; sampleAbnd=1000; normalize="pqn"
-#' rmTx=list("Order in Chloroplast", "Phylum in Plantae"); separate=separate
-#' metadata=cbind(separate, data.frame(plot = stringr::str_extract(samps, "[0-9]+"))), return_removed=TRUE
-#' 
-#' asv<-qc(asvTab = seqtab.print, taxa=taxa_rdp, asvAbnd = 100, sampleAbnd=1000, normalize = "rescale", 
-#' rmTx=list("Order in Chloroplast", "Phylum in Plantae"), separate=NULL)
-#' asv<-qc(asvTab = seqtab.print, taxa=taxa_rdp, asvAbnd = 100, sampleAbnd=1000, normalize = "rescale", 
-#' rmTx=list("Order in Chloroplast", "Phylum in Plantae"), separate=separate, metadata=metadata, return_removed=TRUE)
-#' save(asv, file="../qc_output.rdata")
-#' 
+#' separate <- data.frame(tissue = stringr::str_extract(samps, "[:alpha:]+"))
+#' metadata = cbind(separate, data.frame(
+#'   sample = samps,
+#'   plot = stringr::str_extract(samps, "[0-9]+")
+#' ))
+#'
+#'
+#' asv <- qc(
+#'   asvTab = seqtab.print, taxa = taxa_rdp, asvAbnd = 100, sampleAbnd = 1000, normalize = "rescale",
+#'   rmTx = list("Order in Chloroplast", "Phylum in Plantae"), separate = NULL
+#' )
+#' asv <- qc(
+#'   asvTab = seqtab.print, taxa = taxa_rdp, asvAbnd = 100, sampleAbnd = 1000, normalize = "rescale",
+#'   rmTx = list("Order in Chloroplast", "Phylum in Plantae"), separate = separate, metadata = metadata, return_removed = TRUE
+#' )
+#' save(asv, file = "../qc_output.rdata")
+#'
 #' @export
 
-qc<-function(file=NULL, asvTab = NULL, taxa=NULL, asvAbnd = 100, sampleAbnd=1000, normalize="rescale",
-             rmTx=list("Order in Chloroplast", "Phylum in Plantae"), separate=NULL, metadata=NULL, return_removed=FALSE){
-  if(!is.null(file)){load(file)}
-  if(is.null(taxa)){taxa<-taxa_rdp}
-  if(is.null(asvTab)){asvTab<-seqtab.print}
-  if(!is.data.frame(asvTab)){asvTab<-as.data.frame(asvTab)}
-  if(!is.data.frame(taxa)){taxa<-as.data.frame(taxa)}
-  split<-if(!is.null(separate)){T}else{F}
-  if(is.null(metadata) & is.data.frame(separate)){metadata = separate}
-  
-  if(!is.null(rmTx)){
-    indsL<-lapply(rmTx, function(stri){
-      taxaLevel = strsplit(stri," ")[[1]][1]
-      affector<-strsplit(stri," ")[[1]][2]
-      values<-trimws(gsub(",", "", strsplit(stri," ")[[1]][-c(1:2)]))
-      
-      if(affector %in% c("in", "is", "=")){
-        indL<-lapply(values, function(value){
-          index<-taxa[[taxaLevel]]!=value # flag F if the row in taxa should be removed
-          index[is.na(index)]<-T # if taxaLevel[i] is NA then keep it
+qc <- function(file = NULL, asvTab = NULL, taxa = NULL, asvAbnd = 100, sampleAbnd = 1000, normalize = "rescale",
+               rmTx = list("Order in Chloroplast", "Phylum in Plantae"), separate = NULL, metadata = NULL, return_removed = FALSE) {
+  if (!is.null(file)) {
+    load(file)
+  }
+  if (is.null(taxa)) {
+    taxa <- taxa_rdp
+  }
+  if (is.null(asvTab)) {
+    asvTab <- seqtab.print
+  }
+  if (!is.data.frame(asvTab)) {
+    asvTab <- as.data.frame(asvTab)
+  }
+  if (!is.data.frame(taxa)) {
+    taxa <- as.data.frame(taxa)
+  }
+  split <- if (!is.null(separate)) {
+    T
+  } else {
+    F
+  }
+  if (is.null(metadata) & is.data.frame(separate)) {
+    metadata = separate
+  }
+
+  if (!is.null(rmTx)) {
+    indsL <- lapply(rmTx, function(stri) {
+      taxaLevel = strsplit(stri, " ")[[1]][1]
+      affector <- strsplit(stri, " ")[[1]][2]
+      values <- trimws(gsub(",", "", strsplit(stri, " ")[[1]][-c(1:2)]))
+
+      if (affector %in% c("in", "is", "=")) {
+        indL <- lapply(values, function(value) {
+          index <- taxa[[taxaLevel]] != value # flag F if the row in taxa should be removed
+          index[is.na(index)] <- T # if taxaLevel[i] is NA then keep it
           index
         })
-        ind<-apply(matrix(unlist(indL), ncol=length(indL) ), MARGIN=1, FUN=all) # if all are T then keep the row
-      } else if(affector=="contains"){
-        valReg<-paste0(values, collapse="|")
-        ind<-!grepl(valReg, taxa[[taxaLevel]])
+        ind <- apply(matrix(unlist(indL), ncol = length(indL)), MARGIN = 1, FUN = all) # if all are T then keep the row
+      } else if (affector == "contains") {
+        valReg <- paste0(values, collapse = "|")
+        ind <- !grepl(valReg, taxa[[taxaLevel]])
       }
       ind
     })
-    keep_index<-apply(matrix(unlist(indsL), ncol=length(indsL) ), MARGIN=1, FUN=all) 
-    taxa<-taxa[keep_index,]
-    asvTab<-asvTab[,keep_index]
+    keep_index <- apply(matrix(unlist(indsL), ncol = length(indsL)), MARGIN = 1, FUN = all)
+    taxa <- taxa[keep_index, ]
+    asvTab <- asvTab[, keep_index]
   }
-  
-  if(!is.null(sampleAbnd)){
-    originalRowNames<-rownames(asvTab)
-    if(!split){
-    asvTab_sampFilt<-asvTab[rowSums(asvTab) >= sampleAbnd, ]
-    }else{
-      asvTab_sampFilt<-do.call(rbind, 
-              lapply(split(asvTab, interaction(separate, drop=T) ), function(d){
-                d[rowSums(d) >= sampleAbnd, ] }))
-    rownames(asvTab_sampFilt)<-sub( paste0(levels(interaction(separate, drop=T)),".", collapse="|"),"",rownames(asvTab_sampFilt))
-    sepColNames<-colnames(separate)
-    separate<-as.data.frame(separate[which(rownames(asvTab_sampFilt) %in% originalRowNames),])
-    colnames(separate)<-sepColNames
+
+  if (!is.null(sampleAbnd)) {
+    originalRowNames <- rownames(asvTab)
+    if (!split) {
+      asvTab_sampFilt <- asvTab[rowSums(asvTab) >= sampleAbnd, ]
+    } else {
+      asvTab_sampFilt <- do.call(
+        rbind,
+        lapply(split(asvTab, interaction(separate, drop = T)), function(d) {
+          d[rowSums(d) >= sampleAbnd, ]
+        })
+      )
+      rownames(asvTab_sampFilt) <- sub(paste0(levels(interaction(separate, drop = T)), ".", collapse = "|"), "", rownames(asvTab_sampFilt))
+      sepColNames <- colnames(separate)
+      separate <- as.data.frame(separate[which(rownames(asvTab_sampFilt) %in% originalRowNames), ])
+      colnames(separate) <- sepColNames
     }
-    if(!is.null(metadata)){
-      metadata<-metadata[rowSums(asvTab) >= sampleAbnd,]
+    if (!is.null(metadata)) {
+      metadata <- metadata[rowSums(asvTab) >= sampleAbnd, ]
     }
-    if(return_removed){
+    if (return_removed) {
       removed <- list()
-      removed$rows <- asvTab[rowSums(asvTab) < sampleAbnd,]
+      removed$rows <- asvTab[rowSums(asvTab) < sampleAbnd, ]
     }
   } else {
     asvTab_sampFilt <- asvTab
   }
-  if(!is.null(asvAbnd)){
-    if(!split){asvTab_filt<-asvTab_sampFilt[, colSums(asvTab_sampFilt)>=asvAbnd]
-    }else{
-      asvTab_filt<-do.call(plyr::rbind.fill, 
-                      lapply(split(asvTab_sampFilt, interaction(separate, drop=T)), function(d){
-                        d[,colSums(d)>=asvAbnd] }))
+  if (!is.null(asvAbnd)) {
+    if (!split) {
+      asvTab_filt <- asvTab_sampFilt[, colSums(asvTab_sampFilt) >= asvAbnd]
+    } else {
+      asvTab_filt <- do.call(
+        plyr::rbind.fill,
+        lapply(split(asvTab_sampFilt, interaction(separate, drop = T)), function(d) {
+          d[, colSums(d) >= asvAbnd]
+        })
+      )
     }
-    if(return_removed){
+    if (return_removed) {
       removed <- list()
-      removed$cols <- asvTab[,-which(colnames(asvTab_filt) %in% colnames(asvTab))]
+      removed$cols <- asvTab[, -which(colnames(asvTab_filt) %in% colnames(asvTab))]
     }
   } else {
     asvTab_filt <- asvTab_sampFilt
   }
-  if(!is.null(normalize)){
-    if(normalize == "rescale"){
-      scaleFactor<-exp(mean(log(rowSums(asvTab_filt, na.rm=T))))
-      asvTab_filt<-as.data.frame(t(apply(asvTab_filt ,MARGIN=1, FUN = function(i) round(scaleFactor*i/sum(i, na.rm=T)) )))
-    } else if (normalize == "pqn"){
-      median_vec <- apply(asvTab_filt / rowMeans(asvTab, na.rm = TRUE), 2, median, na.rm = TRUE)+1
-      normalized_asvTab <- t(apply(asvTab_filt, 1, function(x) x/median_vec))
+  if (!is.null(normalize)) {
+    if (normalize == "rescale") {
+      scaleFactor <- exp(mean(log(rowSums(asvTab_filt, na.rm = T))))
+      asvTab_filt <- as.data.frame(t(apply(asvTab_filt, MARGIN = 1, FUN = function(i) round(scaleFactor * i / sum(i, na.rm = T)))))
+    } else if (normalize == "pqn") {
+      median_vec <- apply(asvTab_filt / rowMeans(asvTab, na.rm = TRUE), 2, median, na.rm = TRUE) + 1
+      normalized_asvTab <- t(apply(asvTab_filt, 1, function(x) x / median_vec))
       rownames(normalized_asvTab) <- rownames(asvTab_filt)
       asvTab <- normalized_asvTab
-    } else{
+    } else {
       warning(paste0("Available options for normalization are NULL, 'pqn', and 'rescale', ", normalize, " is not implemented"))
     }
   }
-  
-  if(!is.null(metadata)){
-    asvTab<-cbind(metadata, asvTab_filt)
+
+  if (!is.null(metadata)) {
+    asvTab <- cbind(metadata, asvTab_filt)
   }
-  if(return_removed){
-    out <- list("asv" = asvTab, "removed"= removed)
-  } else {out <- asvTab}
+  if (return_removed) {
+    out <- list("asv" = asvTab, "removed" = removed)
+  } else {
+    out <- asvTab
+  }
   return(out)
 }

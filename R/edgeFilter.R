@@ -8,7 +8,7 @@
 #' @importFrom stats quantile
 #' @return A modified version of net with filtered edges (and nodes if any were now isolated).
 #'
-#' @examples 
+#' @examples
 #'
 #' # a<-qc(); b<-cal(a); c<-thresh(b); d<-asvDist(a) ; e<-net(d, thresh = c)
 #' print(load("~/scripts/SINC/sincUtils/syncomBuilder/net_output.rdata"))
@@ -22,14 +22,14 @@
 #'
 
 edgeFilter <- function(net, filter, edge = "spearman") {
-  original_nodes<-net[["nodes"]]
-  original_edges<-net[["edges"]]
-  if(is.character(filter)){
-    cutoff<-stats::quantile(original_edges[[edge]], probs = as.numeric(filter))
-    edges<-original_edges[original_edges[[edge]] >= as.numeric(cutoff), ]
+  original_nodes <- net[["nodes"]]
+  original_edges <- net[["edges"]]
+  if (is.character(filter)) {
+    cutoff <- stats::quantile(original_edges[[edge]], probs = as.numeric(filter))
+    edges <- original_edges[original_edges[[edge]] >= as.numeric(cutoff), ]
     removed_edges <- original_edges[original_edges[[edge]] < as.numeric(cutoff), ]
-  } else if(is.numeric(filter)){
-    edges<-original_edges[original_edges[[edge]] >= filter, ]
+  } else if (is.numeric(filter)) {
+    edges <- original_edges[original_edges[[edge]] >= filter, ]
     removed_edges <- original_edges[original_edges[[edge]] < filter, ]
   }
   removed_edge_names <- paste(removed_edges$from, removed_edges$to, sep = "|")

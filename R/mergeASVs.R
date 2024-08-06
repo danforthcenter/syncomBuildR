@@ -1,5 +1,5 @@
 #' Function combine ASV tables that have been aligned with blastASVs
-#' 
+#'
 #' @param blast A dataframe as returned by \link{blastASVs}.
 #' @param asv A list of two ASV tables.
 #' @param taxa Optional taxonomy information in the form returned by dada2 for both experiments.
@@ -16,32 +16,34 @@
 #' @importFrom parallel mclapply
 #' @import stats
 #' @return A named list of dataframes including "asv" and "links", optionally with "taxa"
-#' 
-#' @examples 
-#' 
+#'
+#' @examples
+#'
 #' res <- read.csv("blast_2022_vs_2021.csv")
 #' print(load("~/scripts/SINC/field_2021/microbiome/sinc_field_2021_asvTable.rdata"))
 #' asv21 <- asv ; taxa21 <- taxa
-#' colnames(asv21)[c(1,7)] <- c("genotype", "tissue")
+#' colnames(asv21)[c(1, 7)] <- c("genotype", "tissue")
 #' print(load("~/scripts/SINC/field_2022/microbiome/2022_asvTable.rdata"))
-#' 
+#'
 #' blast <- res
 #' asv <- list("d1" = asv22, "d2" = asv21)
 #' taxa <- list("d1" = taxa22, "d2" = taxa21)
 #' shared_meta <- c("genotype", "tissue") # shared metadata to keep from both tables
-#' 
+#'
 #' ex <- mergeASVs(blast, asv, taxa, shared_meta)
-#' 
+#'
 #' @export
 
 mergeASVs <- function(blast, asv, taxa, shared_meta, check_taxa = TRUE,
                       min_pident = 99.5, cores = getOption("mc.cores", 1)) {
   #* label which experiment things are from in a dataframe
-  new_asv_metadata <- data.frame("experiment" =  rep(c("d1", "d2"), c(nrow(asv$d1), nrow(asv$d2))))
+  new_asv_metadata <- data.frame("experiment" = rep(c("d1", "d2"), c(nrow(asv$d1), nrow(asv$d2))))
   #* assemble other metadata and bind it to the new_asv_metadata
-  if(!is.null(shared_meta)){
+  if (!is.null(shared_meta)) {
     shared_metadata <- stats::setNames(as.data.frame(do.call(cbind, lapply(shared_meta, function(col) {
-      unlist(lapply(asv, function(d){ d[,col]}))
+      unlist(lapply(asv, function(d) {
+        d[, col]
+      }))
     }))), c(shared_meta))
     new_asv_metadata <- cbind(new_asv_metadata, shared_metadata)
   }
@@ -49,35 +51,37 @@ mergeASVs <- function(blast, asv, taxa, shared_meta, check_taxa = TRUE,
   dList <- split(blast, blast$seq1_id)
   #* Main looping function that will run on each ASV in parallel according to cores/"mc.cores" option
   #* Begin main loop
-  linkage_data <- parallel::mclapply(seq_along(dList)[1:10], function(i){
+  linkage_data <- parallel::mclapply(seq_along(dList)[1:10], function(i) {
     d <- dList[[i]]
     #* in case there is no match return original counts from first ASV table padded with NAs
     asvColumn <- setNames(data.frame(
-      c(asv[[1]][[ d$seq1_id[1] ]], rep(NA, nrow(asv[[2]] )))
-      ), c(paste0("ASV",i)))
+      c(asv[[1]][[d$seq1_id[1]]], rep(NA, nrow(asv[[2]])))
+    ), c(paste0("ASV", i)))
     #* get link between ASVs, picking first match and filtering for pident in case you had
     #* different options in blastASVs
-    link <- d[ which(d$match_rank == min(d$match_rank, na.rm = TRUE)), ]
+    link <- d[which(d$match_rank == min(d$match_rank, na.rm = TRUE)), ]
     link <- link[link$pident >= min_pident, ]
     #* if there is a match then do more stuff and make an ASV Column of counts with a new ASV number
     if (nrow(link) >= 1) {
       link$used <- FALSE
-      link[1,"used"] <- TRUE
+      link[1, "used"] <- TRUE
       ASV1 <- link[link$used, "seq1_id"]
       ASV2 <- link[link$used, "db_id"]
-      asvColumn <- stats::setNames(data.frame(c(asv[[1]][[ASV1]], asv[[2]][[ASV2]])),
-                                   c(paste0("ASV",i)))
+      asvColumn <- stats::setNames(
+        data.frame(c(asv[[1]][[ASV1]], asv[[2]][[ASV2]])),
+        c(paste0("ASV", i))
+      )
       #* record new ASV number
-      link$new_ASV_number <- paste0("ASV",i)
+      link$new_ASV_number <- paste0("ASV", i)
       #* if there was a link and we are checking taxa then check taxa here and add to the link data.
       if (check_taxa & !is.null(taxa)) {
         tx1 <- taxa[[1]][ASV1, ]
         tx2 <- taxa[[2]][ASV2, ]
         #* record how low their agreement gets and whether they disagree on any non NA fields
         taxaRes <- unlist(lapply(colnames(tx1), function(taxaLevel) {
-          if( any(is.na(c(tx1[[taxaLevel]], tx2[[taxaLevel]])))) {
+          if (any(is.na(c(tx1[[taxaLevel]], tx2[[taxaLevel]])))) {
             NA
-          } else if( tx1[[taxaLevel]] == tx2[[taxaLevel]] ){
+          } else if (tx1[[taxaLevel]] == tx2[[taxaLevel]]) {
             paste0("agree to ", taxaLevel)
           } else {
             paste0("disagree on ", taxaLevel)
@@ -90,33 +94,35 @@ mergeASVs <- function(blast, asv, taxa, shared_meta, check_taxa = TRUE,
       outList <- list(link = link, asvColumn = asvColumn)
       #* if the taxa information is provided then make a new taxa table.
       if (!is.null(taxa)) {
-        #* make crossed taxa table, POTENTIALLY with 2 rows per ASV if there is a problem. 
+        #* make crossed taxa table, POTENTIALLY with 2 rows per ASV if there is a problem.
         #* if that happens it will be flagged later and a warning is returned too.
         tx1 <- taxa[[1]][ASV1, ]
         tx2 <- taxa[[2]][ASV2, ]
         new_taxa_iter <- rbind(tx1, tx2)
         rownames(new_taxa_iter) <- NULL
         new_taxa_iter <- new_taxa_iter[!duplicated(new_taxa_iter), ]
-        new_taxa_iter$ASVnumber <- paste0("ASV",i)
+        new_taxa_iter$ASVnumber <- paste0("ASV", i)
         outList$taxa <- new_taxa_iter
       }
     } else { # if there is no link
       #* make list to be returned in case there is no link
       asvColumn <- setNames(data.frame(
-        c(asv[[1]][[ d$seq1_id[1] ]], rep(NA, nrow(asv[[2]] )))
-        ), c(paste0("ASV",i)))
-      link <- data.frame(seq1_id = d$seq1_id[1], db_id = NA, pident = NA, 
-                         length = NA, mismatch = NA, gapopen = NA, qstart = NA, 
-                         qend = NA, sstart = NA, send = NA, evalue = NA, bitscore = NA, 
-                         match_rank = NA, used = TRUE, new_ASV_number = paste0("ASV",i))
+        c(asv[[1]][[d$seq1_id[1]]], rep(NA, nrow(asv[[2]])))
+      ), c(paste0("ASV", i)))
+      link <- data.frame(
+        seq1_id = d$seq1_id[1], db_id = NA, pident = NA,
+        length = NA, mismatch = NA, gapopen = NA, qstart = NA,
+        qend = NA, sstart = NA, send = NA, evalue = NA, bitscore = NA,
+        match_rank = NA, used = TRUE, new_ASV_number = paste0("ASV", i)
+      )
       if (check_taxa & !is.null(taxa)) {
         link$agreement <- NA
         link$disagreement <- NA
       }
       outList <- list(link = link, asvColumn = asvColumn)
-      if(!is.null(taxa)){
+      if (!is.null(taxa)) {
         new_taxa_iter <- taxa[[1]][d$seq1_id[1], ]
-        new_taxa_iter$ASVnumber <- paste0("ASV",i)
+        new_taxa_iter$ASVnumber <- paste0("ASV", i)
         outList$taxa <- new_taxa_iter
       }
     }
@@ -141,9 +147,11 @@ mergeASVs <- function(blast, asv, taxa, shared_meta, check_taxa = TRUE,
       lst$taxa
     }))
     #* check for bad taxa matches
-    if( any(as.numeric(table(new_taxa$ASVnumber))>1 )){
-      warning(paste0("Some non-unique taxa information, ",
-              "check taxonomy results carefully for duplicated ASVnumbers"))
+    if (any(as.numeric(table(new_taxa$ASVnumber)) > 1)) {
+      warning(paste0(
+        "Some non-unique taxa information, ",
+        "check taxonomy results carefully for duplicated ASVnumbers"
+      ))
     }
     #* add to final_output list
     final_output$taxa <- new_taxa
@@ -152,36 +160,37 @@ mergeASVs <- function(blast, asv, taxa, shared_meta, check_taxa = TRUE,
   #* this would happen whenever there are some matches below the pident cutoff
   n1 <- ncol(final_output$new_asv_counts)
   remaining_columns <- setdiff(colnames(asv[[2]]), links$db_id)
-  if(length(remaining_columns) > 0) {
+  if (length(remaining_columns) > 0) {
     #* need to make another set of ASV counts, grab taxa information, and make links.
     pt2_asv_counts <- do.call(cbind, lapply(seq_along(remaining_columns), function(i) {
       col <- remaining_columns[i]
-      n2 <- n1+i
-      stats::setNames(data.frame(c(rep(NA, nrow(asv[[1]])), asv[[2]][[col]] )),
-                      paste0("ASV", n2))
+      n2 <- n1 + i
+      stats::setNames(
+        data.frame(c(rep(NA, nrow(asv[[1]])), asv[[2]][[col]])),
+        paste0("ASV", n2)
+      )
     }))
     final_output$asv <- cbind(final_output$asv, pt2_asv_counts)
-    pt2_link <- data.frame(seq1_id = NA, db_id = remaining_columns, pident = NA, 
-                           length = NA, mismatch = NA, gapopen = NA, qstart = NA, 
-                           qend = NA, sstart = NA, send = NA, evalue = NA, bitscore = NA, 
-                           match_rank = NA, used = TRUE,
-                           new_ASV_number = paste0("ASV",
-                                                   (n1+1):(n1+length(remaining_columns))
-                           ))
+    pt2_link <- data.frame(
+      seq1_id = NA, db_id = remaining_columns, pident = NA,
+      length = NA, mismatch = NA, gapopen = NA, qstart = NA,
+      qend = NA, sstart = NA, send = NA, evalue = NA, bitscore = NA,
+      match_rank = NA, used = TRUE,
+      new_ASV_number = paste0(
+        "ASV",
+        (n1 + 1):(n1 + length(remaining_columns))
+      )
+    )
     if (check_taxa & !is.null(taxa)) {
       pt2_link$agreement <- NA
       pt2_link$disagreement <- NA
     }
     final_output$links <- cbind(final_output$links, p2_link)
-    if(!is.null(taxa)){
-      pt2_taxa <- taxa[[2]][remaining_columns,]
-      pt2_taxa$ASVnumber <- remaining_columns 
+    if (!is.null(taxa)) {
+      pt2_taxa <- taxa[[2]][remaining_columns, ]
+      pt2_taxa$ASVnumber <- remaining_columns
       final_output$taxa <- rbind(final_output$taxa, pt2_taxa)
     }
   }
   return(final_output)
 }
-
-
-
-

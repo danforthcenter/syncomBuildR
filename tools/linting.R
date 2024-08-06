@@ -1,15 +1,16 @@
 library(lintr)
 library(styler)
 
-lintr::lint_package(path = "~/syncomBuildR/",
+x <- lintr::lint_package(path = "~/syncomBuildR/",
                     linters = linters_with_defaults(line_length_linter(length = 105L),
                                                     object_name_linter(styles = c("snake_case", "symbols",
                                                                                   "camelCase", "dotted.case",
                                                                                   "lowercase", "UPPERCASE")),
                                                     brace_linter(allow_single_line = TRUE)
                     ))
+length(x)
 #* dry run styling
-style_pkg("~/syncomBuildR", dry = "on")
+style_pkg("~/syncomBuildR", dry = "off", scope = "line_breaks")
 
 if(FALSE){
   file = "~/syncomBuildR/R/asvDist.R"

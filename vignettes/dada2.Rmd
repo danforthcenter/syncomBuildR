@@ -14,7 +14,7 @@ vignette: >
 ---
 
 ```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = TRUE, eval=FALSE)
+knitr::opts_chunk$set(echo = TRUE, eval = FALSE)
 ```
 
 ```{r, eval=TRUE}
@@ -82,8 +82,8 @@ Here we go through an example dada2 script which would be provided to the submit
 The dada2 script can stay the same between experiments with the exception of the truncation lengths, which should be picked using `plotQualityProfile`. 
 
 ```{r, eval = FALSE}
-plotQualityProfile( c("100ARE_S1_R1_001.fastq.gz","100ARR_S2_R1_001.fastq.gz")) # forward
-plotQualityProfile(c("100ARE_S1_R2_001.fastq.gz","100ARR_S2_R2_001.fastq.gz")) # reverse
+plotQualityProfile(c("100ARE_S1_R1_001.fastq.gz", "100ARR_S2_R1_001.fastq.gz")) # forward
+plotQualityProfile(c("100ARE_S1_R2_001.fastq.gz", "100ARR_S2_R2_001.fastq.gz")) # reverse
 ```
 
 ![](forward.png)
@@ -110,19 +110,19 @@ library(seqinr)
 pathToSeq <- "/home/jsumner/SINC/field_2021/microbiome/sequences/field_samples"
 pathToRDP <- "/home/jsumner/microbiome/Taxa/rdp_train_set_18.fa.gz"
 pathToRDPSpec <- "/home/jsumner/microbiome/Taxa/rdp_species_assignment_18_withBart.fa.gz"
-pathToSILVA <-"/home/jsumner/microbiome/Taxa/silva_nr99_v138.1_train_set.fa.gz"
-pathToSILVASpec <- "/home/jsumner/microbiome/Taxa/silva_species_assignment_v138.1_withBart.fa.gz" 
-truncLength <- c(250,175) # length after which to truncate forward and reverse reads, respectively
+pathToSILVA <- "/home/jsumner/microbiome/Taxa/silva_nr99_v138.1_train_set.fa.gz"
+pathToSILVASpec <- "/home/jsumner/microbiome/Taxa/silva_species_assignment_v138.1_withBart.fa.gz"
+truncLength <- c(250, 175) # length after which to truncate forward and reverse reads, respectively
 trimLeft <- 0
 trimRight <- 0
 cores <- 10 # this should be the number of cores specified in your submit file
 
 ### Housekeeping
-samps <- unique(sub("_R\\d_.*", "",basename(list.files(pathToSeq,pattern="*.fastq*"))))
-samps<-samps[!grepl("^MM", samps)] # this was to remove samples from a different experiment
+samps <- unique(sub("_R\\d_.*", "", basename(list.files(pathToSeq, pattern = "*.fastq*"))))
+samps <- samps[!grepl("^MM", samps)] # this was to remove samples from a different experiment
 print(paste0("Detected ", length(samps), " samples for processing"))
-fnFs <- sort(list.files(pathToSeq, pattern="_R1_001.fastq", full.names = TRUE))
-fnRs <- sort(list.files(pathToSeq, pattern="_R2_001.fastq", full.names = TRUE))
+fnFs <- sort(list.files(pathToSeq, pattern = "_R1_001.fastq", full.names = TRUE))
+fnRs <- sort(list.files(pathToSeq, pattern = "_R2_001.fastq", full.names = TRUE))
 filtFs <- file.path(pathToSeq, "filtered", paste0(samps, "_F_filt.fastq.gz"))
 filtRs <- file.path(pathToSeq, "filtered", paste0(samps, "_R_filt.fastq.gz"))
 names(filtFs) <- samps
@@ -130,23 +130,25 @@ names(filtRs) <- samps
 
 ### Filter and trimming
 print("Filtering and trimming")
-out <- filterAndTrim(fnFs, filtFs, fnRs, filtRs, truncLen=truncLength, trimLeft=trimLeft, trimRight=trimRight,
-                     maxN=0, maxEE=c(2,2), truncQ=2, rm.phix=TRUE,
-                     compress=TRUE, multithread=cores)
+out <- filterAndTrim(fnFs, filtFs, fnRs, filtRs,
+  truncLen = truncLength, trimLeft = trimLeft, trimRight = trimRight,
+  maxN = 0, maxEE = c(2, 2), truncQ = 2, rm.phix = TRUE,
+  compress = TRUE, multithread = cores
+)
 
 ### Learning error rates
 print("Learning error rates")
-errF <- learnErrors(filtFs, multithread=cores)
-errR <- learnErrors(filtRs, multithread=cores)
+errF <- learnErrors(filtFs, multithread = cores)
+errR <- learnErrors(filtRs, multithread = cores)
 
 ### Identifying unique sequences
 print("Identifying unique sequences")
-dadaFs <- dada(filtFs, err=errF, multithread=cores)
-dadaRs <- dada(filtRs, err=errR, multithread=cores)
+dadaFs <- dada(filtFs, err = errF, multithread = cores)
+dadaRs <- dada(filtRs, err = errR, multithread = cores)
 
 ### Merging reads
 print("Merging reads")
-mergers <- mergePairs(dadaFs, filtFs, dadaRs, filtRs, verbose=cores)
+mergers <- mergePairs(dadaFs, filtFs, dadaRs, filtRs, verbose = cores)
 
 ### Generate ASV table
 print("Generate ASV table")
@@ -154,10 +156,10 @@ seqtab <- makeSequenceTable(mergers)
 
 ### Removing Chimeras
 print("Removing Chimeras")
-seqtab.nochim <- removeBimeraDenovo(seqtab, method="consensus", multithread=cores)
+seqtab.nochim <- removeBimeraDenovo(seqtab, method = "consensus", multithread = cores)
 seqtab.print <- seqtab.nochim
-colnames(seqtab.print) <- paste0("ASV",1:length(colnames(seqtab.print)))
-write.csv(seqtab.print,"dada2_asv_table.csv",quote=F)
+colnames(seqtab.print) <- paste0("ASV", 1:length(colnames(seqtab.print)))
+write.csv(seqtab.print, "dada2_asv_table.csv", quote = F)
 
 ### Track sequences
 print("Tracking sequences")
@@ -165,29 +167,28 @@ getN <- function(x) sum(getUniques(x))
 track <- cbind(out, sapply(dadaFs, getN), sapply(dadaRs, getN), sapply(mergers, getN), rowSums(seqtab.nochim))
 colnames(track) <- c("input", "filtered", "denoisedF", "denoisedR", "merged", "nonchim")
 rownames(track) <- samps
-write.csv(track,"dada2_sequence_tracking.csv",row.names=T,quote=F)
+write.csv(track, "dada2_sequence_tracking.csv", row.names = T, quote = F)
 
 ### Generate fasta file
 print("Generate fasta file")
 asvseq <- colnames(seqtab.nochim)
-write.fasta(sequences = lapply(asvseq,identity),names=paste0("ASV",1:length(asvseq)),file.out = "dada2_asv.fasta")
+write.fasta(sequences = lapply(asvseq, identity), names = paste0("ASV", 1:length(asvseq)), file.out = "dada2_asv.fasta")
 
 ### Assign taxonomy
 print("Assigning taxonomy")
-taxa_rdp <- assignTaxonomy(seqtab.nochim, pathToRDP, multithread=cores)
+taxa_rdp <- assignTaxonomy(seqtab.nochim, pathToRDP, multithread = cores)
 taxa_rdp <- addSpecies(taxa_rdp, pathToRDPSpec)
-rownames(taxa_rdp) <- paste0("ASV",1:length(asvseq))
-write.csv(taxa_rdp,"dada2_rdp_taxonomy.csv",quote=F)
-taxa_silva <- assignTaxonomy(seqtab.nochim, pathToSILVA, multithread=cores)
+rownames(taxa_rdp) <- paste0("ASV", 1:length(asvseq))
+write.csv(taxa_rdp, "dada2_rdp_taxonomy.csv", quote = F)
+taxa_silva <- assignTaxonomy(seqtab.nochim, pathToSILVA, multithread = cores)
 taxa_silva <- addSpecies(taxa_silva, pathToSILVASpec)
-rownames(taxa_silva) <- paste0("ASV",1:length(asvseq))
-write.csv(taxa_silva,"dada2_silva_taxonomy.csv",quote=F)
+rownames(taxa_silva) <- paste0("ASV", 1:length(asvseq))
+write.csv(taxa_silva, "dada2_silva_taxonomy.csv", quote = F)
 
 ### Save everything in RData
 print("Creating RData Object")
-save(fnFs,fnRs,samps,filtFs,filtRs,out,errF,errR,dadaFs,dadaRs,mergers,seqtab,seqtab.nochim,track,seqtab.print,asvseq,taxa_rdp,taxa_silva,file="dada2_output.RData")
+save(fnFs, fnRs, samps, filtFs, filtRs, out, errF, errR, dadaFs, dadaRs, mergers, seqtab, seqtab.nochim, track, seqtab.print, asvseq, taxa_rdp, taxa_silva, file = "dada2_output.RData")
 print("Done!")
-
 ```
 
 
@@ -200,28 +201,30 @@ When the job is done running you can check the progress using the `track` object
 ```{r, eval=TRUE}
 load("../data/track.rda")
 track <- as.data.frame(track)
-track$id<-1:nrow(track)
+track$id <- 1:nrow(track)
 
 
 track$sample <- sub("_.*", "", rownames(track))
 track$tissue <- sub("[0-9]+", "", track$sample)
-track$depth <- ifelse(substr(track$tissue,1,1)=="A", "A", "B")
+track$depth <- ifelse(substr(track$tissue, 1, 1) == "A", "A", "B")
 track$tiss <- sub("[A|B]", "", track$tissue)
 
 track <- as.data.table(track)
 track <- melt(track, measure.vars = c("input", "filtered", "denoisedF", "denoisedR", "merged", "nonchim"))
-track$name<-ordered(track$variable, levels=c('input', 'filtered', 'denoisedF', 'denoisedR', 'merged', 'nonchim'))
+track$name <- ordered(track$variable, levels = c('input', 'filtered', 'denoisedF', 'denoisedR', 'merged', 'nonchim'))
 
-ggplot(track,aes(x=variable,y=value,group=id, color=interaction(depth, tiss)))+
-  facet_grid(depth ~ tiss, scale="free")+
-  geom_line(alpha=0.75, linewidth=0.25, show.legend = FALSE)+
-  labs(y="Reads",title="DADA2 - Reads")+
-  theme_minimal()+
-  theme(axis.text.x.bottom = element_text(angle=-45, hjust=0),
-        axis.title.x.bottom = element_blank(),
-        strip.background=element_rect(fill="gray50",color="gray20"),
-        strip.text.x=element_text(size=14,color="white"),
-        strip.text.y=element_text(size=14,color="white"))
+ggplot(track, aes(x = variable, y = value, group = id, color = interaction(depth, tiss))) +
+  facet_grid(depth ~ tiss, scale = "free") +
+  geom_line(alpha = 0.75, linewidth = 0.25, show.legend = FALSE) +
+  labs(y = "Reads", title = "DADA2 - Reads") +
+  theme_minimal() +
+  theme(
+    axis.text.x.bottom = element_text(angle = -45, hjust = 0),
+    axis.title.x.bottom = element_blank(),
+    strip.background = element_rect(fill = "gray50", color = "gray20"),
+    strip.text.x = element_text(size = 14, color = "white"),
+    strip.text.y = element_text(size = 14, color = "white")
+  )
 ```
 
 
