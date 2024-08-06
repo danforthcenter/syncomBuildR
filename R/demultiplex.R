@@ -1,18 +1,25 @@
-#'
 #' Function to demultiplex sequences either to single files or to multiple files for use with dada2.
 #'
-#' @param reads A ShortReadQ object or a file path to a fastq file that will be read in with \code{ShortRead::readFastq}.
-#' @param barcodes A dataframe of barcodes and metadata for naming or a file path to such a flat file readable by \code{utils::read.delim}.
-#' @param fwd The column name of the barcodes dataframe representing forward barcodes. Defaults to "FWD".
-#' @param rev The column name of the barcodes dataframe representing reverse barcodes. Defaults to "REV".
+#' @param reads A ShortReadQ object or a file path to a fastq file that will be read in with
+#' \code{ShortRead::readFastq}.
+#' @param barcodes A dataframe of barcodes and metadata for naming or a file path to such a flat file
+#' readable by \code{utils::read.delim}.
+#' @param fwd The column name of the barcodes dataframe representing forward barcodes.
+#' Defaults to "FWD".
+#' @param rev The column name of the barcodes dataframe representing reverse barcodes.
+#' Defaults to "REV".
 #' @param name One or more column names from the barcodes dataframe to be used in naming samples.
-#' @param mode One of "dada" or "general". This controls how files are written out. If mode is "dada" then a fastq file will be written out for
-#' each row of the barcodes dataframe and the files will be named using the name argument. If mode is "general" then each input fastq file will yield one
-#' output fastq file with sample names in that file corresponding to the name argument. Defaults to "dada".
-#' @param cores Optionally the number of cores to run in parallel. This defaults to 1 if the "mc.cores" option is not set.
+#' @param mode One of "dada" or "general". This controls how files are written out.
+#' If mode is "dada" then a fastq file will be written out for
+#' each row of the barcodes dataframe and the files will be named using the name argument.
+#' If mode is "general" then each input fastq file will yield one
+#' output fastq file with sample names in that file corresponding to the name argument.
+#' Defaults to "dada".
+#' @param cores Optionally the number of cores to run in parallel. This defaults to 1 if the "mc.cores"
+#' option is not set.
 #' @param writeOut Logical, should fastq/stats files be written out. Defaults to TRUE.
-#' This can also be a path where data should be written to. Note that files are written as mode "w" and this will
-#' throw an error if the file already exists.
+#' This can also be a path where data should be written to. Note that files are written as mode "w"
+#' and this will throw an error if the file already exists.
 #' @param stat Logical, should stats files be generated if writeOut is TRUE. Defaults to FALSE.
 #'
 #'
@@ -35,7 +42,7 @@
 #'   setwd("~/Desktop/stargate/SINC/sincUtils/syncomBuilder/nastya96WellEx")
 #'
 #'   barcodes <- read.delim("barcode_tab.tsv")
-#'   name = c("Name", "Well")
+#'   name <- c("Name", "Well")
 #'   reads <- ShortRead::readFastq("Plate11_R1_001.fastq.gz")
 #'
 #'   demultiplex(reads, barcodes[1:10, ],
@@ -43,8 +50,9 @@
 #'     name = name, mode = "dada", cores = 10, writeOut = "tests", stat = FALSE
 #'   )
 #'
-#'   path <- '/run/user/1000/gvfs/smb-share:server=nas01,share=research/bart_lab/Previous_people/Mingsheng_Qi/research_dr/SINC/limiting_dilution/20210314/p2p11_rawseq'
-#'   barcodes = read.csv(paste0(path, "/barcodetable1.csv"))
+#'   path <- paste0("/run/user/1000/gvfs/smb-share:server=nas01,share=research/bart_lab/",
+#'   "Previous_people/Mingsheng_Qi/research_dr/SINC/limiting_dilution/20210314/p2p11_rawseq")
+#'   barcodes <- read.csv(paste0(path, "/barcodetable1.csv"))
 #'   barcodes$exp <- "exp"
 #'   reads <- ShortRead::readFastq(paste0(path, "/210314S05P10_merge.fq"))
 #'
@@ -65,7 +73,8 @@
 
 
 demultiplex <- function(reads, barcodes, fwd = "FWD", rev = "REV", name = c("Name", "Sample_name"),
-                        mode = c("dada", "general"), cores = getOption("mc.cores", 1), writeOut = TRUE, stat = FALSE) {
+                        mode = c("dada", "general"), cores = getOption("mc.cores", 1), writeOut = TRUE,
+                        stat = FALSE) {
   if (is.character(reads)) {
     reads <- ShortRead::readFastq(reads)
   }
@@ -81,7 +90,7 @@ demultiplex <- function(reads, barcodes, fwd = "FWD", rev = "REV", name = c("Nam
   if (!all(c(fwd, rev, name) %in% colnames(barcodes))) {
     stop("fwd, rev, and name must all be column names in the barcodes dataframe.")
   }
-  mode = mode[1]
+  mode <- mode[1]
   if (mode == "dada") {
     out <- .demultiplex_for_dada(reads, barcodes, fwd, rev, name, writeOut, stat, cores)
   } else if (mode == "general") {
@@ -90,9 +99,9 @@ demultiplex <- function(reads, barcodes, fwd = "FWD", rev = "REV", name = c("Nam
     stop("mode must be one of 'dada' or 'general'")
   }
   if (!is.logical(writeOut)) {
-    writeOut = TRUE
+    writeOut <- TRUE
   }
-  if (stat & writeOut) {
+  if (stat && writeOut) {
     out
   }
 }
@@ -106,40 +115,53 @@ demultiplex <- function(reads, barcodes, fwd = "FWD", rev = "REV", name = c("Nam
 #' @keywords internal
 #' @noRd
 
-.demultiplex_for_dada <- function(reads, barcodes, fwd = "FWD", rev = "REV", name = c("Name", "Sample_name"), writeOut = TRUE, stat = FALSE, cores = 1) {
+.demultiplex_for_dada <- function(reads, barcodes, fwd = "FWD", rev = "REV",
+                                  name = c("Name", "Sample_name"), writeOut = TRUE,
+                                  stat = FALSE, cores = 1) {
   # format barcodes to uppercase
   barcodes[[fwd]] <- toupper(barcodes[[fwd]])
   barcodes[[rev]] <- toupper(barcodes[[rev]])
   # per barcode write out a fq and optionally a summary table
-  test <- parallel::mclapply(1:nrow(barcodes), function(i) {
+  test <- parallel::mclapply(seq_len(nrow(barcodes)), function(i) {
     # get a name for the sub sample
     name <- paste(barcodes[i, c(name)], collapse = ".")
     # get barcodes
     fwd_bar <- barcodes[i, fwd]
     rev_bar <- barcodes[i, rev]
     # filter for barcodes at beginning of sequence
-    RowReads <- reads[grepl(paste0("^", fwd_bar), ShortRead::sread(reads))]
-    ColumnReads <- reads[grepl(paste0("^", rev_bar), ShortRead::sread(reads))]
+    rowReads <- reads[grepl(paste0("^", fwd_bar), ShortRead::sread(reads))]
+    columnReads <- reads[grepl(paste0("^", rev_bar), ShortRead::sread(reads))]
     # make reverse complements of fwd and reverse barcodes
-    fwd_bar_reverseComplement <- as.character(Biostrings::reverseComplement(Biostrings::DNAString(fwd_bar)))
-    rev_bar_reverseComplement <- as.character(Biostrings::reverseComplement(Biostrings::DNAString(rev_bar)))
+    fwd_bar_reverse_complement <- as.character(
+      Biostrings::reverseComplement(
+        Biostrings::DNAString(fwd_bar)
+        )
+      )
+    rev_bar_reverse_complement <- as.character(
+      Biostrings::reverseComplement(
+        Biostrings::DNAString(rev_bar)
+        )
+      )
     # search for reverse complements of opposite barcode at end of sequences
-    RowReads <- RowReads[grepl(paste0(rev_bar_reverseComplement, "$"), ShortRead::sread(RowReads))]
-    ColumnReads <- ColumnReads[grepl(paste0(fwd_bar_reverseComplement, "$"), ShortRead::sread(ColumnReads))]
+    rowReads <- rowReads[grepl(paste0(rev_bar_reverse_complement, "$"),
+                               ShortRead::sread(rowReads))]
+    columnReads <- columnReads[grepl(paste0(fwd_bar_reverse_complement, "$"),
+                                     ShortRead::sread(columnReads))]
     # append row and column reads
-    Clone <- append(RowReads, ColumnReads)
+    clone <- append(rowReads, columnReads)
     # write fastq
     if (!is.logical(writeOut)) {
-      write = writeOut
+      write <- writeOut
       if (substr(write, nchar(write), nchar(write)) != "/") {
         write <- paste0(write, "/")
       }
-      writeOut = TRUE
+      writeOut <- TRUE
     } else {
-      write = NULL
+      write <- NULL
     }
     if (writeOut) {
-      ShortRead::writeFastq(object = Clone, file = paste0(write, name, ".fq"), mode = "w", compress = T)
+      ShortRead::writeFastq(object = clone, file = paste0(write, name, ".fq"),
+                            mode = "w", compress = TRUE)
     }
     if (stat & writeOut) {
       stats <- data.frame(
@@ -153,9 +175,9 @@ demultiplex <- function(reads, barcodes, fwd = "FWD", rev = "REV", name = c("Nam
     }
   }, mc.cores = cores)
   if (!is.logical(writeOut)) {
-    writeOut = TRUE
+    writeOut <- TRUE
   }
-  if (stat & writeOut) {
+  if (stat && writeOut) {
     return(do.call(rbind, test))
   }
 }
@@ -169,48 +191,60 @@ demultiplex <- function(reads, barcodes, fwd = "FWD", rev = "REV", name = c("Nam
 #' @keywords internal
 #' @noRd
 
-.demultiplex_general <- function(reads, barcodes, fwd = "FWD", rev = "REV", name = c("Name", "Sample_name"), writeOut = TRUE, stat = FALSE, cores = 1) {
+.demultiplex_general <- function(reads, barcodes, fwd = "FWD", rev = "REV",
+                                 name = c("Name", "Sample_name"),
+                                 writeOut = TRUE, stat = FALSE, cores = 1) {
   # format barcodes to uppercase
   barcodes[[fwd]] <- toupper(barcodes[[fwd]])
   barcodes[[rev]] <- toupper(barcodes[[rev]])
   # per barcode write out a fq and optionally a summary table
-  test <- lapply(1:nrow(barcodes), function(i) {
+  lapply(seq_len(nrow(barcodes)), function(i) {
     # get a name for the sub sample
     name <- paste(barcodes[i, c(name)], collapse = ".")
     # get barcodes
     fwd_bar <- barcodes[i, fwd]
     rev_bar <- barcodes[i, rev]
     # filter for barcodes at beginning of sequence
-    RowReads <- reads[grepl(paste0("^", fwd_bar), ShortRead::sread(reads))]
-    ColumnReads <- reads[grepl(paste0("^", rev_bar), ShortRead::sread(reads))]
+    rowReads <- reads[grepl(paste0("^", fwd_bar), ShortRead::sread(reads))]
+    columnReads <- reads[grepl(paste0("^", rev_bar), ShortRead::sread(reads))]
     # make reverse complements of fwd and reverse barcodes
-    fwd_bar_reverseComplement <- as.character(Biostrings::reverseComplement(Biostrings::DNAString(fwd_bar)))
-    rev_bar_reverseComplement <- as.character(Biostrings::reverseComplement(Biostrings::DNAString(rev_bar)))
+    fwd_bar_reverse_complement <- as.character(
+      Biostrings::reverseComplement(
+        Biostrings::DNAString(fwd_bar)
+        )
+      )
+    rev_bar_reverse_complement <- as.character(
+      Biostrings::reverseComplement(
+        Biostrings::DNAString(rev_bar)
+        )
+      )
     # search for reverse complements of opposite barcode at end of sequences
-    RowReads <- RowReads[grepl(paste0(rev_bar_reverseComplement, "$"), ShortRead::sread(RowReads))]
-    ColumnReads <- ColumnReads[grepl(paste0(fwd_bar_reverseComplement, "$"), ShortRead::sread(ColumnReads))]
+    rowReads <- rowReads[grepl(paste0(rev_bar_reverse_complement, "$"), ShortRead::sread(rowReads))]
+    columnReads <- columnReads[grepl(paste0(fwd_bar_reverse_complement, "$"),
+                                     ShortRead::sread(columnReads))]
     # append row and column reads
-    Clone <- append(RowReads, ColumnReads)
+    clone <- append(rowReads, columnReads)
     # write fastq
     if (!is.logical(writeOut)) {
-      write = writeOut
+      write <- writeOut
       if (substr(write, nchar(write), nchar(write)) != "/") {
         write <- paste0(write, "/")
       }
-      writeOut = TRUE
+      writeOut <- TRUE
     } else {
-      write = NULL
+      write <- NULL
     }
     if (writeOut) {
       if (i == 1) {
-        md = "w"
+        md <- "w"
       } else {
-        md = "a"
+        md <- "a"
       }
-      ShortRead::writeFastq(object = Clone, file = paste0(write, name, ".fq"), mode = md, compress = T)
+      ShortRead::writeFastq(object = clone, file = paste0(write, name, ".fq"),
+                            mode = md, compress = TRUE)
     }
   })
-  if (stat & writeOut) {
+  if (stat && writeOut) {
     stats <- data.frame(
       name = name,
       totalReads = length(reads),
