@@ -18,11 +18,14 @@ threshPlot(
 
 \item{asv}{The asv table used in making \code{thresh} object.}
 
-\item{asvCols}{A vector of ASV column names. Defaults to NULL in which case all columns containing "ASV" are used and a list of ggplots is returned.}
+\item{asvCols}{A vector of ASV column names. Defaults to NULL in which case all columns containing
+"ASV" are used and a list of ggplots is returned.}
 
-\item{phenotype}{A vector of phenotype names in \code{thresh}. Defaults to NULL where all phenotypes are used and a list of plots is returned per ASV.}
+\item{phenotype}{A vector of phenotype names in \code{thresh}. Defaults to NULL where all phenotypes
+are used and a list of plots is returned per ASV.}
 
-\item{unit}{The unit or scale of the changepoint models. This defaults to "asv" for use with thresh and "cluster" should be used with netThresh output.}
+\item{unit}{The unit or scale of the changepoint models. This defaults to "asv" for use with thresh
+and "cluster" should be used with netThresh output.}
 
 \item{net}{The asvNet object if netThresh output is being plotted.}
 }
@@ -39,7 +42,6 @@ print(load("/home/jsumner/Desktop/stargate/SINC/sincUtils/syncomBuilder/threshOu
 head(threshMods)
 
 threshPlot(threshMods, asv, "ASV9")
-
 
 }
 \keyword{changepoint,}

@@ -44,8 +44,9 @@ Function combine ASV tables that have been aligned with blastASVs
 
 res <- read.csv("blast_2022_vs_2021.csv")
 print(load("~/scripts/SINC/field_2021/microbiome/sinc_field_2021_asvTable.rdata"))
-asv21 <- asv ; taxa21 <- taxa
-colnames(asv21)[c(1,7)] <- c("genotype", "tissue")
+asv21 <- asv
+taxa21 <- taxa
+colnames(asv21)[c(1, 7)] <- c("genotype", "tissue")
 print(load("~/scripts/SINC/field_2022/microbiome/2022_asvTable.rdata"))
 
 blast <- res

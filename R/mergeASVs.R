@@ -21,7 +21,8 @@
 #'
 #' res <- read.csv("blast_2022_vs_2021.csv")
 #' print(load("~/scripts/SINC/field_2021/microbiome/sinc_field_2021_asvTable.rdata"))
-#' asv21 <- asv ; taxa21 <- taxa
+#' asv21 <- asv
+#' taxa21 <- taxa
 #' colnames(asv21)[c(1, 7)] <- c("genotype", "tissue")
 #' print(load("~/scripts/SINC/field_2022/microbiome/2022_asvTable.rdata"))
 #'
@@ -181,11 +182,11 @@ mergeASVs <- function(blast, asv, taxa, shared_meta, check_taxa = TRUE,
         (n1 + 1):(n1 + length(remaining_columns))
       )
     )
-    if (check_taxa & !is.null(taxa)) {
+    if (check_taxa && !is.null(taxa)) {
       pt2_link$agreement <- NA
       pt2_link$disagreement <- NA
     }
-    final_output$links <- cbind(final_output$links, p2_link)
+    final_output$links <- cbind(final_output$links, pt2_link)
     if (!is.null(taxa)) {
       pt2_taxa <- taxa[[2]][remaining_columns, ]
       pt2_taxa$ASVnumber <- remaining_columns

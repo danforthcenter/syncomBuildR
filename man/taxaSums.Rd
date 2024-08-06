@@ -9,15 +9,13 @@ taxaSums(x = NULL, tx = NULL, taxaLevel = "Class")
 \arguments{
 \item{x}{ASV table, asv columns thought start with "ASV" prefix.}
 
-\item{tx}{Taxonomy table in dada2 format. Rownames should correspond to ASV names in the same format as x's column names.}
+\item{tx}{Taxonomy table in dada2 format. Rownames should correspond to ASV names in the same
+format as x's column names.}
 
 \item{taxaLevel}{A level of the taxonomy in `tx` to aggregate data to. Must match a colname of `tx`.}
 }
 \description{
 Make named vector of taxonomy sums
-}
-\details{
-This function can be used to make counts for use in a dirichlet updating function such as `diriUpdate`
 }
 \keyword{conjugate}
 \keyword{dirichlet,}

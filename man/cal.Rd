@@ -8,25 +8,35 @@ cal(
   asvTab = NULL,
   asvCols = which(grepl("ASV", colnames(asvTab))),
   cal = NULL,
-  ZI_cutoff = 0.9,
+  zi_cutoff = 0.9,
   cores = getOption("mc.cores", 1),
   verbose = TRUE
 )
 }
 \arguments{
-\item{asvTab}{ASV table similar to that returned by \code{\link{qc}}, often with additional metadata joined.}
+\item{asvTab}{ASV table similar to that returned by \code{\link{qc}}, often with additional
+metadata joined.}
 
-\item{asvCols}{Numeric index of columns representing ASVs in asvTab. Defaults to all columns containing "ASV" in their column name. Note that missing values in these columns will be treated as 0s.}
+\item{asvCols}{Numeric index of columns representing ASVs in asvTab. Defaults to all columns
+containing "ASV" in their column name.
+Note that missing values in these columns will be treated as 0s.}
 
-\item{cal}{Vector of columns to use to calibrate asv counts. These can be categorical or continuous and are passed to MASS::glm.nb or pscl::zeroinfl, depending on the presense of 0s in the data.}
+\item{cal}{Vector of columns to use to calibrate asv counts. These can be categorical or continuous
+and are passed to MASS::glm.nb or pscl::zeroinfl, depending on the presense of 0s in the data.}
 
-\item{ZI_cutoff}{A proportion of 0s that is considered too many. Higher values will fit models to more of the data, but those models may be worse fits for calibration. This defaults to 0.9 which is rather high.}
+\item{zi_cutoff}{A proportion of 0s that is considered too many. Higher values will fit models to
+more of the data, but those models may be worse fits for calibration.
+This defaults to 0.9 which is rather high.}
 
-\item{cores}{Number of cores to use. Passed to parallel::mclapply. Defaults to 1 if the "mc.cores" option is not set.}
+\item{cores}{Number of cores to use. Passed to parallel::mclapply. Defaults to 1 if the "mc.cores"
+option is not set.}
 
-\item{verbose}{Logical, should fit metrics be returned? If TRUE then the output is a list with two elements (new ASV table and the metrics data), otherwise only the new ASV table is returned.}
+\item{verbose}{Logical, should fit metrics be returned? If TRUE then the output is a list with
+two elements (new ASV table and the metrics data), otherwise only the new ASV table is returned.}
 
-\item{model}{Type of changepoint model in chngpt::chngptm labeling convention. See Figure 2.1 of the \link{[chngpt vignette](https://cran.r-project.org/web/packages/chngpt/vignettes/chngpt-vignette.pdf)}}
+\item{model}{Type of changepoint model in chngpt::chngptm labeling convention.
+See Figure 2.1 of the chngpt
+\link{[vignette](https://cran.r-project.org/web/packages/chngpt/vignettes/chngpt-vignette.pdf)}}
 }
 \value{
 An ASV table as a wide dataframe with effects from some variables modeled out.
@@ -37,15 +47,14 @@ Function to calibrate asv counts for some set of confounder variables
 \examples{
 
 print(load("/home/jsumner/Desktop/stargate/SINC/sincUtils/syncomBuilder/qc_output.rdata"))
-asv[1:10,1:10]
+asv[1:10, 1:10]
 print(load("/home/jsumner/Desktop/stargate/SINC/sincUtils/syncomBuilder/biomass.rdata"))
-agBiomass<-aggregate(biomass ~ plot+row+genotype, biomass, mean)
-agBiomass$sd<-aggregate(biomass ~ plot+row+genotype, biomass, sd)$biomass
-asv_joined<-plyr::join(asv, agBiomass, by="plot")
-are_c<-cal(asv_joined[asv_joined$tissue=="ARE", ], cal="genotype", cores=10)
+agBiomass <- aggregate(biomass ~ plot + row + genotype, biomass, mean)
+agBiomass$sd <- aggregate(biomass ~ plot + row + genotype, biomass, sd)$biomass
+asv_joined <- plyr::join(asv, agBiomass, by = "plot")
+are_c <- cal(asv_joined[asv_joined$tissue == "ARE", ], cal = "genotype", cores = 10)
 table(are_c[[2]]$model)
 dim(are_c[[1]])
-
 
 }
 \keyword{NB}

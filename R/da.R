@@ -40,8 +40,10 @@ da <- function(df, col, predictors, zi_cutoff = 0.1) {
   }
 
   if (mod_type == "zinb") {
-    m <- pscl::zeroinfl(as.formula(paste0(col, "~", paste(predictors, collapse = "+"))), data = df,
-                        dist = "negbin", link = "logit")
+    m <- pscl::zeroinfl(as.formula(paste0(col, "~", paste(predictors, collapse = "+"))),
+      data = df,
+      dist = "negbin", link = "logit"
+    )
     dc <- as.data.frame(summary(m)$coefficients$count)
     dc$comp <- "count"
     dc$coef <- rownames(dc)

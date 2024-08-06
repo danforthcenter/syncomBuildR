@@ -19,12 +19,14 @@ netcomi2scb(
 
 \item{microNetComp}{A microNetComp object as returned by \link{NetCoMi::netCompare}}
 
-\item{cutoff}{Optional value to filter edges for. If non-NULL then only edges with edgeWeight greater than this value are kept.
+\item{cutoff}{Optional value to filter edges for. If non-NULL then only edges with edgeWeight
+greater than this value are kept.
 This can be a character vector or a numeric.
 Character vectors are interpreted as quantiles ("0.5" corresponds to the top 50% are kept).
 Defaults to "0.9" .}
 
-\item{combine}{Logical, should multiple networks have X/Y coordinates for nodes standardized to make comparable plots later on? Defaults to TRUE.}
+\item{combine}{Logical, should multiple networks have X/Y coordinates for nodes standardized to
+make comparable plots later on? Defaults to TRUE.}
 }
 \value{
 If the microNetObj contains one network then a named list with three elements is returned:
@@ -41,7 +43,7 @@ that allows for more customized visualization such as with \link{net.plot}
 }
 \examples{
 
-if(FALSE){
+if (FALSE) {
   # pending
 }
 

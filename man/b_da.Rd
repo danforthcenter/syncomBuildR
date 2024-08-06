@@ -23,7 +23,8 @@ b_da(
 
 \item{predictors}{Column names of predictors, can be discrete or continuous.}
 
-\item{zi_cutoff}{Proportion of zeros to consider the distribution to be zero inflated, defaults to 0.1.}
+\item{zi_cutoff}{Proportion of zeros to consider the distribution to be zero inflated,
+defaults to 0.1.}
 
 \item{intercept}{Logical, should an intercept be used? Defaults to TRUE.}
 
@@ -35,8 +36,9 @@ b_da(
 
 \item{iter}{Argument to control number of iterations \code{brms::brm()}.}
 
-\item{priors}{Prior distributions as \code{brmsprior} objects, defaults are shown in details. If left NULL
-(the default) then wide student priors will be used (\code{brms::set_prior('student_t(3,0,5)',  class="b")}).}
+\item{priors}{Prior distributions as \code{brmsprior} objects, defaults are shown in details.
+If left NULL (the default) then wide student priors will be used
+(\code{brms::set_prior('student_t(3,0,5)',  class="b")}).}
 
 \item{...}{Further arguments passed to \code{brms::brm()}.}
 }
@@ -47,7 +49,7 @@ A brmsfit object
 Function to assess differential abundance of microbe counts or pseudo counts
 }
 \details{
-The prior distributions for a ZINB model are shown below, the only difference with 
+The prior distributions for a ZINB model are shown below, the only difference with
 an NB model is that there is no zi parameter.
 
                   prior     class      coef group resp dpar nlpar lb ub       source
@@ -60,20 +62,20 @@ an NB model is that there is no zi parameter.
 \examples{
 
 
-if(FALSE){
+if (FALSE) {
   print(load("~/Desktop/stargate/SINC/sincUtils/syncomBuilder/qc_output.rdata"))
-  asv[1:10,1:10]
+  asv[1:10, 1:10]
 
-  df <- asv[,1:20]
-  sapply(df[,3:20], function(c) mean(c==0))
+  df <- asv[, 1:20]
+  sapply(df[, 3:20], function(c) mean(c == 0))
 
-  col = "ASV9"
-  predictors = "tissue"
-  zi_cutoff = 0.1
+  col <- "ASV9"
+  predictors <- "tissue"
+  zi_cutoff <- 0.1
 
   df[[predictors]] <- relevel(factor(df[[predictors]]), "AS")
 
-  ex <- b_da(df, col, predictors, zi_cutoff, intercept=FALSE)
+  ex <- b_da(df, col, predictors, zi_cutoff, intercept = FALSE)
 }
 
 }

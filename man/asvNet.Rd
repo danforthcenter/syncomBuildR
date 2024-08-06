@@ -16,15 +16,20 @@ asvNet(
 \arguments{
 \item{df}{Long dataframe such as that returned from \code{\link{asvDist}}.}
 
-\item{metadata}{Optional dataframe of metadata to attach to nodes. Metadata should belong to data at the node level, so taxonomy for ASV nodes or genotype per sample nodes, but not genotype per ASV since an ASV is present in many samples.}
+\item{metadata}{Optional dataframe of metadata to attach to nodes. Metadata should belong to data at
+the node level, so taxonomy for ASV nodes or genotype per sample nodes, but not genotype per ASV
+since an ASV is present in many samples.}
 
-\item{edge}{Column name of df to use for edge weighting. Typically this is the same as \code{method} from \code{asvDist} used to make df.}
+\item{edge}{Column name of df to use for edge weighting. Typically this is the same as \code{method}
+from \code{asvDist} used to make df.}
 
-\item{thresh}{Optional output from \code{\link{thresh}}. If provided then P values of changepoints will be added as node metadata.}
+\item{thresh}{Optional output from \code{\link{thresh}}. If provided then P values of changepoints
+will be added as node metadata.}
 
 \item{metadata_join}{Column name of metadata that identifies nodes. Defaults to "asv".}
 
-\item{thresh_join}{Column name of thresh that identifies nodes. Defaults to "asv" and there are no cases currently where we expect it to be a good idea to change this.}
+\item{thresh_join}{Column name of thresh that identifies nodes. Defaults to "asv" and there are no
+cases currently where we expect it to be a good idea to change this.}
 }
 \value{
 A named list with three elements:
@@ -43,10 +48,10 @@ Function to perform network analysis on a distance/dissimilarity matrix of a mic
 print(load("/home/jsumner/Desktop/stargate/SINC/sincUtils/syncomBuilder/threshOutput.rdata"))
 print(load("/home/jsumner/Desktop/stargate/SINC/sincUtils/syncomBuilder/asvDist_output.rdata"))
 print(load("/home/jsumner/Desktop/stargate/SINC/sincUtils/syncomBuilder/taxa_rdp.rdata"))
-taxa<-as.data.frame(taxa_rdp)
-taxa$asv<-rownames(taxa_rdp)
-rownames(taxa)<-NULL
-net_data<-asvNet(sp_dist, taxa, edge="spearman", thresh=threshMods)
+taxa <- as.data.frame(taxa_rdp)
+taxa$asv <- rownames(taxa_rdp)
+rownames(taxa) <- NULL
+net_data <- asvNet(sp_dist, taxa, edge = "spearman", thresh = threshMods)
 
 }
 \keyword{changepoint}

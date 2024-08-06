@@ -18,22 +18,27 @@ net.plot(
 \arguments{
 \item{net}{Object returned from \link{asvNet}.}
 
-\item{fill}{Optional column name to fill points by. Accepts single column names, vectors of p-value columns,
-or "thresh" which will match all p-value columns if the network was fit with threshold model data from \link{thresh}.}
+\item{fill}{Optional column name to fill points by. Accepts single column names, vectors of p-value
+columns, or "thresh" which will match all p-value columns if the network was fit with threshold model
+data from \link{thresh}.}
 
 \item{shape}{Optional column name to use for node shapes. Accepts the same options as fill.}
 
 \item{size}{Size for points. Passed to ggplot2::geom_point.}
 
-\item{edgeWeight}{Optional weighting for edges. Must be present in the "edges" of net. Default of NULL will show equal size edges between all connected nodes.}
+\item{edgeWeight}{Optional weighting for edges. Must be present in the "edges" of net. Default of
+NULL will show equal size edges between all connected nodes.}
 
-\item{edgeFilter}{Optional value to filter edges for. If non-NULL then only edges with edgeWeight greater than this value are kept.
+\item{edgeFilter}{Optional value to filter edges for. If non-NULL then only edges with edgeWeight
+greater than this value are kept.
 This can be a character vector or a numeric.
 Character vectors are interpreted as quantiles ("0.5" corresponds to the top 50 percent are kept).}
 
-\item{thresh_below}{Significant cutoff if p-value columns are used for fill or shape. Defaults to 0.05.}
+\item{thresh_below}{Significant cutoff if p-value columns are used for fill or shape.
+Defaults to 0.05.}
 
-\item{facet}{Optionally a variable to facet the plot on. This is meant to be used to separate multiple networks created from \link{netcomi2scb}
+\item{facet}{Optionally a variable to facet the plot on. This is meant to be used to separate
+multiple networks created from \link{netcomi2scb}
 in which case "netNumber" should be used.}
 }
 \value{
@@ -47,15 +52,14 @@ Function to plot networks generated from \code{asvNet} with various emphases.
 # a<-qc(); b<-cal(a); c<-thresh(b); d<-asvDist(a) ; e<-net(d, thresh = c)
 print(load("/home/jsumner/Desktop/stargate/SINC/sincUtils/syncomBuilder/net_output.rdata"))
 
-net = net_data
-fill=NULL
-shape=NULL
-size=3
-edgeWeight="spearman"
-edgeFilter=NULL
-thresh_below = 0.05
+net <- net_data
+fill <- NULL
+shape <- NULL
+size <- 3
+edgeWeight <- "spearman"
+edgeFilter <- NULL
+thresh_below <- 0.05
 net.plot(net, fill, shape, size, edgeWeight, edgeFilter, thresh_below)
-net.plot(net, fill="thresh", shape, size, edgeWeight, edgeFilter, thresh_below)
-
+net.plot(net, fill = "thresh", shape, size, edgeWeight, edgeFilter, thresh_below)
 
 }

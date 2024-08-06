@@ -2,7 +2,8 @@
 % Please edit documentation in R/thresh.R
 \name{thresh}
 \alias{thresh}
-\title{Function to run changepoint models of individual microbes vs phenotypes or communities/clusters vs phenotypes.}
+\title{Function to run changepoint models of individual microbes vs phenotypes or
+communities/clusters vs phenotypes.}
 \usage{
 thresh(
   asvTab,
@@ -18,29 +19,39 @@ thresh(
 
 \item{phenoCols}{A character vector of column names for phenotypes to be used in changepoint models.}
 
-\item{asvCols}{A character vector of columns representing microbes (predictor variables). Defaults NULL where all column names containing the string "ASV" will be used.}
+\item{asvCols}{A character vector of columns representing microbes (predictor variables).
+Defaults NULL where all column names containing the string "ASV" will be used.}
 
-\item{model}{Type of changepoint model in chngpt::chngptm labeling convention. Currently hinge, upperhinge, and segmented are supported. See Figure 2.1 of the \link{[chngpt vignette](https://cran.r-project.org/web/packages/chngpt/vignettes/chngpt-vignette.pdf)}}
+\item{model}{Type of changepoint model in chngpt::chngptm labeling convention. Currently hinge,
+upperhinge, and segmented are supported. See Figure 2.1 of the chngpt
+\link{[vignette](https://cran.r-project.org/web/packages/chngpt/vignettes/chngpt-vignette.pdf)}}
 
 \item{cores}{Number of cores to run in parallel.}
 
-\item{calibratePheno}{An optional vector of column names to calibrate the phenotypes by. This should generally correspond to those used in `cal` if the ASV table has been calibrated or just represent confounders that you wish to remove effects from in the changepoint regression. /code{lm} is used to get residuals of the phenotype after these effects are regressed out.}
+\item{calibratePheno}{An optional vector of column names to calibrate the phenotypes by.
+This should generally correspond to those used in `cal` if the ASV table has been calibrated or
+just represent confounders that you wish to remove effects from in the changepoint regression.
+\code{lm} is used to get residuals of the phenotype after these effects are regressed out.}
 }
 \value{
 A dataframe summarizing changepoint models for individual ASVs vs phenotypes.
 }
 \description{
-Function to run changepoint models of individual microbes vs phenotypes or communities/clusters vs phenotypes.
+Function to run changepoint models of individual microbes vs phenotypes or
+communities/clusters vs phenotypes.
 }
 \examples{
 
 # a<-qc(); b<-cal(a); c<-thresh(b)
 print(load("/home/jsumner/Desktop/stargate/SINC/sincUtils/syncomBuilder/cal_output.rdata"))
-asv<-are_c[[1]]
-zinbCalibrated = are_c[[2]][are_c[[2]]$model=="ZINB", "asv"]
-asv<-are_c[[1]][, c("tissue","plot","row","genotype", "biomass","sd", zinbCalibrated)]
+asv <- are_c[[1]]
+zinbCalibrated <- are_c[[2]][are_c[[2]]$model == "ZINB", "asv"]
+asv <- are_c[[1]][, c("tissue", "plot", "row", "genotype", "biomass", "sd", zinbCalibrated)]
 
-threshMods<-thresh(asvTab=asv, phenoCols="biomass", model="hinge", cores=10, calibratePheno = "genotype")
+threshMods <- thresh(
+  asvTab = asv, phenoCols = "biomass",
+  model = "hinge", cores = 10, calibratePheno = "genotype"
+)
 dim(threshMods)
 head(threshMods)
 

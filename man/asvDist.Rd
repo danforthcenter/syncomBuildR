@@ -18,19 +18,30 @@ asvDist(
 \arguments{
 \item{asvTab}{ASV table to use. Should have rows as samples and columns representing ASVs.}
 
-\item{asvCols}{Either column names, positions, or a single character string to use as regex to find all asv columns.}
+\item{asvCols}{Either column names, positions, or a single character string to use as regex to
+find all asv columns.}
 
-\item{method}{A distance method compatible with \code{\link{vegan::vegdist}}, a correlation coefficient (spearman or pearson), or a custom function that returns a matrix of pairwise distances.}
+\item{method}{A distance method compatible with \code{\link{vegan::vegdist}}, a correlation
+coefficient (spearman or pearson).}
 
-\item{parallel}{How many cores to use in parallel. The parallelized component only comes into play with correlation coefficient methods and is not particularly heavy, so more cores will have a minimal speed improvement.}
+\item{parallel}{How many cores to use in parallel. The parallelized component only comes into play
+with correlation coefficient methods and is not particularly heavy, so more cores will have a
+minimal speed improvement.}
 
-\item{clr_transform}{Should ASV counts be transformed with a centered log ratio? This defaults to TRUE to alleviate the compositional nature of the data.}
+\item{clr_transform}{Should ASV counts be transformed with a centered log ratio?
+This defaults to TRUE to alleviate the compositional nature of the data.}
 
-\item{edgeFilter}{A filter for the edges returned. This defaults to NULL where no filtering is done. Optionally this can be numeric, in which case distances/correlations below that number are removed, or it can be a number as a string in which case that quantile is used (ie, "0.5" filters for above the median.).}
+\item{edgeFilter}{A filter for the edges returned. This defaults to NULL where no filtering is done.
+Optionally this can be numeric, in which case distances/correlations below that number are removed,
+or it can be a number as a string in which case that quantile is used
+(ie, "0.5" filters for above the median.).}
 
 \item{plot}{Logical, should the data be plotted? Defaults to FALSE.}
 
-\item{returnASVs}{Should ASVs or samples be considered the experimental unit? Defaults to TRUE in which case distances/correlations between ASVs across samples are returned. If FALSE then samples are compared by their ASV composition. Note that different methods are appropriate depending on whether samples or ASVs are being considered "nodes".}
+\item{returnASVs}{Should ASVs or samples be considered the experimental unit?
+Defaults to TRUE in which case distances/correlations between ASVs across samples are returned.
+If FALSE then samples are compared by their ASV composition. Note that different methods are
+appropriate depending on whether samples or ASVs are being considered "nodes".}
 }
 \value{
 A dataframe showing pairwise correlations between individual ASVs/samples.
@@ -42,13 +53,16 @@ Function to make distance/dissimilarity data from an ASV table.
 
 # a<-qc(); b<-cal(a); c<-thresh(b); d<-asvDist(a)
 print(load("/home/jsumner/Desktop/stargate/SINC/sincUtils/syncomBuilder/threshOutput.rdata"))
-sp_dist<-asvDist(asv, method="spearman", clr_transform=TRUE, edgeFilter=0.5)
-unfiltered_sp_dist<-asvDist(asv, method="spearman", clr_transform=TRUE, edgeFilter=NULL)
+sp_dist <- asvDist(asv, method = "spearman", clr_transform = TRUE, edgeFilter = 0.5)
+unfiltered_sp_dist <- asvDist(asv, method = "spearman", clr_transform = TRUE, edgeFilter = NULL)
 dim(sp_dist)
-euc<-asvDist(asv, method="euclidean", clr_transform=FALSE, edgeFilter=NULL)
-bray<-asvDist(asv, method="bray", clr_transform=FALSE, edgeFilter=NULL)
-save(sp_dist, euc, bray, file="/home/jsumner/Desktop/stargate/SINC/sincUtils/syncomBuilder/asvDist_output.rdata")
-
+euc <- asvDist(asv, method = "euclidean", clr_transform = FALSE, edgeFilter = NULL)
+bray <- asvDist(asv, method = "bray", clr_transform = FALSE, edgeFilter = NULL)
+save(sp_dist,
+  euc,
+  bray,
+  file = "/home/jsumner/Desktop/stargate/SINC/sincUtils/syncomBuilder/asvDist_output.rdata"
+)
 
 }
 \keyword{changepoint,}

@@ -24,11 +24,14 @@ Function to make upset plots of thresh output
 
 # a<-qc(); b<-cal(a); c<-thresh(b)
 print(load("/home/jsumner/Desktop/stargate/SINC/sincUtils/syncomBuilder/cal_output.rdata"))
-asv<-are_c[[1]]
-zinbCalibrated = are_c[[2]][are_c[[2]]$model=="ZINB", "asv"]
-asv<-are_c[[1]][, c("tissue","plot","row","genotype", "biomass","sd", zinbCalibrated)]
+asv <- are_c[[1]]
+zinbCalibrated <- are_c[[2]][are_c[[2]]$model == "ZINB", "asv"]
+asv <- are_c[[1]][, c("tissue", "plot", "row", "genotype", "biomass", "sd", zinbCalibrated)]
 
-threshMods<-thresh(asvTab=asv, phenoCols="biomass", model="hinge", cores=10, calibratePheno = "genotype")
+threshMods <- thresh(
+  asvTab = asv, phenoCols = "biomass",
+  model = "hinge", cores = 10, calibratePheno = "genotype"
+)
 threshUpset(threshMods, 1)
 
 }

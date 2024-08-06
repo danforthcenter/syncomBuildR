@@ -3,9 +3,12 @@
 #'
 #' @param thresh Output from \code{\link{thresh}}
 #' @param asv The asv table used in making \code{thresh} object.
-#' @param asvCols A vector of ASV column names. Defaults to NULL in which case all columns containing "ASV" are used and a list of ggplots is returned.
-#' @param phenotype A vector of phenotype names in \code{thresh}. Defaults to NULL where all phenotypes are used and a list of plots is returned per ASV.
-#' @param unit The unit or scale of the changepoint models. This defaults to "asv" for use with thresh and "cluster" should be used with netThresh output.
+#' @param asvCols A vector of ASV column names. Defaults to NULL in which case all columns containing
+#' "ASV" are used and a list of ggplots is returned.
+#' @param phenotype A vector of phenotype names in \code{thresh}. Defaults to NULL where all phenotypes
+#' are used and a list of plots is returned per ASV.
+#' @param unit The unit or scale of the changepoint models. This defaults to "asv" for use with thresh
+#' and "cluster" should be used with netThresh output.
 #' @param net The asvNet object if netThresh output is being plotted.
 #'
 #' @keywords changepoint, threshold, regression, phenotype, ggplot
@@ -39,7 +42,6 @@ threshPlot <- function(thresh, asv, asvCols = NULL, phenotype = NULL, unit = "as
       asvs_in_cluster <- nodes[nodes[[clusterCol]] == clust, "asv"]
       setNames(data.frame(rowSums(asv[, c(asvs_in_cluster)])), c(paste0("cluster_", clust)))
     }))
-    clusterColumns <- colnames(clust_ag)
     asv <- cbind(asv[, -which(grepl("ASV", colnames(asv)))], clust_ag)
   }
   if (is.null(phenotype)) {
@@ -50,13 +52,12 @@ threshPlot <- function(thresh, asv, asvCols = NULL, phenotype = NULL, unit = "as
       as.character(as.formula(s))[3]
     }))
   } else {
-    cal = NULL
+    cal <- NULL
   }
   outList <- lapply(asvCols, function(microbe) {
     thresh_sub <- thresh[thresh[[unit]] == microbe, ]
-    asv_sub <- asv[, colnames(asv) %in% c(phenotype, microbe, cal)]
     phenoPlots <- lapply(phenotype, function(pheno) {
-      # print(c(pheno, microbe))
+      asv_sub <- asv[, colnames(asv) %in% c(phenotype, microbe, cal)]
       if (!is.null(cal)) {
         asv_sub[[pheno]] <- residuals(lm(
           as.formula(
@@ -87,12 +88,12 @@ threshPlot <- function(thresh, asv, asvCols = NULL, phenotype = NULL, unit = "as
           ggplot2::aes(.data[[microbe]], .data[[pheno]]),
           color = postCptCol, size = 2, alpha = 0.85
         ) +
-        geom_vline(aes(xintercept = changePoint), linetype = 5, color = "black") +
+        geom_vline(aes(xintercept = .data[["changePoint"]]), linetype = 5, color = "black") +
         geom_segment(
           data = chngptData,
           aes(
             x = min(asv_sub[[microbe]]),
-            xend = changePoint,
+            xend = .data[["changePoint"]],
             y = mean(interceptData$est),
             yend = mean(interceptData$est)
           ),
@@ -116,12 +117,13 @@ threshPlot <- function(thresh, asv, asvCols = NULL, phenotype = NULL, unit = "as
         )
       return(p)
     })
+    return(phenoPlots)
   })
 
   if (length(asvCols) == 1) {
     outList <- outList[[1]]
   }
-  if (length(phenotype) == 1 & length(asvCols) == 1) {
+  if (length(phenotype) == 1 && length(asvCols) == 1) {
     outList <- outList[[1]]
   }
   return(outList)

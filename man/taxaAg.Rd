@@ -9,13 +9,16 @@ taxaAg(x = NULL, tx = NULL, taxaLevel = "Class")
 \arguments{
 \item{x}{ASV table, asv columns thought start with "ASV" prefix.}
 
-\item{tx}{Taxonomy table in dada2 format. Rownames should correspond to ASV names in the same format as x's column names.}
+\item{tx}{Taxonomy table in dada2 format. Rownames should correspond to ASV names in the same format
+as x's column names.}
 
 \item{taxaLevel}{A level of the taxonomy in `tx` to aggregate data to. Must match a colname of `tx`.}
 }
 \value{
-A list of two dataframes. "data" is similar to an ASV table but aggregated to the given taxaLevel.
-"meta" is a summary of the aggregation containing the number of ASVs and the total number of counts in each family in long format.
+A list of two dataframes. "data" is similar to an ASV table but aggregated to the
+given taxaLevel.
+"meta" is a summary of the aggregation containing the number of ASVs and the total number of counts
+in each family in long format.
 }
 \description{
 Aggregate an ASV table to some taxonomic level

@@ -17,10 +17,13 @@
 #' # a<-qc(); b<-cal(a); c<-thresh(b)
 #' print(load("/home/jsumner/Desktop/stargate/SINC/sincUtils/syncomBuilder/cal_output.rdata"))
 #' asv <- are_c[[1]]
-#' zinbCalibrated = are_c[[2]][are_c[[2]]$model == "ZINB", "asv"]
+#' zinbCalibrated <- are_c[[2]][are_c[[2]]$model == "ZINB", "asv"]
 #' asv <- are_c[[1]][, c("tissue", "plot", "row", "genotype", "biomass", "sd", zinbCalibrated)]
 #'
-#' threshMods <- thresh(asvTab = asv, phenoCols = "biomass", model = "hinge", cores = 10, calibratePheno = "genotype")
+#' threshMods <- thresh(
+#'   asvTab = asv, phenoCols = "biomass",
+#'   model = "hinge", cores = 10, calibratePheno = "genotype"
+#' )
 #' threshUpset(threshMods, 1)
 #'
 #' @export
@@ -44,7 +47,7 @@ threshUpset <- function(thresh, cores = getOption("mc.cores", 1), method = "fdr"
   })))
   p0 <- ComplexUpset::upset(adj_results, intersect = colnames(adj_results))
   p0[[2]] <- p0[[2]] +
-    ggplot2::labs(title = paste0("P adjustment options in ", tiss))
+    ggplot2::labs(title = paste0("P adjustment options"))
   p.adj.col <- paste0("p.adj.", method)
   sig <- do.call(rbind, parallel::mclapply(unique(df$asv), function(asv) {
     sub <- df[df$asv == asv, ]
@@ -55,15 +58,15 @@ threshUpset <- function(thresh, cores = getOption("mc.cores", 1), method = "fdr"
     }
   }, mc.cores = cores))
 
-  sub_upsetData <- sig[, c("phenotype", p.adj.col, "asv")]
-  sub_upsetData[[p.adj.col]] <- ifelse(sub_upsetData[[p.adj.col]] < 0.05, 1, 0)
-  dt_l <- data.table::as.data.table(sub_upsetData)
+  subUpsetData <- sig[, c("phenotype", p.adj.col, "asv")]
+  subUpsetData[[p.adj.col]] <- ifelse(subUpsetData[[p.adj.col]] < 0.05, 1, 0)
+  dt_l <- data.table::as.data.table(subUpsetData)
 
   dw <- as.data.frame(data.table::dcast(dt_l, asv ~ phenotype, value.var = p.adj.col))
 
-  p01 <- ComplexUpset::upset(dw, intersect = colnames(sub_upsetData)[-1])
+  p01 <- ComplexUpset::upset(dw, intersect = colnames(subUpsetData)[-1])
   p01[[2]] <- p01[[2]] + ggplot2::labs(
-    title = paste0("ASV ~ Phenotype Correlations in ", tiss),
+    title = paste0("ASV ~ Phenotype Correlations"),
     subtitle = paste0(method, " P Values Intersections")
   )
 

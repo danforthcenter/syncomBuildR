@@ -158,36 +158,49 @@ seqtab <- makeSequenceTable(mergers)
 print("Removing Chimeras")
 seqtab.nochim <- removeBimeraDenovo(seqtab, method = "consensus", multithread = cores)
 seqtab.print <- seqtab.nochim
-colnames(seqtab.print) <- paste0("ASV", 1:length(colnames(seqtab.print)))
-write.csv(seqtab.print, "dada2_asv_table.csv", quote = F)
+colnames(seqtab.print) <- paste0("ASV", seq_len(length(colnames(seqtab.print))))
+write.csv(seqtab.print, "dada2_asv_table.csv", quote = FALSE)
 
 ### Track sequences
 print("Tracking sequences")
 getN <- function(x) sum(getUniques(x))
-track <- cbind(out, sapply(dadaFs, getN), sapply(dadaRs, getN), sapply(mergers, getN), rowSums(seqtab.nochim))
+track <- cbind(
+  out, sapply(dadaFs, getN),
+  sapply(dadaRs, getN),
+  sapply(mergers, getN),
+  rowSums(seqtab.nochim)
+)
 colnames(track) <- c("input", "filtered", "denoisedF", "denoisedR", "merged", "nonchim")
 rownames(track) <- samps
-write.csv(track, "dada2_sequence_tracking.csv", row.names = T, quote = F)
+write.csv(track, "dada2_sequence_tracking.csv", row.names = TRUE, quote = FALSE)
 
 ### Generate fasta file
 print("Generate fasta file")
 asvseq <- colnames(seqtab.nochim)
-write.fasta(sequences = lapply(asvseq, identity), names = paste0("ASV", 1:length(asvseq)), file.out = "dada2_asv.fasta")
+write.fasta(
+  sequences = lapply(asvseq, identity),
+  names = paste0("ASV", seq_len(length(asvseq))),
+  file.out = "dada2_asv.fasta"
+)
 
 ### Assign taxonomy
 print("Assigning taxonomy")
 taxa_rdp <- assignTaxonomy(seqtab.nochim, pathToRDP, multithread = cores)
 taxa_rdp <- addSpecies(taxa_rdp, pathToRDPSpec)
-rownames(taxa_rdp) <- paste0("ASV", 1:length(asvseq))
-write.csv(taxa_rdp, "dada2_rdp_taxonomy.csv", quote = F)
+rownames(taxa_rdp) <- paste0("ASV", seq_len(length(asvseq)))
+write.csv(taxa_rdp, "dada2_rdp_taxonomy.csv", quote = FALSE)
 taxa_silva <- assignTaxonomy(seqtab.nochim, pathToSILVA, multithread = cores)
 taxa_silva <- addSpecies(taxa_silva, pathToSILVASpec)
-rownames(taxa_silva) <- paste0("ASV", 1:length(asvseq))
-write.csv(taxa_silva, "dada2_silva_taxonomy.csv", quote = F)
+rownames(taxa_silva) <- paste0("ASV", seq_len(length(asvseq)))
+write.csv(taxa_silva, "dada2_silva_taxonomy.csv", quote = FALSE)
 
 ### Save everything in RData
 print("Creating RData Object")
-save(fnFs, fnRs, samps, filtFs, filtRs, out, errF, errR, dadaFs, dadaRs, mergers, seqtab, seqtab.nochim, track, seqtab.print, asvseq, taxa_rdp, taxa_silva, file = "dada2_output.RData")
+save(fnFs, fnRs, samps, filtFs, filtRs, out, errF, errR, dadaFs, dadaRs,
+  mergers, seqtab, seqtab.nochim, track, seqtab.print,
+  asvseq, taxa_rdp, taxa_silva,
+  file = "dada2_output.RData"
+)
 print("Done!")
 ```
 
@@ -201,7 +214,7 @@ When the job is done running you can check the progress using the `track` object
 ```{r, eval=TRUE}
 load("../data/track.rda")
 track <- as.data.frame(track)
-track$id <- 1:nrow(track)
+track$id <- seq_len(nrow(track))
 
 
 track$sample <- sub("_.*", "", rownames(track))
@@ -210,8 +223,14 @@ track$depth <- ifelse(substr(track$tissue, 1, 1) == "A", "A", "B")
 track$tiss <- sub("[A|B]", "", track$tissue)
 
 track <- as.data.table(track)
-track <- melt(track, measure.vars = c("input", "filtered", "denoisedF", "denoisedR", "merged", "nonchim"))
-track$name <- ordered(track$variable, levels = c('input', 'filtered', 'denoisedF', 'denoisedR', 'merged', 'nonchim'))
+track <- melt(track, measure.vars = c(
+  "input", "filtered", "denoisedF",
+  "denoisedR", "merged", "nonchim"
+))
+track$name <- ordered(track$variable, levels = c(
+  "input", "filtered", "denoisedF",
+  "denoisedR", "merged", "nonchim"
+))
 
 ggplot(track, aes(x = variable, y = value, group = id, color = interaction(depth, tiss))) +
   facet_grid(depth ~ tiss, scale = "free") +

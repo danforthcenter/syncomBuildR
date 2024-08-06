@@ -19,15 +19,18 @@ pullNode(
 
 \item{node}{A node name (or vector of names) to extract connections to.}
 
-\item{edge}{Optional weighting for edges. Must be present in the "edges" of net. Default of NULL will show equal size edges between all connected nodes.}
+\item{edge}{Optional weighting for edges. Must be present in the "edges" of net. Default of NULL
+will show equal size edges between all connected nodes.}
 
-\item{edgeFilter}{Optional value to filter edges for. If non-NULL then only edges with edgeWeight greater than this value are kept.
+\item{edgeFilter}{Optional value to filter edges for. If non-NULL then only edges with edgeWeight
+greater than this value are kept.
 This can be a character vector or a numeric.
 Character vectors are interpreted as quantiles ("0.5" corresponds to the top 50 percent are kept).}
 
 \item{plot}{Logical, should data be plotted using \link{net.plot}.}
 
-\item{keepNames}{Logical, should other nodes be filled in the plot as their node name (TRUE) or all as "other" (FALSE)?
+\item{keepNames}{Logical, should other nodes be filled in the plot as their node name (TRUE) or all
+as "other" (FALSE)?
 Defaults to FALSE.}
 }
 \value{
@@ -41,6 +44,6 @@ Function to highlight subsets of networks generated from \code{asvNet} or \link{
 # a<-qc(); b<-cal(a); c<-thresh(b); d<-asvDist(a) ; e<-net(d, thresh = c)
 print(load("/home/jsumner/Desktop/stargate/SINC/sincUtils/syncomBuilder/net_output.rdata"))
 
-pullNode(net_data, node = "ASV10", edge = "spearman", plot=TRUE, nodeCol="asv")
+pullNode(net_data, node = "ASV10", edge = "spearman", plot = TRUE, nodeCol = "asv")
 
 }

@@ -38,9 +38,10 @@
 #' euc <- asvDist(asv, method = "euclidean", clr_transform = FALSE, edgeFilter = NULL)
 #' bray <- asvDist(asv, method = "bray", clr_transform = FALSE, edgeFilter = NULL)
 #' save(sp_dist,
-#' euc,
-#' bray,
-#' file = "/home/jsumner/Desktop/stargate/SINC/sincUtils/syncomBuilder/asvDist_output.rdata")
+#'   euc,
+#'   bray,
+#'   file = "/home/jsumner/Desktop/stargate/SINC/sincUtils/syncomBuilder/asvDist_output.rdata"
+#' )
 #'
 #' @export
 
@@ -84,8 +85,10 @@ asvDist <- function(asvTab, asvCols = NULL, method = "spearman",
     dist_mat <- as.matrix(vegan::vegdist(mat, method = method))
     sim_mat <- as.data.frame(1 / dist_mat)
     sim_mat$c1 <- rownames(sim_mat)
-    ldf <- data.table::melt(data.table::as.data.table(sim_mat), id.vars = c("c1"),
-                            variable.name = "c2", value.name = method)
+    ldf <- data.table::melt(data.table::as.data.table(sim_mat),
+      id.vars = c("c1"),
+      variable.name = "c2", value.name = method
+    )
   } else if (method %in% correlation_coefficients) {
     M <- Hmisc::rcorr(t(mat), type = method)
     M[[method]] <- (1 - M[["r"]]) / 2 # turn correlation into a distance

@@ -50,8 +50,10 @@
 #'     name = name, mode = "dada", cores = 10, writeOut = "tests", stat = FALSE
 #'   )
 #'
-#'   path <- paste0("/run/user/1000/gvfs/smb-share:server=nas01,share=research/bart_lab/",
-#'   "Previous_people/Mingsheng_Qi/research_dr/SINC/limiting_dilution/20210314/p2p11_rawseq")
+#'   path <- paste0(
+#'     "/run/user/1000/gvfs/smb-share:server=nas01,share=research/bart_lab/",
+#'     "Previous_people/Mingsheng_Qi/research_dr/SINC/limiting_dilution/20210314/p2p11_rawseq"
+#'   )
 #'   barcodes <- read.csv(paste0(path, "/barcodetable1.csv"))
 #'   barcodes$exp <- "exp"
 #'   reads <- ShortRead::readFastq(paste0(path, "/210314S05P10_merge.fq"))
@@ -135,18 +137,22 @@ demultiplex <- function(reads, barcodes, fwd = "FWD", rev = "REV", name = c("Nam
     fwd_bar_reverse_complement <- as.character(
       Biostrings::reverseComplement(
         Biostrings::DNAString(fwd_bar)
-        )
       )
+    )
     rev_bar_reverse_complement <- as.character(
       Biostrings::reverseComplement(
         Biostrings::DNAString(rev_bar)
-        )
       )
+    )
     # search for reverse complements of opposite barcode at end of sequences
-    rowReads <- rowReads[grepl(paste0(rev_bar_reverse_complement, "$"),
-                               ShortRead::sread(rowReads))]
-    columnReads <- columnReads[grepl(paste0(fwd_bar_reverse_complement, "$"),
-                                     ShortRead::sread(columnReads))]
+    rowReads <- rowReads[grepl(
+      paste0(rev_bar_reverse_complement, "$"),
+      ShortRead::sread(rowReads)
+    )]
+    columnReads <- columnReads[grepl(
+      paste0(fwd_bar_reverse_complement, "$"),
+      ShortRead::sread(columnReads)
+    )]
     # append row and column reads
     clone <- append(rowReads, columnReads)
     # write fastq
@@ -160,8 +166,10 @@ demultiplex <- function(reads, barcodes, fwd = "FWD", rev = "REV", name = c("Nam
       write <- NULL
     }
     if (writeOut) {
-      ShortRead::writeFastq(object = clone, file = paste0(write, name, ".fq"),
-                            mode = "w", compress = TRUE)
+      ShortRead::writeFastq(
+        object = clone, file = paste0(write, name, ".fq"),
+        mode = "w", compress = TRUE
+      )
     }
     if (stat & writeOut) {
       stats <- data.frame(
@@ -211,17 +219,19 @@ demultiplex <- function(reads, barcodes, fwd = "FWD", rev = "REV", name = c("Nam
     fwd_bar_reverse_complement <- as.character(
       Biostrings::reverseComplement(
         Biostrings::DNAString(fwd_bar)
-        )
       )
+    )
     rev_bar_reverse_complement <- as.character(
       Biostrings::reverseComplement(
         Biostrings::DNAString(rev_bar)
-        )
       )
+    )
     # search for reverse complements of opposite barcode at end of sequences
     rowReads <- rowReads[grepl(paste0(rev_bar_reverse_complement, "$"), ShortRead::sread(rowReads))]
-    columnReads <- columnReads[grepl(paste0(fwd_bar_reverse_complement, "$"),
-                                     ShortRead::sread(columnReads))]
+    columnReads <- columnReads[grepl(
+      paste0(fwd_bar_reverse_complement, "$"),
+      ShortRead::sread(columnReads)
+    )]
     # append row and column reads
     clone <- append(rowReads, columnReads)
     # write fastq
@@ -240,8 +250,10 @@ demultiplex <- function(reads, barcodes, fwd = "FWD", rev = "REV", name = c("Nam
       } else {
         md <- "a"
       }
-      ShortRead::writeFastq(object = clone, file = paste0(write, name, ".fq"),
-                            mode = md, compress = TRUE)
+      ShortRead::writeFastq(
+        object = clone, file = paste0(write, name, ".fq"),
+        mode = md, compress = TRUE
+      )
     }
   })
   if (stat && writeOut) {

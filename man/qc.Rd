@@ -18,27 +18,39 @@ qc(
 )
 }
 \arguments{
-\item{file}{A file path to an Rdata object containing DADA2 output in such as that from DADA2 examples (function?)}
+\item{file}{A file path to an Rdata object containing DADA2 output in such as that from DADA2
+examples (function?)}
 
-\item{asvTab}{ASV table from DADA2. If a file path is given then this defaults to seqtab.print if left NULL for consistency with common DADA2 examples and previous SINC work.}
+\item{asvTab}{ASV table from DADA2. If a file path is given then this defaults to seqtab.print if
+left NULL for consistency with common DADA2 examples and previous SINC work.}
 
 \item{taxa}{A taxonomy file for the ASVs in asvTab. This defaults to taxa_rdp if left NULL.}
 
-\item{asvAbnd}{Lower bound on sum per microbe across all samples, ASVs with fewer total counts than this number will be removed.}
+\item{asvAbnd}{Lower bound on sum per microbe across all samples, ASVs with fewer total counts than
+this number will be removed.}
 
-\item{sampleAbnd}{Lower bound on sum of all microbes per sample, samples with fewer total counts than this number will be removed. Note this filtering happens before `asvAbnd` filtering.}
+\item{sampleAbnd}{Lower bound on sum of all microbes per sample, samples with fewer total counts
+than this number will be removed. Note this filtering happens before `asvAbnd` filtering.}
 
-\item{normalize}{Method for normalization, currently supported options are NULL (where no normalization is done),
-"rescale" (the default) where samples are rescaled to have the same sample abundance using the exponent of the mean log sample sum,
+\item{normalize}{Method for normalization, currently supported options are NULL
+(where no normalization is done),
+"rescale" (the default) where samples are rescaled to have the same sample abundance using the
+exponent of the mean log sample sum,
  and "pqn" where probabilistic quotient normalization is used.}
 
-\item{rmTx}{A list of taxa filters. Each element in the list should specify a level of the taxonomy, an affector, and a comma separated string of values to filter that taxonomy for. See details.}
+\item{rmTx}{A list of taxa filters. Each element in the list should specify a level of the taxonomy,
+an affector, and a comma separated string of values to filter that taxonomy for. See details.}
 
-\item{separate}{An optional dataframe or vector of the same length as the number of samples in asvTab. If provided then this separates the asvTab by these groupings and abundance filtering will be done separately in each subset of the data. Subsets will be bound together and missing values will be filled with NA should subsets contain different selections of ASVs.}
+\item{separate}{An optional dataframe or vector of the same length as the number of samples in
+asvTab. If provided then this separates the asvTab by these groupings and abundance filtering will
+be done separately in each subset of the data. Subsets will be bound together and missing values
+will be filled with NA should subsets contain different selections of ASVs.}
 
-\item{metadata}{An optional dataframe of metadata to add to the asv table. If left NULL while `separate` is a dataframe then this will include that data as metadata.}
+\item{metadata}{An optional dataframe of metadata to add to the asv table. If left NULL while
+`separate` is a dataframe then this will include that data as metadata.}
 
-\item{return_removed}{Logical, abundance filtered data be returned? Defaults to FALSE. If TRUE then a list is returned.}
+\item{return_removed}{Logical, abundance filtered data be returned? Defaults to FALSE. If TRUE then
+a list is returned.}
 }
 \value{
 An ASV table as a wide dataframe
@@ -47,26 +59,33 @@ An ASV table as a wide dataframe
 Ease of use quality control function for DADA2 output.
 }
 \details{
-The `rmTx` argument specifies a list of filters, with one element per each level of taxonomy that should be filtered. Each element in the list should take the form of "Taxalevel in example, example2".
-Which will remove ASVs where their "Taxalevel" is "example" or "example2". Alternatively the affector can be "contains" in which case regex is used.
-In that case the string "Class contains plant, other" would search for matches to "plant|other" in the Class column of the taxonomy. More general regex patterns are supported.
+The `rmTx` argument specifies a list of filters, with one element per each level of taxonomy that
+should be filtered. Each element in the list should take the form of "Taxalevel in example, example2".
+Which will remove ASVs where their "Taxalevel" is "example" or "example2". Alternatively the affector
+can be "contains" in which case regex is used.
+In that case the string "Class contains plant, other" would search for matches to "plant|other" in
+the Class column of the taxonomy. More general regex patterns are supported.
 }
 \examples{
 
 print(load("~/scripts/SINC/sincUtils/syncomBuilder/field_2021_small_ex.rdata"))
-separate<-data.frame(tissue = stringr::str_extract(samps, "[:alpha:]+"))
-metadata = cbind(separate, data.frame(sample = samps,
-  plot = stringr::str_extract(samps, "[0-9]+")))
+separate <- data.frame(tissue = stringr::str_extract(samps, "[:alpha:]+"))
+metadata <- cbind(separate, data.frame(
+  sample = samps,
+  plot = stringr::str_extract(samps, "[0-9]+")
+))
 
-file=NULL; asvTab = seqtab.print; taxa=NULL; asvAbnd = 100; sampleAbnd=1000; normalize="pqn"
-rmTx=list("Order in Chloroplast", "Phylum in Plantae"); separate=separate
-metadata=cbind(separate, data.frame(plot = stringr::str_extract(samps, "[0-9]+"))), return_removed=TRUE
 
-asv<-qc(asvTab = seqtab.print, taxa=taxa_rdp, asvAbnd = 100, sampleAbnd=1000, normalize = "rescale", 
-rmTx=list("Order in Chloroplast", "Phylum in Plantae"), separate=NULL)
-asv<-qc(asvTab = seqtab.print, taxa=taxa_rdp, asvAbnd = 100, sampleAbnd=1000, normalize = "rescale", 
-rmTx=list("Order in Chloroplast", "Phylum in Plantae"), separate=separate, metadata=metadata, return_removed=TRUE)
-save(asv, file="../qc_output.rdata")
+asv <- qc(
+  asvTab = seqtab.print, taxa = taxa_rdp, asvAbnd = 100, sampleAbnd = 1000, normalize = "rescale",
+  rmTx = list("Order in Chloroplast", "Phylum in Plantae"), separate = NULL
+)
+asv <- qc(
+  asvTab = seqtab.print, taxa = taxa_rdp, asvAbnd = 100, sampleAbnd = 1000, normalize = "rescale",
+  rmTx = list("Order in Chloroplast", "Phylum in Plantae"), separate = separate, metadata = metadata,
+  return_removed = TRUE
+)
+save(asv, file = "../qc_output.rdata")
 
 }
 \keyword{DADA2}

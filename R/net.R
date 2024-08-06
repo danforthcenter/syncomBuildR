@@ -55,9 +55,11 @@ asvNet <- function(df, metadata = NULL, edge = NULL, thresh = NULL,
   #* link thresh to nodes
   if (!is.null(thresh)) {
     agThresh <- aggregate(p.value. ~ asv + phenotype + model, thresh[thresh$Source != "(Intercept)", ],
-                          FUN = identity)
+      FUN = identity
+    )
     subThresh <- data.table::dcast(data.table::as.data.table(agThresh), asv ~ phenotype + model,
-                                   value.var = "p.value.")
+      value.var = "p.value."
+    )
     colnames(subThresh)[2:ncol(subThresh)] <- paste0(colnames(subThresh)[2:ncol(subThresh)], "_p")
     nd <- merge(nd, subThresh, by = thresh_join)
   }

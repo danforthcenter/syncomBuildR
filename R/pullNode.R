@@ -3,12 +3,15 @@
 #'
 #' @param net Network list returned from \link{asvNet} or \link{netcomi2scb}.
 #' @param node A node name (or vector of names) to extract connections to.
-#' @param edge Optional weighting for edges. Must be present in the "edges" of net. Default of NULL will show equal size edges between all connected nodes.
-#' @param edgeFilter Optional value to filter edges for. If non-NULL then only edges with edgeWeight greater than this value are kept.
+#' @param edge Optional weighting for edges. Must be present in the "edges" of net. Default of NULL
+#' will show equal size edges between all connected nodes.
+#' @param edgeFilter Optional value to filter edges for. If non-NULL then only edges with edgeWeight
+#' greater than this value are kept.
 #' This can be a character vector or a numeric.
 #' Character vectors are interpreted as quantiles ("0.5" corresponds to the top 50 percent are kept).
 #' @param plot Logical, should data be plotted using \link{net.plot}.
-#' @param keepNames Logical, should other nodes be filled in the plot as their node name (TRUE) or all as "other" (FALSE)?
+#' @param keepNames Logical, should other nodes be filled in the plot as their node name (TRUE) or all
+#' as "other" (FALSE)?
 #' Defaults to FALSE.
 #'
 #' @return A list with a subset network and optionally a ggplot.
@@ -23,7 +26,8 @@
 #'
 #' @export
 
-pullNode <- function(net, node, edge = NULL, edgeFilter = NULL, plot = TRUE, nodeCol = "asv", keepNames = FALSE) {
+pullNode <- function(net, node, edge = NULL, edgeFilter = NULL,
+                     plot = TRUE, nodeCol = "asv", keepNames = FALSE) {
   #* grab network components
   nodes <- net$nodes
   edges <- net$edges

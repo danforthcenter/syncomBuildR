@@ -86,7 +86,7 @@ net.plot <- function(net, fill = NULL, shape = NULL, size = 3, edgeWeight = NULL
     }))
     nodes[["significantThresholdModels"]] <- factor(
       rowSums(as.data.frame(nodes[[paste0(shape, "_bin")]]))
-      )
+    )
     shape <- "significantThresholdModels"
   }
   if (is.null(edgeWeight)) {
@@ -132,7 +132,7 @@ net.plot <- function(net, fill = NULL, shape = NULL, size = 3, edgeWeight = NULL
   if (fill == "significantThresholdModels") {
     p <- p + ggplot2::scale_color_continuous(
       breaks = seq(0, max(nodes$significantThresholdModels, na.rm = TRUE), 1)
-      )
+    )
   }
   if (!is.null(facet)) {
     p <- p + ggplot2::facet_wrap(as.formula(paste0("~", facet))) +

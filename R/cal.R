@@ -3,11 +3,13 @@
 #' @param asvTab ASV table similar to that returned by \code{\link{qc}}, often with additional
 #' metadata joined.
 #' @param asvCols Numeric index of columns representing ASVs in asvTab. Defaults to all columns
-#' containing "ASV" in their column name. Note that missing values in these columns will be treated as 0s.
+#' containing "ASV" in their column name.
+#' Note that missing values in these columns will be treated as 0s.
 #' @param cal Vector of columns to use to calibrate asv counts. These can be categorical or continuous
 #' and are passed to MASS::glm.nb or pscl::zeroinfl, depending on the presense of 0s in the data.
 #' @param zi_cutoff A proportion of 0s that is considered too many. Higher values will fit models to
-#' more of the data, but those models may be worse fits for calibration. This defaults to 0.9 which is rather high.
+#' more of the data, but those models may be worse fits for calibration.
+#' This defaults to 0.9 which is rather high.
 #' @param cores Number of cores to use. Passed to parallel::mclapply. Defaults to 1 if the "mc.cores"
 #' option is not set.
 #' @param verbose Logical, should fit metrics be returned? If TRUE then the output is a list with

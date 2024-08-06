@@ -13,7 +13,8 @@ da(df, col, predictors, zi_cutoff = 0.1)
 
 \item{predictors}{Column names of predictors, can be discrete or continuous.}
 
-\item{zi_cutoff}{Proportion of zeros to consider the distribution to be zero inflated, defaults to 0.1.}
+\item{zi_cutoff}{Proportion of zeros to consider the distribution to be zero inflated,
+defaults to 0.1.}
 }
 \value{
 A data frame of model results.
@@ -26,14 +27,14 @@ Function to assess differential abundance of microbe counts or pseudo counts
 # Using uncalibrated data
 
 print(load("~/Desktop/stargate/SINC/sincUtils/syncomBuilder/qc_output.rdata"))
-asv[1:10,1:10]
+asv[1:10, 1:10]
 
-df <- asv[,1:20]
-sapply(df[,3:20], function(c) mean(c==0))
+df <- asv[, 1:20]
+sapply(df[, 3:20], function(c) mean(c == 0))
 
-col = "ASV9"
-predictors = "tissue"
-zi_cutoff = 0.1
+col <- "ASV9"
+predictors <- "tissue"
+zi_cutoff <- 0.1
 
 df[[predictors]] <- relevel(factor(df[[predictors]]), "AS")
 
