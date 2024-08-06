@@ -7,11 +7,13 @@
 #' @param microNetObj A microNetObj object as returned by \link{NetCoMi::netConstruct}
 #' @param microNetProps A microNetProps object as returned by \link{NetCoMi::netAnalyze}
 #' @param microNetComp A microNetComp object as returned by \link{NetCoMi::netCompare}
-#' @param cutoff Optional value to filter edges for. If non-NULL then only edges with edgeWeight greater than this value are kept.
+#' @param cutoff Optional value to filter edges for. If non-NULL then only edges with edgeWeight
+#' greater than this value are kept.
 #' This can be a character vector or a numeric.
 #' Character vectors are interpreted as quantiles ("0.5" corresponds to the top 50% are kept).
 #' Defaults to "0.9" .
-#' @param combine Logical, should multiple networks have X/Y coordinates for nodes standardized to make comparable plots later on? Defaults to TRUE.
+#' @param combine Logical, should multiple networks have X/Y coordinates for nodes standardized to
+#' make comparable plots later on? Defaults to TRUE.
 #' @keywords network, changepoint
 #' @importFrom igraph graph_from_data_frame layout_nicely as_data_frame
 #' @return If the microNetObj contains one network then a named list with three elements is returned:
@@ -30,17 +32,18 @@
 #'
 #' @export
 
-netcomi2scb <- function(microNetObj, microNetProps = NULL, microNetComp = NULL, cutoff = "0.9", combine = TRUE) {
+netcomi2scb <- function(microNetObj, microNetProps = NULL, microNetComp = NULL, cutoff = "0.9",
+                        combine = TRUE) {
   if (microNetObj$twoNets) {
-    nNets = 2
+    nNets <- 2
   } else {
-    nNets = 1
+    nNets <- 1
   }
   res <- lapply(1:nNets, function(w) {
     mat <- microNetObj[[paste0("adjaMat", w)]]
 
-    long <- do.call(rbind, lapply(1:nrow(mat), function(i) {
-      do.call(rbind, lapply(1:ncol(mat), function(j) {
+    long <- do.call(rbind, lapply(seq_len(nrow(mat)), function(i) {
+      do.call(rbind, lapply(seq_len(ncol(mat)), function(j) {
         data.frame(value = mat[i, j], from = colnames(mat)[j], to = rownames(mat)[i])
       }))
     }))
@@ -100,7 +103,7 @@ netcomi2scb <- function(microNetObj, microNetProps = NULL, microNetComp = NULL, 
 #' @noRd
 
 .combine_nets <- function(nets, metrics = c("degree", "between", "close", "eigen")) {
-  nets <- lapply(1:length(nets), function(i) {
+  nets <- lapply(seq_len(length(nets)), function(i) {
     net <- nets[[i]]
     net <- lapply(net, function(n) {
       if (is.data.frame(n)) {
