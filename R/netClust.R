@@ -16,11 +16,15 @@
 #'    \item{"graph" is the igraph object used to generate the dataframes.}
 #' }
 #'
-#' @details Each method will use a different function to cluster data according to the layout in the graph. Note that layouts in the graph are determined by \code{igraph::layout_nicely}.
+#' @details Each method will use a different function to cluster data according to the layout
+#'          in the graph. Note that layouts in the graph are determined by \code{igraph::layout_nicely}.
 #' \itemize{
-#'    \item{"component" uses \code{igraph::components} to cluster data and requires no additional arguments.}
-#'    \item{"dbscan" uses \code{dbscan::dbscan} to cluster data. This requires at least that the eps argument is set. See \code{?dbscan::dbscan}.}
-#'    \item{"kmeans" uses \code{stats::kmeans} to cluster data. This requires at least that the centers argument is set.}
+#'    \item{"component" uses \code{igraph::components} to cluster data and
+#'          requires no additional arguments.}
+#'    \item{"dbscan" uses \code{dbscan::dbscan} to cluster data. 
+#'          This requires at least that the eps argument is set. See \code{?dbscan::dbscan}.}
+#'    \item{"kmeans" uses \code{stats::kmeans} to cluster data.
+#'          This requires at least that the centers argument is set.}
 #' }
 #'
 #'
@@ -42,14 +46,20 @@
 netClust <- function(net, method = "components", ...) {
   if (is.character(method)) {
     if (method == "components") {
-      net[["nodes"]]$component_cluster <- as.character(igraph::components(net[["graph"]], ...)$membership)
+      net[["nodes"]]$component_cluster <- as.character(
+        igraph::components(net[["graph"]], ...)$membership
+        )
     } else if (method == "dbscan") {
-      net[["nodes"]]$dbscan_cluster <- as.character(dbscan::dbscan(net[["nodes"]][, c("V1", "V2")], ...)$cluster)
+      net[["nodes"]]$dbscan_cluster <- as.character(
+        dbscan::dbscan(net[["nodes"]][, c("V1", "V2")], ...)$cluster
+        )
     } else if (method == "kmeans") {
-      net[["nodes"]]$kmeans_cluster <- as.character(kmeans(net[["nodes"]][, c("V1", "V2")], ...)$cluster)
+      net[["nodes"]]$kmeans_cluster <- as.character(
+        kmeans(net[["nodes"]][, c("V1", "V2")], ...)$cluster
+        )
     }
   } else { # pull node option
-    if (any(unlist(lapply(node_ex, function(l) any(ggplot2::is.ggplot(l)))))) {
+    if (any(unlist(lapply(method, function(l) any(ggplot2::is.ggplot(l)))))) {
       method <- method$net
     }
     pulled_nodes <- method$nodes
