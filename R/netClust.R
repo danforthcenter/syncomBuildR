@@ -2,7 +2,9 @@
 #' 
 #' 
 #' @param net Object returned from \code{\link{asvNet}}
-#' @param method Method to use for clustering. Current supported options are components, dbscan, and kmeans. See details.
+#' @param method Method to use for clustering. This can be a method from "components", "dbscan",
+#' and "kmeans" or the output from pullNode, in which case that node and it's connections are labelled
+#' as a cluster.
 #' @param ... Additional arguments passed to function picked by method.
 #' @keywords network, changepoint
 #' @importFrom igraph components
@@ -39,13 +41,26 @@
 #' 
 
 netClust<-function(net, method="components", ...){
-  method=match.arg(method, c("components", "dbscan", "kmeans"))
-  if(method == "components"){
-    net[["nodes"]]$component_cluster<-as.character(igraph::components(net[["graph"]], ...)$membership)
-  } else if(method=="dbscan"){
-    net[["nodes"]]$dbscan_cluster<-as.character(dbscan::dbscan( net[["nodes"]][,c("V1", "V2")], ...)$cluster)
-  } else if(method == "kmeans"){
-    net[["nodes"]]$kmeans_cluster<-as.character(kmeans(net[["nodes"]][,c("V1", "V2")], ...)$cluster)
+  if (is.character(method)) {
+    if(method == "components"){
+      net[["nodes"]]$component_cluster<-as.character(igraph::components(net[["graph"]], ...)$membership)
+    } else if(method=="dbscan"){
+      net[["nodes"]]$dbscan_cluster<-as.character(dbscan::dbscan( net[["nodes"]][,c("V1", "V2")], ...)$cluster)
+    } else if(method == "kmeans"){
+      net[["nodes"]]$kmeans_cluster<-as.character(kmeans(net[["nodes"]][,c("V1", "V2")], ...)$cluster)
+    } 
+  } else { # pull node option
+    if (any(unlist(lapply(node_ex, function(l) any(ggplot2::is.ggplot(l)))))) {
+      method <- method$net
+    }
+    pulled_nodes <- method$nodes
+    net_nodes <- net[["nodes"]]
+    fills <- unique(pulled_nodes$fill)
+    fills <- fills[!grepl("other", fills)]
+    net_nodes[[paste0("pullNode_cluster_",
+                      paste(fills, collapse = "_"))]] <- ifelse(net_nodes$asv %in% pulled_nodes$asv,
+                                                                "In", "Out")
+    net[["nodes"]] <- net_nodes
   }
   return(net)
 }

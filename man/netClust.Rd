@@ -9,7 +9,9 @@ netClust(net, method = "components", ...)
 \arguments{
 \item{net}{Object returned from \code{\link{asvNet}}}
 
-\item{method}{Method to use for clustering. Current supported options are components, dbscan, and kmeans. See details.}
+\item{method}{Method to use for clustering. This can be a method from "components", "dbscan",
+and "kmeans" or the output from pullNode, in which case that node and it's connections are labelled
+as a cluster.}
 
 \item{...}{Additional arguments passed to function picked by method.}
 }
