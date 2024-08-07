@@ -74,7 +74,7 @@ asvNet <- function(df, metadata = NULL, edge = NULL, thresh = NULL,
   nd$eigen_centrality <- igraph::eigen_centrality(g)[[1]]
   nd$authority_score <- igraph::authority_score(g)[[1]]
   nd$page_rank <- igraph::page_rank(g)[[1]]
-  nd$k_coreness <- igraph::coreness(g)
+  nd$k_coreness <- igraph::coreness(g)[[1]]
   #* add coordinates for plotting edges
   eg$from.x <- nd$V1[match(eg$from, nd[[metadata_join]])]
   eg$from.y <- nd$V2[match(eg$from, nd[[metadata_join]])]
