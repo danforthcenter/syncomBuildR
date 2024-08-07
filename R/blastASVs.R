@@ -12,9 +12,9 @@
 #' Defaults to Inf, which will return all matches above the cutoff.
 #' @param cores Number of cores optionally to run in parallel. Defaults to 1 if "mc.cores" is not set.
 #' @keywords calibrate, ZINB, NB
-#' @import rBLAST
-#' @import Biostrings
-#' @import seqinr
+#' @importFrom rBLAST makeblastdb blast
+#' @importFrom Biostrings DNAStringSet
+#' @importFrom seqinr write.fasta
 #' @import parallel
 #' @return A dataframe of blast results
 #'

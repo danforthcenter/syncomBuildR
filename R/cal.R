@@ -19,8 +19,8 @@
 #' \link{[vignette](https://cran.r-project.org/web/packages/chngpt/vignettes/chngpt-vignette.pdf)}
 #' @keywords calibrate, ZINB, NB
 #' @import parallel
-#' @import pscl
-#' @import MASS
+#' @importFrom pscl zeroinfl
+#' @importFrom MASS glm.nb
 #' @return An ASV table as a wide dataframe with effects from some variables modeled out.
 #'
 #' @examples
