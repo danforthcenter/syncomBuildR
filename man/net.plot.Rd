@@ -12,7 +12,8 @@ net.plot(
   edgeWeight = NULL,
   edgeFilter = NULL,
   thresh_below = 0.05,
-  facet = NULL
+  facet = NULL,
+  method = "ggplot"
 )
 }
 \arguments{
@@ -40,9 +41,11 @@ Defaults to 0.05.}
 \item{facet}{Optionally a variable to facet the plot on. This is meant to be used to separate
 multiple networks created from \link{netcomi2scb}
 in which case "netNumber" should be used.}
+
+\item{method}{Method for visualization, defaults to "ggplot" but also accepts "plotly".}
 }
 \value{
-A ggplot object.
+A plot of the kind determined by the method argument.
 }
 \description{
 Function to plot networks generated from \code{asvNet} with various emphases.

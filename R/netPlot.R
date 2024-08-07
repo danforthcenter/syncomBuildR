@@ -18,8 +18,9 @@
 #' @param facet Optionally a variable to facet the plot on. This is meant to be used to separate
 #' multiple networks created from \link{netcomi2scb}
 #' in which case "netNumber" should be used.
+#' @param method Method for visualization, defaults to "ggplot" but also accepts "plotly".
 #' @import ggplot2
-#' @return A ggplot object.
+#' @return A plot of the kind determined by the method argument.
 #'
 #'
 #' @examples
@@ -41,7 +42,7 @@
 #'
 
 net.plot <- function(net, fill = NULL, shape = NULL, size = 3, edgeWeight = NULL,
-                     edgeFilter = NULL, thresh_below = 0.05, facet = NULL) {
+                     edgeFilter = NULL, thresh_below = 0.05, facet = NULL, method = "ggplot") {
   nodes <- net[["nodes"]]
   edges <- net[["edges"]]
   multi_thresh_fill <- FALSE
@@ -103,6 +104,22 @@ net.plot <- function(net, fill = NULL, shape = NULL, size = 3, edgeWeight = NULL
       stop("edgeFilter must be character or numeric, see ?net.plot for details.")
     }
   }
+  if (method == "plotly") {
+    if (is.null(facet)) {
+      p <- .plotlyNetPlot(nodes, edges, edgeWeight, fill, shape, facet)
+    } else {
+      p <- .facetedPlotlyNetPlot(nodes, edges, edgeWeight, fill, shape, facet)
+    }
+  } else {
+    p <- .ggNetPlot(nodes, edges, edgeWeight, fill, shape, facet, size)
+  }
+  return(p)
+}
+
+#' @keywords internal
+#' @noRd
+
+.ggNetPlot <- function(nodes, edges, edgeWeight, fill, shape, facet, size) {
   p <- ggplot2::ggplot(nodes) +
     ggplot2::geom_segment(
       data = edges, ggplot2::aes(
@@ -142,5 +159,81 @@ net.plot <- function(net, fill = NULL, shape = NULL, size = 3, edgeWeight = NULL
         strip.text = element_text(color = "white", size = 12)
       )
   }
+  return(p)
+}
+
+#' @keywords internal
+#' @importFrom plotly plot_ly add_segments add_markers layout
+#' @noRd
+
+.plotlyNetPlot <- function(nodes, edges, edgeWeight = NULL, fill = NULL, shape = NULL, facet = NULL) {
+  p <- plotly::plot_ly(data = nodes)
+  p <- plotly::add_segments(p = p, data = edges,
+                    x = ~from.x,
+                    y = ~from.y,
+                    xend = ~to.x,
+                    yend = ~to.y,
+                    text = ~paste0(from, " to ", to, "\n", edgeWeight, ": ",
+                                   round(edges[[edgeWeight]], 3)),
+                    hoverinfo = "text",
+                    line = list(width = 0.1),
+                    name = "Edges",
+                    inherit = FALSE)
+  if (fill == "NOFILL") {
+    p <- plotly::add_markers(p = p, data = nodes,
+                             x = ~V1,
+                             y = ~V2,
+                             text = ~paste0(asv, "\n", "strength: ", round(nodes[["strength"]], 1)),
+                             hoverinfo = "text",
+                             type = "scatter",
+                             mode = "markers",
+                             name = "Nodes",
+                             marker = list(
+                               size = ~log(strength, base = exp(1)/2),
+                               opacity = 0.75,
+                               color = "black",
+                               line = list(color = "black")
+                             )
+    )
+  } else {
+    p <- plotly::add_markers(p = p, data = nodes,
+                             x = ~V1,
+                             y = ~V2,
+                             text = ~paste0(asv, "\n", "strength: ",
+                                            round(nodes[["strength"]], 1), "\n",
+                                            nodes[[fill]]),
+                             hoverinfo = "text",
+                             type = "scatter",
+                             mode = "markers",
+                             name = "Nodes",
+                             marker = list(
+                               size = ~log(strength, base = exp(1)/2),
+                               opacity = 0.75,
+                               color = ~nodes[[fill]],
+                               line = list(color = "black")
+                             )
+    )
+  }
+  p <- plotly::layout(p,
+                      xaxis = list(visible = FALSE),
+                      yaxis = list(visible = FALSE))
+  return(p)
+}
+
+#' @keywords internal
+#' @importFrom plotly subplot
+#' @noRd
+
+.facetedPlotlyNetPlot <- function(nodes, edges, edgeWeight = NULL, fill = NULL,
+                                  shape = NULL, facet = NULL) {
+  nodes <- nodes[!is.na(nodes[[facet]]), ]
+  ps <- lapply(unique(nodes[[facet]]), function(fct) {
+    sub_nodes <- nodes[nodes[[facet]] == fct, ]
+    sub_edges <- edges[edges$to %in% nodes$asv || edges$from %in% nodes$asv, ]
+    .plotlyNetPlot(sub_nodes, sub_edges, edgeWeight = edgeWeight, fill = fill,
+                   shape = shape, facet = facet)
+  })
+  p <- plotly::subplot(ps, nrows = ceiling(length(unique(nodes[[facet]])) / 3),
+               shareX = TRUE, shareY = TRUE)
   return(p)
 }
