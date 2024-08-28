@@ -50,18 +50,16 @@ net.plot <- function(net, fill = NULL, shape = NULL, size = 3, edgeWeight = NULL
   multi_thresh_shape <- FALSE
   single_thresh_shape <- FALSE
   #* make fill work
-  if (is.null(fill)) {
-    fill <- "NOFILL"
-    edges$NOFILL <- "a"
-    nodes$NOFILL <- "a"
-  } else if (fill == "thresh") {
-    fill <- colnames(nodes)[grepl("[hinge|upperhinge|segmented]_p", colnames(nodes))]
-    multi_thresh_fill <- TRUE
-  } else if (length(fill) > 1) {
-    multi_thresh_fill <- TRUE
-  } else if (is.numeric(nodes[[fill]]) && grepl("[hinge|upperhinge|segmented]_p$", fill)) {
-    single_thresh_fill <- TRUE
-  }
+  fill_helper_out <- .netPlotFillHelper(
+    multi_thresh_fill, single_thresh_fill, fill,
+    edges, nodes
+  )
+  nodes <- fill_helper_out$nodes
+  edges <- fill_helper_out$edges
+  multi_thresh_fill <- fill_helper_out$mtf
+  single_thresh_fill <- fill_helper_out$stf
+  fill <- fill_helper_out$fill
+
   if (multi_thresh_fill || single_thresh_fill) {
     nodes[[paste0(fill, "_bin")]] <- unlist(lapply(fill, function(col) {
       as.numeric(nodes[[col]] <= thresh_below)
@@ -70,17 +68,16 @@ net.plot <- function(net, fill = NULL, shape = NULL, size = 3, edgeWeight = NULL
     fill <- "significantThresholdModels"
   }
   #* make shape work
-  if (is.null(shape)) {
-    shape <- "NOSHAPE"
-    nodes$NOSHAPE <- "a"
-  } else if (shape == "thresh") {
-    shape <- colnames(nodes)[grepl("[hinge|upperhinge|segmented]_p", colnames(nodes))]
-    multi_thresh_shape <- TRUE
-  } else if (length(shape) > 1) {
-    multi_thresh_shape <- TRUE
-  } else if (is.numeric(nodes[[shape]]) && grepl("[hinge|upperhinge|segmented]_p$", shape)) {
-    single_thresh_shape <- TRUE
-  }
+  shape_helper_out <- .netPlotShapeHelper(
+    multi_thresh_shape, single_thresh_shape, shape,
+    edges, nodes
+  )
+  nodes <- shape_helper_out$nodes
+  edges <- shape_helper_out$edges
+  multi_thresh_shape <- shape_helper_out$mts
+  single_thresh_shape <- shape_helper_out$sts
+  shape <- shape_helper_out$shape
+
   if (multi_thresh_shape || single_thresh_shape) {
     nodes[[paste0(shape, "_bin")]] <- unlist(lapply(shape, function(col) {
       as.numeric(nodes[[col]] <= thresh_below)
@@ -114,6 +111,57 @@ net.plot <- function(net, fill = NULL, shape = NULL, size = 3, edgeWeight = NULL
     p <- .ggNetPlot(nodes, edges, edgeWeight, fill, shape, facet, size)
   }
   return(p)
+}
+
+#' @keywords internal
+#' @noRd
+
+.netPlotFillHelper <- function(multi_thresh_fill, single_thresh_fill, fill,
+                               edges, nodes) {
+  if (is.null(fill)) {
+    fill <- "NOFILL"
+    edges$NOFILL <- "a"
+    nodes$NOFILL <- "a"
+  } else if (fill == "thresh") {
+    fill <- colnames(nodes)[grepl("[hinge|upperhinge|segmented]_p", colnames(nodes))]
+    multi_thresh_fill <- TRUE
+  } else if (length(fill) > 1) {
+    multi_thresh_fill <- TRUE
+  } else if (is.numeric(nodes[[fill]]) && grepl("[hinge|upperhinge|segmented]_p$", fill)) {
+    single_thresh_fill <- TRUE
+  }
+  return(list(
+    "mtf" = multi_thresh_fill,
+    "stf" = single_thresh_fill,
+    "edges" = edges,
+    "nodes" = nodes,
+    "fill" = fill
+  ))
+}
+
+#' @keywords internal
+#' @noRd
+
+.netPlotShapeHelper <- function(multi_thresh_shape, single_thresh_shape, shape,
+                                edges, nodes) {
+  if (is.null(shape)) {
+    shape <- "NOSHAPE"
+    nodes$NOSHAPE <- "a"
+  } else if (shape == "thresh") {
+    shape <- colnames(nodes)[grepl("[hinge|upperhinge|segmented]_p", colnames(nodes))]
+    multi_thresh_shape <- TRUE
+  } else if (length(shape) > 1) {
+    multi_thresh_shape <- TRUE
+  } else if (is.numeric(nodes[[shape]]) && grepl("[hinge|upperhinge|segmented]_p$", shape)) {
+    single_thresh_shape <- TRUE
+  }
+  return(list(
+    "mts" = multi_thresh_shape,
+    "sts" = single_thresh_shape,
+    "edges" = edges,
+    "nodes" = nodes,
+    "shape" = shape
+  ))
 }
 
 #' @keywords internal
@@ -168,55 +216,64 @@ net.plot <- function(net, fill = NULL, shape = NULL, size = 3, edgeWeight = NULL
 
 .plotlyNetPlot <- function(nodes, edges, edgeWeight = NULL, fill = NULL, shape = NULL, facet = NULL) {
   p <- plotly::plot_ly(data = nodes)
-  p <- plotly::add_segments(p = p, data = edges,
-                    x = ~from.x,
-                    y = ~from.y,
-                    xend = ~to.x,
-                    yend = ~to.y,
-                    text = ~paste0(from, " to ", to, "\n", edgeWeight, ": ",
-                                   round(edges[[edgeWeight]], 3)),
-                    hoverinfo = "text",
-                    line = list(width = 0.1),
-                    name = "Edges",
-                    inherit = FALSE)
+  p <- plotly::add_segments(
+    p = p, data = edges,
+    x = ~from.x,
+    y = ~from.y,
+    xend = ~to.x,
+    yend = ~to.y,
+    text = ~ paste0(
+      from, " to ", to, "\n", edgeWeight, ": ",
+      round(edges[[edgeWeight]], 3)
+    ),
+    hoverinfo = "text",
+    line = list(width = 0.1),
+    name = "Edges",
+    inherit = FALSE
+  )
   if (fill == "NOFILL") {
-    p <- plotly::add_markers(p = p, data = nodes,
-                             x = ~V1,
-                             y = ~V2,
-                             text = ~paste0(asv, "\n", "strength: ", round(nodes[["strength"]], 1)),
-                             hoverinfo = "text",
-                             type = "scatter",
-                             mode = "markers",
-                             name = "Nodes",
-                             marker = list(
-                               size = ~log(strength, base = exp(1)/2),
-                               opacity = 0.75,
-                               color = "black",
-                               line = list(color = "black")
-                             )
+    p <- plotly::add_markers(
+      p = p, data = nodes,
+      x = ~V1,
+      y = ~V2,
+      text = ~ paste0(asv, "\n", "strength: ", round(nodes[["strength"]], 1)),
+      hoverinfo = "text",
+      type = "scatter",
+      mode = "markers",
+      name = "Nodes",
+      marker = list(
+        size = ~ log(strength, base = exp(1) / 2),
+        opacity = 0.75,
+        color = "black",
+        line = list(color = "black")
+      )
     )
   } else {
-    p <- plotly::add_markers(p = p, data = nodes,
-                             x = ~V1,
-                             y = ~V2,
-                             text = ~paste0(asv, "\n", "strength: ",
-                                            round(nodes[["strength"]], 1), "\n",
-                                            nodes[[fill]]),
-                             hoverinfo = "text",
-                             type = "scatter",
-                             mode = "markers",
-                             name = "Nodes",
-                             marker = list(
-                               size = ~log(strength, base = exp(1)/2),
-                               opacity = 0.75,
-                               color = ~nodes[[fill]],
-                               line = list(color = "black")
-                             )
+    p <- plotly::add_markers(
+      p = p, data = nodes,
+      x = ~V1,
+      y = ~V2,
+      text = ~ paste0(
+        asv, "\n", "strength: ",
+        round(nodes[["strength"]], 1), "\n",
+        nodes[[fill]]
+      ),
+      hoverinfo = "text",
+      type = "scatter",
+      mode = "markers",
+      name = "Nodes",
+      marker = list(
+        size = ~ log(strength, base = exp(1) / 2),
+        opacity = 0.75,
+        color = ~ nodes[[fill]],
+        line = list(color = "black")
+      )
     )
   }
   p <- plotly::layout(p,
-                      xaxis = list(visible = FALSE),
-                      yaxis = list(visible = FALSE))
+    xaxis = list(visible = FALSE),
+    yaxis = list(visible = FALSE)
+  )
   return(p)
 }
 
@@ -230,10 +287,14 @@ net.plot <- function(net, fill = NULL, shape = NULL, size = 3, edgeWeight = NULL
   ps <- lapply(unique(nodes[[facet]]), function(fct) {
     sub_nodes <- nodes[nodes[[facet]] == fct, ]
     sub_edges <- edges[edges$to %in% nodes$asv || edges$from %in% nodes$asv, ]
-    .plotlyNetPlot(sub_nodes, sub_edges, edgeWeight = edgeWeight, fill = fill,
-                   shape = shape, facet = facet)
+    .plotlyNetPlot(sub_nodes, sub_edges,
+      edgeWeight = edgeWeight, fill = fill,
+      shape = shape, facet = facet
+    )
   })
-  p <- plotly::subplot(ps, nrows = ceiling(length(unique(nodes[[facet]])) / 3),
-               shareX = TRUE, shareY = TRUE)
+  p <- plotly::subplot(ps,
+    nrows = ceiling(length(unique(nodes[[facet]])) / 3),
+    shareX = TRUE, shareY = TRUE
+  )
   return(p)
 }
