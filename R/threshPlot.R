@@ -48,16 +48,16 @@ threshPlot <- function(thresh, asv, asvCols = NULL, phenotype = NULL, unit = "as
     phenotype <- unique(thresh$phenotype)
   }
   if ("calibratePheno" %in% colnames(thresh)) {
-    cal <- unlist(lapply(unique(thresh$calibratePheno), function(s) {
+    cal <- unique(unlist(lapply(unique(thresh$calibratePheno), function(s) {
       as.character(as.formula(s))[3]
-    }))
+    })))
   } else {
     cal <- NULL
   }
   outList <- lapply(asvCols, function(microbe) {
     thresh_sub <- thresh[thresh[[unit]] == microbe, ]
     phenoPlots <- lapply(phenotype, function(pheno) {
-      asv_sub <- asv[, colnames(asv) %in% c(phenotype, microbe, cal)]
+      asv_sub <- asv[, colnames(asv) %in% c(pheno, microbe, cal)]
       if (!is.null(cal)) {
         asv_sub[[pheno]] <- residuals(lm(
           as.formula(
@@ -71,6 +71,9 @@ threshPlot <- function(thresh, asv, asvCols = NULL, phenotype = NULL, unit = "as
       }
       interceptData <- thresh_sub[thresh_sub$Source == "(Intercept)" & thresh_sub$phenotype == pheno, ]
       chngptData <- thresh_sub[thresh_sub$Source != "(Intercept)" & thresh_sub$phenotype == pheno, ]
+      if (nrow(chngptData) < 1) {
+        return(NULL)
+      }
       postCptCol <- if (chngptData$p.value < 0.05) {
         viridis::plasma(1, begin = 0.7)
       } else {
