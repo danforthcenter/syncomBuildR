@@ -1,4 +1,5 @@
 #' Function to use BLAST to align ASV sequences across multiple datasets.
+#'
 #' Note that currently no attempt is made to resolve dependencies for this function so you will need to
 #' have rBLAST from github (\code{devtools::install_github("mhahsler/rBLAST")}) and Biostrings/seqinr
 #' already installed. I'll get to at some point.
@@ -67,7 +68,7 @@ blastASVs <- function(seqs1, seqs2, cutoff = 97.5, db = NULL, maxMatches = Inf,
         row.names = 1L, class = "data.frame"
       )
     }
-    res <- res[as.numeric(rownames(res)) < maxMatches, ]
+    res <- res[as.numeric(rownames(res)) <= maxMatches, ]
     return(res)
   }, mc.cores = cores))
   if (delete_db) {

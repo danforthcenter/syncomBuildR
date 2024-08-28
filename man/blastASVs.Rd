@@ -2,10 +2,7 @@
 % Please edit documentation in R/blastASVs.R
 \name{blastASVs}
 \alias{blastASVs}
-\title{Function to use BLAST to align ASV sequences across multiple datasets.
-Note that currently no attempt is made to resolve dependencies for this function so you will need to
-have rBLAST from github (\code{devtools::install_github("mhahsler/rBLAST")}) and Biostrings/seqinr
-already installed. I'll get to at some point.}
+\title{Function to use BLAST to align ASV sequences across multiple datasets.}
 \usage{
 blastASVs(
   seqs1,
@@ -35,7 +32,6 @@ Defaults to Inf, which will return all matches above the cutoff.}
 A dataframe of blast results
 }
 \description{
-Function to use BLAST to align ASV sequences across multiple datasets.
 Note that currently no attempt is made to resolve dependencies for this function so you will need to
 have rBLAST from github (\code{devtools::install_github("mhahsler/rBLAST")}) and Biostrings/seqinr
 already installed. I'll get to at some point.
