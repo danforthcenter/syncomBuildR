@@ -5,7 +5,8 @@
 #' @param asvCols Either column names, positions, or a single character string to use as regex to
 #' find all asv columns.
 #' @param method A distance method compatible with \code{\link{vegan::vegdist}}, a correlation
-#' coefficient (spearman or pearson).
+#' coefficient for use with \code{Hmisc::rcorr} (spearman or pearson), or one of "blomqvist" or
+#' "gaussrank", which are implemented here in R and therefore will be slower.
 #' @param parallel How many cores to use in parallel. The parallelized component only comes into play
 #' with correlation coefficient methods and is not particularly heavy, so more cores will have a
 #' minimal speed improvement.
@@ -31,7 +32,7 @@
 #' @examples
 #'
 #' # a<-qc(); b<-cal(a); c<-thresh(b); d<-asvDist(a)
-#' print(load("/home/jsumner/Desktop/stargate/SINC/sincUtils/syncomBuilder/threshOutput.rdata"))
+#' print(load("/home/josh/scripts/SINC/sincUtils/syncomBuilder/threshOutput.rdata"))
 #' sp_dist <- asvDist(asv, method = "spearman", clr_transform = TRUE, edgeFilter = 0.5)
 #' unfiltered_sp_dist <- asvDist(asv, method = "spearman", clr_transform = TRUE, edgeFilter = NULL)
 #' dim(sp_dist)
@@ -59,6 +60,7 @@ asvDist <- function(asvTab, asvCols = NULL, method = "spearman",
     "chisq", "chord", "aitchison", "robust.aitchison"
   )
   correlation_coefficients <- c("spearman", "pearson")
+  scb_correlations <- c("blomqvist", "gaussrank")
 
   #* *pull asvs as matrix* [same for all options]
   if (returnASVs) {
@@ -100,6 +102,18 @@ asvDist <- function(asvTab, asvCols = NULL, method = "spearman",
     }, mc.cores = parallel))
     ldf <- as.data.frame(data.table::dcast(ldf, ... ~ trait))
     colnames(ldf) <- c("c1", "c2", names(M))
+  } else if (method %in% scb_correlations) {
+    matched_fun <- get(paste0(".scb_", method))
+    ldf <- do.call(rbind, parallel::mclapply(asvCols, function(ac1) {
+      remaining_asvCols <- c(ac1, asvCols[-c(1:which(asvCols == ac1))])
+      do.call(rbind, lapply(remaining_asvCols, function(ac2) {
+        data.frame(c1 = ac1, c2 = ac2, d = matched_fun(
+          as.numeric(mat[ac1, ]),
+          as.numeric(mat[ac2, ])
+          ) )
+      }))
+    }))
+    ldf <- stats::setNames(ldf, c("c1", "c2", method))
   }
 
   #* *plotting*
@@ -135,4 +149,25 @@ asvDist <- function(asvTab, asvCols = NULL, method = "spearman",
   }
   #* *return data*
   return(ldf)
+}
+
+#' @keywords internal
+#' @noRd
+
+.scb_blomqvist <- function(x, y) {
+  med_x <- stats::median(x, na.rm = TRUE)
+  med_y <- stats::median(y, na.rm = TRUE)
+  x1 <- sign(x - med_x)
+  y1 <- sign(y - med_y)
+  return(cor(x1, y1, method = "pearson"))
+}
+
+#' @keywords internal
+#' @noRd
+
+.scb_gaussrank <- function(x, y) {
+  out <- cor(stats::qnorm(rank(x) / (length(x) + 1)),
+             stats::qnorm(rank(y) / (length(y) + 1)),
+             method="pearson")
+  return(out)
 }

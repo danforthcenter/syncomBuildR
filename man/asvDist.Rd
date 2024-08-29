@@ -22,7 +22,8 @@ asvDist(
 find all asv columns.}
 
 \item{method}{A distance method compatible with \code{\link{vegan::vegdist}}, a correlation
-coefficient (spearman or pearson).}
+coefficient for use with \code{Hmisc::rcorr} (spearman or pearson), or one of "blomqvist" or
+"gaussrank", which are implemented here in R and therefore will be slower.}
 
 \item{parallel}{How many cores to use in parallel. The parallelized component only comes into play
 with correlation coefficient methods and is not particularly heavy, so more cores will have a
@@ -52,7 +53,7 @@ Function to make distance/dissimilarity data from an ASV table.
 \examples{
 
 # a<-qc(); b<-cal(a); c<-thresh(b); d<-asvDist(a)
-print(load("/home/jsumner/Desktop/stargate/SINC/sincUtils/syncomBuilder/threshOutput.rdata"))
+print(load("/home/josh/scripts/SINC/sincUtils/syncomBuilder/threshOutput.rdata"))
 sp_dist <- asvDist(asv, method = "spearman", clr_transform = TRUE, edgeFilter = 0.5)
 unfiltered_sp_dist <- asvDist(asv, method = "spearman", clr_transform = TRUE, edgeFilter = NULL)
 dim(sp_dist)
