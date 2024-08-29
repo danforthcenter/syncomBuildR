@@ -2,40 +2,48 @@
 % Please edit documentation in R/threshUpset.R
 \name{threshUpset}
 \alias{threshUpset}
-\title{Function to make upset plots of thresh output}
+\title{Function to plot results of a changepoint models as upset plots}
 \usage{
-threshUpset(thresh, cores = getOption("mc.cores", 1), method = "fdr")
+threshUpset(
+  thresh,
+  mode = "phenotype",
+  pvalcol = "p.value.",
+  cutoff = 0.05,
+  cores = getOption("mc.cores", 1)
+)
 }
 \arguments{
-\item{thresh}{output from the thresh function}
+\item{thresh}{Output from \code{\link{thresh}}}
 
-\item{cores}{Number of cores to use in summarizing data. This defaults to 1 if the "mc.cores" option
-is not set.}
+\item{mode}{Either "phenotype" (the default) or "pvalue". "phenotype" will show an upset plot
+of significant changepoint models against the phenotypes present in thresh, "pvalue" will show
+the results of various p-value adjustment methods.}
 
-\item{method}{The p-adjustment method to be used. Can be any suffix from ?p.adjust.methods}
+\item{pvalcol}{The column in thresh that has p-value data, defaults to "p.value." which reflects
+standard output from \code{thresh}.}
+
+\item{cutoff}{Alpha, the significance threshold. Defaults to 0.05.}
+
+\item{cores}{Number of cores to use in parallel. This should not make much of a difference generally
+but can be useful with very large tables. Defaults to 1 if the "mc.cores" option is not set.}
 }
 \value{
-A list of ggplots
+A ggplot or list of ggplots showing changepoint models against some set of phenotypes.
 }
 \description{
-Function to make upset plots of thresh output
+Function to plot results of a changepoint models as upset plots
 }
 \examples{
 
 # a<-qc(); b<-cal(a); c<-thresh(b)
-print(load("/home/jsumner/Desktop/stargate/SINC/sincUtils/syncomBuilder/cal_output.rdata"))
-asv <- are_c[[1]]
-zinbCalibrated <- are_c[[2]][are_c[[2]]$model == "ZINB", "asv"]
-asv <- are_c[[1]][, c("tissue", "plot", "row", "genotype", "biomass", "sd", zinbCalibrated)]
+print(load("/home/jsumner/Desktop/stargate/SINC/sincUtils/syncomBuilder/threshOutput.rdata"))
+head(threshMods)
 
-threshMods <- thresh(
-  asvTab = asv, phenoCols = "biomass",
-  model = "hinge", cores = 10, calibratePheno = "genotype"
-)
-threshUpset(threshMods, 1)
+threshUpset(threshMods)
 
 }
 \keyword{changepoint,}
-\keyword{phenotype}
+\keyword{phenotype,}
 \keyword{regression,}
 \keyword{threshold,}
+\keyword{upset}

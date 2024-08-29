@@ -10,12 +10,15 @@
 #' returned. Defaults to all.
 #' @param umap Logical, should a UMAP also be performed? Defaults to FALSE. If TRUE then UAMP1 and 2
 #' columns will be added and a list of 2 ggplots will be returned.
+#' @param distance Distance to use. The default ("euclidean") will use \code{FactoMineR::PCA}, distances
+#' supported by \code{vegan::vegdist} will use \code{ape::pcoa}.
 #' @keywords pca umap
 #' @return a ggplot, optionally a dataframe and FactoMineR::PCA output if returnData is TRUE.
 #'
 #' @import ggplot2
-#' @import FactoMineR
+#' @importFrom FactoMineR PCA
 #' @importFrom uwot umap
+#' @importFrom ape pcoa
 #'
 #' @examples
 #' print(load("/home/jsumner/Desktop/stargate/SINC/sincUtils/syncomBuilder/cal_output.rdata"))
@@ -27,7 +30,8 @@
 #'
 #' @export
 
-pcadf <- function(df = NULL, cols = NULL, color = NULL, returnData = TRUE, ncp = NULL, umap = FALSE) {
+pcadf <- function(df = NULL, cols = NULL, color = NULL, returnData = TRUE, ncp = NULL, umap = FALSE,
+                  distance = "euclidean") {
   if (is.null(cols)) {
     cols <- which(grepl("ASV", colnames(df)))
   } else if (is.character(cols) && length(cols) == 1) {
@@ -38,13 +42,23 @@ pcadf <- function(df = NULL, cols = NULL, color = NULL, returnData = TRUE, ncp =
   if (is.null(ncp)) {
     ncp <- min(dim(df[, cols])) - 1
   }
-  pca <- FactoMineR::PCA(df[, cols], ncp = ncp, graph = FALSE)
-  pc1Var <- round(pca$eig[1, 2], 3)
-  pc2Var <- round(pca$eig[2, 2], 3)
-  coords <- as.data.frame(pca$ind)
-  coords <- coords[, grepl("coord", colnames(coords))]
-  colnames(coords) <- gsub("coord.Dim.", "pc", colnames(coords))
-  pca.df <- cbind(df[, -cols], coords)
+  if (distance == "euclidean") {
+    pca <- FactoMineR::PCA(df[, cols], ncp = ncp, graph = FALSE)
+    pc1Var <- round(pca$eig[1, 2], 3)
+    pc2Var <- round(pca$eig[2, 2], 3)
+    coords <- as.data.frame(pca$ind)
+    coords <- coords[, grepl("coord", colnames(coords))]
+    colnames(coords) <- gsub("coord.Dim.", "pc", colnames(coords))
+    pca.df <- cbind(df[, -cols], coords) 
+  } else {
+    d <- vegan::vegdist(as.matrix(df[, cols]), method = distance)
+    pca <- ape::pcoa(d, correction = "none")
+    pc1Var <- round(pca$values$Relative_eig[1], 3) * 100
+    pc2Var <- round(pca$values$Relative_eig[2], 3) * 100
+    coords <- as.data.frame(pca$vectors[, c(1:min(ncp, ncol(pca$vectors)))])
+    colnames(coords) <- gsub("Axis.", "pc", colnames(coords))
+    pca.df <- cbind(df[, -cols], coords) 
+  }
   if (length(color) > 1) {
     pca.df[[paste0(color, collapse = ".")]] <- interaction(pca.df[, c(color)])
     color <- paste0(color, collapse = ".")
@@ -96,8 +110,6 @@ pcadf <- function(df = NULL, cols = NULL, color = NULL, returnData = TRUE, ncp =
     }
     p <- list("pca" = p, "umap" = p2)
   }
-
-
 
   if (returnData) {
     return(list("data" = pca.df, "plot" = p, "pca" = pca))

@@ -42,7 +42,7 @@ thresh <- function(asvTab, phenoCols, asvCols = NULL, model = "hinge",
     asvCols <- colnames(asvTab)[grepl("ASV", colnames(asvTab))]
   }
   threshOut <- do.call(rbind, lapply(phenoCols, function(phenotype) {
-    print(phenotype)
+    message(paste0("Running ", phenotype))
     if (!is.null(calibratePheno)) {
       formString <- paste0(phenotype, "~", paste0(calibratePheno, collapse = "+"))
       asvTab[[phenotype]] <- residuals(lm(as.formula(formString), data = asvTab, na.action = na.exclude))
@@ -78,6 +78,7 @@ thresh <- function(asvTab, phenoCols, asvCols = NULL, model = "hinge",
           out$asv <- asv_col
           out$phenotype <- phenotype
           out$model <- model
+          out$model_id <- paste(asv_col, phenotype, model, sep = "_")
           if (!is.null(calibratePheno)) {
             out$calibratePheno <- formString
           }

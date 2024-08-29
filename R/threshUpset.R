@@ -1,74 +1,85 @@
-#' Function to make upset plots of thresh output
+#' Function to plot results of a changepoint models as upset plots
 #'
-#' @param thresh output from the thresh function
-#' @param cores Number of cores to use in summarizing data. This defaults to 1 if the "mc.cores" option
-#' is not set.
-#' @param method The p-adjustment method to be used. Can be any suffix from ?p.adjust.methods
-#' @keywords changepoint, threshold, regression, phenotype
-#' @import ComplexUpset
+#' @param thresh Output from \code{\link{thresh}}
+#' @param mode Either "phenotype" (the default) or "pvalue". "phenotype" will show an upset plot
+#' of significant changepoint models against the phenotypes present in thresh, "pvalue" will show
+#' the results of various p-value adjustment methods.
+#' @param pvalcol The column in thresh that has p-value data, defaults to "p.value." which reflects
+#' standard output from \code{thresh}.
+#' @param cutoff Alpha, the significance threshold. Defaults to 0.05.
+#' @param cores Number of cores to use in parallel. This should not make much of a difference generally
+#' but can be useful with very large tables. Defaults to 1 if the "mc.cores" option is not set.
+#'
+#' @keywords changepoint, threshold, regression, phenotype, upset
+#'
 #' @import patchwork
-#' @importFrom parallel mclapply
-#' @importFrom ggplot2 labs
-#' @importFrom data.table as.data.table dcast
-#' @return A list of ggplots
+#' @importFrom ComplexUpset upset
+#'
+#' @return A ggplot or list of ggplots showing changepoint models against some set of phenotypes.
 #'
 #' @examples
 #'
 #' # a<-qc(); b<-cal(a); c<-thresh(b)
-#' print(load("/home/jsumner/Desktop/stargate/SINC/sincUtils/syncomBuilder/cal_output.rdata"))
-#' asv <- are_c[[1]]
-#' zinbCalibrated <- are_c[[2]][are_c[[2]]$model == "ZINB", "asv"]
-#' asv <- are_c[[1]][, c("tissue", "plot", "row", "genotype", "biomass", "sd", zinbCalibrated)]
+#' print(load("/home/jsumner/Desktop/stargate/SINC/sincUtils/syncomBuilder/threshOutput.rdata"))
+#' head(threshMods)
 #'
-#' threshMods <- thresh(
-#'   asvTab = asv, phenoCols = "biomass",
-#'   model = "hinge", cores = 10, calibratePheno = "genotype"
-#' )
-#' threshUpset(threshMods, 1)
+#' threshUpset(threshMods)
 #'
 #' @export
 
-threshUpset <- function(thresh, cores = getOption("mc.cores", 1), method = "fdr") {
-  df <- do.call(rbind, lapply(split(
-    thresh,
-    interaction(thresh$phenotype)
-  ), function(d) {
-    d$p.adj.bonferroni <- p.adjust(d$p.value., method = "bonferroni")
-    d$p.adj.holm <- p.adjust(d$p.value., method = "holm")
-    d$p.adj.hochberg <- p.adjust(d$p.value., method = "hochberg")
-    d$p.adj.fdr <- p.adjust(d$p.value., method = "fdr")
-    d$p.adj.by <- p.adjust(d$p.value., method = "BY")
-    d$p.adj.none <- p.adjust(d$p.value., method = "none")
+threshUpset <- function(thresh, mode = "phenotype",
+                        pvalcol = "p.value.", cutoff = 0.05, cores = getOption("mc.cores", 1)) {
+  if (mode == "phenotype") {
+    p <- .pheno_upset_plot(thresh, pvalcol, cutoff, cores)
+  } else {
+    p <- .pvalue_upset_plot(thresh, pvalcol)
+  }
+  return(p)
+}
+
+
+.pheno_upset_plot <- function(thresh, pvalcol = "p.value.", cutoff = 0.05, cores = 1) {
+  sig <- do.call(rbind, parallel::mclapply(unique(thresh$asv), function(asv){
+    sub <- thresh[!grepl("Intercept", thresh$Source) & thresh$asv == asv, ]
+    if(any(sub[[pvalcol]] < cutoff)){
+      return(sub)
+    } else{NULL}
+  }, mc.cores=cores))
+  
+  sub_upsetData <- sig[, c("phenotype", pvalcol, "asv")]
+  sub_upsetData[[pvalcol]] <- ifelse(sub_upsetData[[pvalcol]] < cutoff, 1, 0)
+  data.table::setDT(sub_upsetData)
+  upsetPlotData <- as.data.frame(data.table::dcast(sub_upsetData, asv ~ phenotype, value.var = pvalcol))
+  p <- ComplexUpset::upset(upsetPlotData, intersect = colnames(upsetPlotData)[-1])
+  p[[2]] <- p[[2]] + 
+    ggplot2::labs(title = paste0("ASV ~ Phenotype Correlations"),
+                  subtitle = paste0("With ", pvalcol, " < ", cutoff)) +
+    ggplot2::theme(legend.title.align = NULL,
+                   legend.text.align = NULL)
+  return(p)
+}
+
+#' @keywords internal
+#' @noRd
+
+.pvalue_upset_plot <- function(thresh, pvalcol = "p.value.") {
+  df <- do.call(rbind, lapply(split(thresh, thresh$phenotype), function(d){
+    d$p.adj.bonferroni <- p.adjust(d[[pvalcol]], method = "bonferroni")
+    d$p.adj.holm <- p.adjust(d[[pvalcol]], method = "holm")
+    d$p.adj.hochberg <- p.adjust(d[[pvalcol]], method = "hochberg")
+    d$p.adj.fdr <- p.adjust(d[[pvalcol]], method = "fdr")
+    d$p.adj.by <- p.adjust(d[[pvalcol]], method = "BY")
+    d$p.adj.none <- p.adjust(d[[pvalcol]], method = "none")
     return(d)
   }))
-
-  adj_results <- as.data.frame(do.call(cbind, lapply(df[, grepl("p.adj", colnames(df))], function(col) {
-    as.numeric(col < 0.05)
-  })))
+  
+  adj_results <- as.data.frame(do.call(cbind,
+                                       lapply(df[, grepl("p.adj", colnames(df))], function(col){
+                                         as.numeric(col<0.05)
+                                       })))
   p0 <- ComplexUpset::upset(adj_results, intersect = colnames(adj_results))
   p0[[2]] <- p0[[2]] +
-    ggplot2::labs(title = paste0("P adjustment options"))
-  p.adj.col <- paste0("p.adj.", method)
-  sig <- do.call(rbind, parallel::mclapply(unique(df$asv), function(asv) {
-    sub <- df[df$asv == asv, ]
-    if (any(sub[[p.adj.col]] < 0.05)) {
-      return(sub)
-    } else {
-      NULL
-    }
-  }, mc.cores = cores))
-
-  subUpsetData <- sig[, c("phenotype", p.adj.col, "asv")]
-  subUpsetData[[p.adj.col]] <- ifelse(subUpsetData[[p.adj.col]] < 0.05, 1, 0)
-  dt_l <- data.table::as.data.table(subUpsetData)
-
-  dw <- as.data.frame(data.table::dcast(dt_l, asv ~ phenotype, value.var = p.adj.col))
-
-  p01 <- ComplexUpset::upset(dw, intersect = colnames(subUpsetData)[-1])
-  p01[[2]] <- p01[[2]] + ggplot2::labs(
-    title = paste0("ASV ~ Phenotype Correlations"),
-    subtitle = paste0(method, " P Values Intersections")
-  )
-
-  return(list("p_adj_plot" = p0, "plot" = p01))
+    ggplot2::labs(title = paste0("P adjustment options")) +
+    ggplot2::theme(legend.text.align = NULL)
+  return(p0)
 }

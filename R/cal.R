@@ -14,9 +14,6 @@
 #' option is not set.
 #' @param verbose Logical, should fit metrics be returned? If TRUE then the output is a list with
 #' two elements (new ASV table and the metrics data), otherwise only the new ASV table is returned.
-#' @param model Type of changepoint model in chngpt::chngptm labeling convention.
-#' See Figure 2.1 of the chngpt
-#' \link{[vignette](https://cran.r-project.org/web/packages/chngpt/vignettes/chngpt-vignette.pdf)}
 #' @keywords calibrate, ZINB, NB
 #' @import parallel
 #' @importFrom pscl zeroinfl

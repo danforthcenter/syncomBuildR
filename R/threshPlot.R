@@ -49,7 +49,7 @@ threshPlot <- function(thresh, asv, asvCols = NULL, phenotype = NULL, unit = "as
   }
   if ("calibratePheno" %in% colnames(thresh)) {
     cal <- unique(unlist(lapply(unique(thresh$calibratePheno), function(s) {
-      as.character(as.formula(s))[3]
+      trimws(strsplit(as.character(as.formula(s))[3], "[+|:|*]")[[1]])
     })))
   } else {
     cal <- NULL
