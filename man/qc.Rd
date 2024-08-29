@@ -11,7 +11,7 @@ qc(
   asvAbnd = 100,
   sampleAbnd = 1000,
   normalize = "rescale",
-  rmTx = list("Order in Chloroplast", "Phylum in Plantae"),
+  rmTx = list("Order in Chloroplast", "Phylum in Plantae", "Kingdom in Eukaryota"),
   separate = NULL,
   metadata = NULL,
   return_removed = FALSE
@@ -47,7 +47,8 @@ be done separately in each subset of the data. Subsets will be bound together an
 will be filled with NA should subsets contain different selections of ASVs.}
 
 \item{metadata}{An optional dataframe of metadata to add to the asv table. If left NULL while
-`separate` is a dataframe then this will include that data as metadata.}
+`separate` is a dataframe then this will include that data as metadata. This must include 1 row
+per row of your asv table.}
 
 \item{return_removed}{Logical, abundance filtered data be returned? Defaults to FALSE. If TRUE then
 a list is returned.}

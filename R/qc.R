@@ -21,7 +21,8 @@
 #' be done separately in each subset of the data. Subsets will be bound together and missing values
 #' will be filled with NA should subsets contain different selections of ASVs.
 #' @param metadata An optional dataframe of metadata to add to the asv table. If left NULL while
-#' `separate` is a dataframe then this will include that data as metadata.
+#' `separate` is a dataframe then this will include that data as metadata. This must include 1 row
+#' per row of your asv table.
 #' @param return_removed Logical, abundance filtered data be returned? Defaults to FALSE. If TRUE then
 #' a list is returned.
 #' @keywords DADA2
@@ -61,7 +62,8 @@
 #' @export
 
 qc <- function(file = NULL, asvTab = NULL, taxa = NULL, asvAbnd = 100, sampleAbnd = 1000,
-               normalize = "rescale", rmTx = list("Order in Chloroplast", "Phylum in Plantae"),
+               normalize = "rescale",
+               rmTx = list("Order in Chloroplast", "Phylum in Plantae", "Kingdom in Eukaryota"),
                separate = NULL, metadata = NULL, return_removed = FALSE) {
   if (!is.null(file)) {
     seqtab.print <- NULL
