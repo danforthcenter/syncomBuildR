@@ -51,9 +51,9 @@ A dataframe showing pairwise correlations between individual ASVs/samples.
 Function to make distance/dissimilarity data from an ASV table.
 }
 \examples{
-
+\dontrun{
 # a<-qc(); b<-cal(a); c<-thresh(b); d<-asvDist(a)
-print(load("/home/josh/scripts/SINC/sincUtils/syncomBuilder/threshOutput.rdata"))
+print(load("~/syncomBuilder/threshOutput.rdata"))
 sp_dist <- asvDist(asv, method = "spearman", clr_transform = TRUE, edgeFilter = 0.5)
 unfiltered_sp_dist <- asvDist(asv, method = "spearman", clr_transform = TRUE, edgeFilter = NULL)
 dim(sp_dist)
@@ -62,8 +62,8 @@ bray <- asvDist(asv, method = "bray", clr_transform = FALSE, edgeFilter = NULL)
 save(sp_dist,
   euc,
   bray,
-  file = "/home/jsumner/Desktop/stargate/SINC/sincUtils/syncomBuilder/asvDist_output.rdata"
+  file = "~/syncomBuilder/asvDist_output.rdata"
 )
-
+}
 }
 \keyword{asv}

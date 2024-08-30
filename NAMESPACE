@@ -2,8 +2,10 @@
 
 export(asvDist)
 export(asvNet)
+export(b_da)
 export(blastASVs)
 export(cal)
+export(da)
 export(demultiplex)
 export(edgeFilter)
 export(mergeASVs)

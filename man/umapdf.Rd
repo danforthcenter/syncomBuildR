@@ -25,12 +25,13 @@ and pca arguments are potentially commonly useful.}
 Function to run a UMAP, plot and return the data with coordinates
 }
 \examples{
-print(load("/home/jsumner/Desktop/stargate/SINC/sincUtils/syncomBuilder/cal_output.rdata"))
+print(load("~/scripts/SINC/sincUtils/syncomBuilder/cal_output.rdata"))
 asv <- are_c[[1]]
 zinbCalibrated <- are_c[[2]][are_c[[2]]$model == "ZINB", "asv"]
 asv <- are_c[[1]][, c("tissue", "plot", "row", "genotype", "biomass", "sd", zinbCalibrated)]
-pdf <- pcadf(df = asv, cols = NULL, color = c("tissue", "genotype"), returnData = T, ncp = NULL)
-udf <- umapdf(df = pdf$data, cols = NULL, color = c("tissue", "genotype"), returnData = T, pca = 50)
+pdf <- pcadf(df = asv, cols = NULL, color = c("tissue", "genotype"), returnData = TRUE, ncp = NULL)
+udf <- umapdf(df = pdf$data, cols = NULL, color = c("tissue", "genotype"),
+returnData = TRUE, pca = 50)
 
 }
 \keyword{pca,}

@@ -41,7 +41,7 @@ A named list of dataframes including "asv" and "links", optionally with "taxa"
 Function combine ASV tables that have been aligned with blastASVs
 }
 \examples{
-
+\dontrun{
 res <- read.csv("blast_2022_vs_2021.csv")
 print(load("~/scripts/SINC/field_2021/microbiome/sinc_field_2021_asvTable.rdata"))
 asv21 <- asv
@@ -55,7 +55,7 @@ taxa <- list("d1" = taxa22, "d2" = taxa21)
 shared_meta <- c("genotype", "tissue") # shared metadata to keep from both tables
 
 ex <- mergeASVs(blast, asv, taxa, shared_meta)
-
+}
 }
 \keyword{ASVs}
 \keyword{combine}

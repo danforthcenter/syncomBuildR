@@ -63,9 +63,9 @@ an NB model is that there is no zi parameter.
 }
 \examples{
 
-
+\dontrun{
 if ("brms" \%in\% installed.packages()) {
-  print(load("~/Desktop/stargate/SINC/sincUtils/syncomBuilder/qc_output.rdata"))
+  print(load("~/scripts/SINC/sincUtils/syncomBuilder/qc_output.rdata"))
   asv[1:10, 1:10]
 
   df <- asv[, 1:20]
@@ -79,5 +79,5 @@ if ("brms" \%in\% installed.packages()) {
 
   ex <- b_da(df, col, predictors, zi_cutoff, intercept = FALSE)
 }
-
+}
 }

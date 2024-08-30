@@ -21,7 +21,7 @@
 #' @examples
 #'
 #' # a<-qc(); b<-cal(a); c<-thresh(b); d<-asvDist(a) ; e<-net(d, thresh = c)
-#' print(load("/home/jsumner/Desktop/stargate/SINC/sincUtils/syncomBuilder/net_output.rdata"))
+#' print(load("~/scripts/SINC/sincUtils/syncomBuilder/net_output.rdata"))
 #'
 #' pullNode(net_data, node = "ASV10", edge = "spearman", plot = TRUE, nodeCol = "asv")
 #'

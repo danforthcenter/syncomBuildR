@@ -8,7 +8,7 @@
 #' Defaults NULL where all column names containing the string "ASV" will be used.
 #' @param model Type of changepoint model in chngpt::chngptm labeling convention. Currently hinge,
 #' upperhinge, and segmented are supported. See Figure 2.1 of the chngpt
-#' \link{[vignette](https://cran.r-project.org/web/packages/chngpt/vignettes/chngpt-vignette.pdf)}
+#' [vignette](https://cran.r-project.org/web/packages/chngpt/vignettes/chngpt-vignette.pdf).
 #' @param cores Number of cores to run in parallel.
 #' @param calibratePheno An optional vector of column names to calibrate the phenotypes by.
 #' This should generally correspond to those used in `cal` if the ASV table has been calibrated or
@@ -22,14 +22,14 @@
 #' @examples
 #'
 #' # a<-qc(); b<-cal(a); c<-thresh(b)
-#' print(load("/home/jsumner/Desktop/stargate/SINC/sincUtils/syncomBuilder/cal_output.rdata"))
+#' print(load("~/scripts/SINC/sincUtils/syncomBuilder/cal_output.rdata"))
 #' asv <- are_c[[1]]
 #' zinbCalibrated <- are_c[[2]][are_c[[2]]$model == "ZINB", "asv"]
 #' asv <- are_c[[1]][, c("tissue", "plot", "row", "genotype", "biomass", "sd", zinbCalibrated)]
 #'
 #' threshMods <- thresh(
-#'   asvTab = asv, phenoCols = "biomass",
-#'   model = "hinge", cores = 10, calibratePheno = "genotype"
+#'   asvTab = asv[, 1:10], phenoCols = "biomass",
+#'   model = "hinge", cores = 1, calibratePheno = "genotype"
 #' )
 #' dim(threshMods)
 #' head(threshMods)

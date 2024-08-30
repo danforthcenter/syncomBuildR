@@ -26,7 +26,7 @@
 #' @examples
 #'
 #' # a<-qc(); b<-cal(a); c<-thresh(b); d<-asvDist(a) ; e<-net(d, thresh = c)
-#' print(load("/home/jsumner/Desktop/stargate/SINC/sincUtils/syncomBuilder/net_output.rdata"))
+#' print(load("~/scripts/SINC/sincUtils/syncomBuilder/net_output.rdata"))
 #'
 #' net <- net_data
 #' fill <- NULL

@@ -22,13 +22,13 @@
 #'
 #' @examples
 #'
-#' print(load("/home/jsumner/Desktop/stargate/SINC/sincUtils/syncomBuilder/qc_output.rdata"))
+#' print(load("~/scripts/SINC/sincUtils/syncomBuilder/qc_output.rdata"))
 #' asv[1:10, 1:10]
-#' print(load("/home/jsumner/Desktop/stargate/SINC/sincUtils/syncomBuilder/biomass.rdata"))
+#' print(load("~/scripts/SINC/sincUtils/syncomBuilder/biomass.rdata"))
 #' agBiomass <- aggregate(biomass ~ plot + row + genotype, biomass, mean)
 #' agBiomass$sd <- aggregate(biomass ~ plot + row + genotype, biomass, sd)$biomass
 #' asv_joined <- plyr::join(asv, agBiomass, by = "plot")
-#' are_c <- cal(asv_joined[asv_joined$tissue == "ARE", ], cal = "genotype", cores = 10)
+#' are_c <- cal(asv_joined[asv_joined$tissue == "ARE", c(1:20, 3145)], cal = "genotype", cores = 1)
 #' table(are_c[[2]]$model)
 #' dim(are_c[[1]])
 #'

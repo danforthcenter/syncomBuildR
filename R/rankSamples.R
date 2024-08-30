@@ -20,10 +20,10 @@
 #' # a<-qc(); b<-cal(a); c<-thresh(b); d<-asvDist(a) ;
 #' # e<-net(d, thresh = c) ;  f<-netClust(e) ; g <- rankSamples(f)
 #'
-#' print(load(paste0("/home/jsumner/Desktop/stargate/SINC/",
+#' print(load(paste0("~/scripts/SINC/",
 #' "sincUtils/syncomBuilder/net_output_clustered.rdata")))
-#' print(load("/home/jsumner/Desktop/stargate/SINC/sincUtils/syncomBuilder/cal_output.rdata"))
-#' print(load("/home/jsumner/Desktop/stargate/SINC/sincUtils/syncomBuilder/threshOutput.rdata"))
+#' print(load("~/scripts/SINC/sincUtils/syncomBuilder/cal_output.rdata"))
+#' print(load("~/scripts/SINC/sincUtils/syncomBuilder/threshOutput.rdata"))
 #'
 #' asv <- are_c[[1]]
 #' zinbCalibrated <- are_c[[2]][are_c[[2]]$model == "ZINB", "asv"]

@@ -26,7 +26,7 @@ Function to assess differential abundance of microbe counts or pseudo counts
 
 # Using uncalibrated data
 
-print(load("~/Desktop/stargate/SINC/sincUtils/syncomBuilder/qc_output.rdata"))
+print(load("~/scripts/SINC/sincUtils/syncomBuilder/qc_output.rdata"))
 asv[1:10, 1:10]
 
 df <- asv[, 1:20]

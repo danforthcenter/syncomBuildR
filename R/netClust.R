@@ -31,7 +31,7 @@
 #' @examples
 #'
 #' # a<-qc(); b<-cal(a); c<-thresh(b); d<-asvDist(a) ; e<-net(d, thresh = c)
-#' print(load("/home/jsumner/Desktop/stargate/SINC/sincUtils/syncomBuilder/net_output.rdata"))
+#' print(load("~/scripts/SINC/sincUtils/syncomBuilder/net_output.rdata"))
 #' table(netClust(net = net_data, "component")[["nodes"]]$component_cluster)
 #' table(netClust(net = net_data, "dbscan", eps = 3)[["nodes"]]$dbscan_cluster)
 #' table(netClust(net = net_data, "kmeans", centers = 3)[["nodes"]]$kmeans_cluster)

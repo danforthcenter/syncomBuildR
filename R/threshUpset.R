@@ -20,9 +20,9 @@
 #' @examples
 #'
 #' # a<-qc(); b<-cal(a); c<-thresh(b)
-#' print(load("/home/jsumner/Desktop/stargate/SINC/sincUtils/syncomBuilder/threshOutput.rdata"))
+#' print(load("~/scripts/SINC/sincUtils/syncomBuilder/threshOutput.rdata"))
 #' head(threshMods)
-#'
+#' threshMods[1:317, "phenotype"] <- "not_biomass"
 #' threshUpset(threshMods)
 #'
 #' @export

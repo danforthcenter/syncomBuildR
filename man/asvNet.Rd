@@ -45,9 +45,9 @@ Function to perform network analysis on a distance/dissimilarity matrix of a mic
 \examples{
 
 # a<-qc(); b<-cal(a); c<-thresh(b); d<-asvDist(a) ; e<-net(d, thresh = c)
-print(load("/home/jsumner/Desktop/stargate/SINC/sincUtils/syncomBuilder/threshOutput.rdata"))
-print(load("/home/jsumner/Desktop/stargate/SINC/sincUtils/syncomBuilder/asvDist_output.rdata"))
-print(load("/home/jsumner/Desktop/stargate/SINC/sincUtils/syncomBuilder/taxa_rdp.rdata"))
+print(load("~/scripts/SINC/sincUtils/syncomBuilder/threshOutput.rdata"))
+print(load("~/scripts/SINC/sincUtils/syncomBuilder/asvDist_output.rdata"))
+print(load("~/scripts/SINC/sincUtils/syncomBuilder/taxa_rdp.rdata"))
 taxa <- as.data.frame(taxa_rdp)
 taxa$asv <- rownames(taxa_rdp)
 rownames(taxa) <- NULL

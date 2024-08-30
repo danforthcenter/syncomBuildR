@@ -16,7 +16,7 @@
 #'
 #' # Using uncalibrated data
 #'
-#' print(load("~/Desktop/stargate/SINC/sincUtils/syncomBuilder/qc_output.rdata"))
+#' print(load("~/scripts/SINC/sincUtils/syncomBuilder/qc_output.rdata"))
 #' asv[1:10, 1:10]
 #'
 #' df <- asv[, 1:20]
@@ -29,6 +29,8 @@
 #' df[[predictors]] <- relevel(factor(df[[predictors]]), "AS")
 #'
 #' da(df, col, predictors, zi_cutoff)
+#' @export
+
 da <- function(df, col, predictors, zi_cutoff = 0.1) {
   if (any(missing(df), missing(col), missing(predictors))) {
     stop("df, col, and predictors must be specified")

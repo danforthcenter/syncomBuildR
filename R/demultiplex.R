@@ -36,12 +36,11 @@
 #'
 #' @examples
 #'
-#' ## Not Run:
-#' if (FALSE) {
+#' \dontrun{
 #'   library(ShortRead)
 #'   library(Biostrings)
 #'   library(parallel)
-#'   setwd("~/Desktop/stargate/SINC/sincUtils/syncomBuilder/nastya96WellEx")
+#'   setwd("~/scripts/SINC/sincUtils/syncomBuilder/nastya96WellEx")
 #'
 #'   barcodes <- read.delim("barcode_tab.tsv")
 #'   name <- c("Name", "Well")
@@ -71,7 +70,6 @@
 #'   # "plate","totalReads","groupedReads","ratio"
 #'   # "P10",234509,154507,0.6589
 #' }
-#' ## End not run
 #'
 #' @export
 

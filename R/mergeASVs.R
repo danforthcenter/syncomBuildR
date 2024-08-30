@@ -19,7 +19,7 @@
 #' @return A named list of dataframes including "asv" and "links", optionally with "taxa"
 #'
 #' @examples
-#'
+#' \dontrun{
 #' res <- read.csv("blast_2022_vs_2021.csv")
 #' print(load("~/scripts/SINC/field_2021/microbiome/sinc_field_2021_asvTable.rdata"))
 #' asv21 <- asv
@@ -33,7 +33,7 @@
 #' shared_meta <- c("genotype", "tissue") # shared metadata to keep from both tables
 #'
 #' ex <- mergeASVs(blast, asv, taxa, shared_meta)
-#'
+#' }
 #' @export
 
 mergeASVs <- function(blast, asv, taxa, shared_meta, check_taxa = TRUE,

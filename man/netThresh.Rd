@@ -35,7 +35,7 @@ These should be column names in the ASV table}
 
 \item{model}{Type of changepoint model in chngpt::chngptm labeling convention. Currently hinge,
 upperhinge, and segmented are supported. See Figure 2.1 of the chngpt
-\link{[vignette](https://cran.r-project.org/web/packages/chngpt/vignettes/chngpt-vignette.pdf)}}
+[vignette](https://cran.r-project.org/web/packages/chngpt/vignettes/chngpt-vignette.pdf)}
 
 \item{cores}{Number of cores to run in parallel, defaults to 1 if "mc.cores" option is not set.}
 
@@ -58,9 +58,8 @@ Function to aggregate clustered networks overall phenotypic impacts.
 \examples{
 
 # a<-qc(); b<-cal(a); c<-thresh(b); d<-asvDist(a) ; e<-net(d, thresh = c)
-print(load(paste0("/home/jsumner/Desktop/stargate/SINC/sincUtils/",
-"syncomBuilder/net_output_clustered.rdata")))
-print(load("/home/jsumner/Desktop/stargate/SINC/sincUtils/syncomBuilder/cal_output.rdata"))
+print(load("~/scripts/SINC/sincUtils/syncomBuilder/net_output_clustered.rdata"))
+print(load("~/scripts/SINC/sincUtils/syncomBuilder/cal_output.rdata"))
 asv <- are_c[[1]]
 zinbCalibrated <- are_c[[2]][are_c[[2]]$model == "ZINB", "asv"]
 asv <- are_c[[1]][, c("tissue", "plot", "row", "genotype", "biomass", "sd", zinbCalibrated)]

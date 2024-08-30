@@ -211,27 +211,39 @@ While the job is running on stargate you can monitor the log files and use `cond
 
 When the job is done running you can check the progress using the `track` object in the `dada2_output` rdata (which is the same as the `dada2_sequence_tracking.csv` file). That will show you where your data are being filtered the most and allow you to compare trends between experiments if that is of interest.
 
+```{r, eval = TRUE, echo = FALSE}
+track <- structure(list(id = c(1L, 2L, 3L, 4L, 5L, 6L, 1L, 2L, 3L, 4L, 
+5L, 6L, 1L, 2L, 3L, 4L, 5L, 6L, 1L, 2L, 3L, 4L, 5L, 6L, 1L, 2L, 
+3L, 4L, 5L, 6L), sample = c("100ARE", "100ARR", "100AS", "100BRE", 
+"100BRR", "100BS", "100ARE", "100ARR", "100AS", "100BRE", "100BRR", 
+"100BS", "100ARE", "100ARR", "100AS", "100BRE", "100BRR", "100BS", 
+"100ARE", "100ARR", "100AS", "100BRE", "100BRR", "100BS", "100ARE", 
+"100ARR", "100AS", "100BRE", "100BRR", "100BS"), tissue = c("ARE", 
+"ARR", "AS", "BRE", "BRR", "BS", "ARE", "ARR", "AS", "BRE", "BRR", 
+"BS", "ARE", "ARR", "AS", "BRE", "BRR", "BS", "ARE", "ARR", "AS", 
+"BRE", "BRR", "BS", "ARE", "ARR", "AS", "BRE", "BRR", "BS"), 
+    depth = c("A", "A", "A", "B", "B", "B", "A", "A", "A", "B", 
+    "B", "B", "A", "A", "A", "B", "B", "B", "A", "A", "A", "B", 
+    "B", "B", "A", "A", "A", "B", "B", "B"), tiss = c("RE", "RR", 
+    "S", "RE", "RR", "S", "RE", "RR", "S", "RE", "RR", "S", "RE", 
+    "RR", "S", "RE", "RR", "S", "RE", "RR", "S", "RE", "RR", 
+    "S", "RE", "RR", "S", "RE", "RR", "S"), variable = structure(c(1L, 
+    1L, 1L, 1L, 1L, 1L, 2L, 2L, 2L, 2L, 2L, 2L, 3L, 3L, 3L, 3L, 
+    3L, 3L, 4L, 4L, 4L, 4L, 4L, 4L, 5L, 5L, 5L, 5L, 5L, 5L), levels = c("input", 
+    "filtered", "denoisedF", "denoisedR", "merged", "nonchim"
+    ), class = "factor"), value = c(21960, 37723, 40306, 30558, 
+    47596, 39143, 15803, 28054, 28611, 21285, 34732, 27402, 15461, 
+    24742, 24445, 21086, 30951, 23604, 15494, 26192, 27039, 21141, 
+    32609, 25535, 8388, 14802, 12895, 9303, 19101, 13816), name = structure(c(1L, 
+    1L, 1L, 1L, 1L, 1L, 2L, 2L, 2L, 2L, 2L, 2L, 3L, 3L, 3L, 3L, 
+    3L, 3L, 4L, 4L, 4L, 4L, 4L, 4L, 5L, 5L, 5L, 5L, 5L, 5L), levels = c("input", 
+    "filtered", "denoisedF", "denoisedR", "merged", "nonchim"
+    ), class = c("ordered", "factor"))), row.names = c(NA, 30L
+), class = c("data.frame"))
+```
+
+
 ```{r, eval=TRUE}
-load("../data/track.rda")
-track <- as.data.frame(track)
-track$id <- seq_len(nrow(track))
-
-
-track$sample <- sub("_.*", "", rownames(track))
-track$tissue <- sub("[0-9]+", "", track$sample)
-track$depth <- ifelse(substr(track$tissue, 1, 1) == "A", "A", "B")
-track$tiss <- sub("[A|B]", "", track$tissue)
-
-track <- as.data.table(track)
-track <- melt(track, measure.vars = c(
-  "input", "filtered", "denoisedF",
-  "denoisedR", "merged", "nonchim"
-))
-track$name <- ordered(track$variable, levels = c(
-  "input", "filtered", "denoisedF",
-  "denoisedR", "merged", "nonchim"
-))
-
 ggplot(track, aes(x = variable, y = value, group = id, color = interaction(depth, tiss))) +
   facet_grid(depth ~ tiss, scale = "free") +
   geom_line(alpha = 0.75, linewidth = 0.25, show.legend = FALSE) +

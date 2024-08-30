@@ -37,7 +37,7 @@ have rBLAST from github (\code{devtools::install_github("mhahsler/rBLAST")}) and
 already installed. I'll get to at some point.
 }
 \examples{
-
+\dontrun{
 seqdf <- read.csv("~/scripts/SINC/sincUtils/syncomBuilder/sequencesPerYear.csv")
 seqs1 <- as.list(seqdf[seqdf$year == "21", "sequence"])
 names1 <- seqdf[seqdf$year == "21", "number"]
@@ -46,7 +46,7 @@ names2 <- seqdf[seqdf$year == "22", "number"]
 names(seqs1) <- names1
 names(seqs2) <- names2
 blastASVs(seqs1, seqs2, 0.99)
-
+}
 }
 \keyword{NB}
 \keyword{ZINB,}

@@ -20,7 +20,7 @@
 #' @return A dataframe of blast results
 #'
 #' @examples
-#'
+#' \dontrun{
 #' seqdf <- read.csv("~/scripts/SINC/sincUtils/syncomBuilder/sequencesPerYear.csv")
 #' seqs1 <- as.list(seqdf[seqdf$year == "21", "sequence"])
 #' names1 <- seqdf[seqdf$year == "21", "number"]
@@ -29,7 +29,7 @@
 #' names(seqs1) <- names1
 #' names(seqs2) <- names2
 #' blastASVs(seqs1, seqs2, 0.99)
-#'
+#' }
 #' @export
 
 
