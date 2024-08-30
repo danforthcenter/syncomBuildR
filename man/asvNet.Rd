@@ -14,7 +14,7 @@ asvNet(
 )
 }
 \arguments{
-\item{df}{Long dataframe such as that returned from \code{\link{asvDist}}.}
+\item{df}{Long dataframe such as that returned from \link{asvDist}.}
 
 \item{metadata}{Optional dataframe of metadata to attach to nodes. Metadata should belong to data at
 the node level, so taxonomy for ASV nodes or genotype per sample nodes, but not genotype per ASV
@@ -23,7 +23,7 @@ since an ASV is present in many samples.}
 \item{edge}{Column name of df to use for edge weighting. Typically this is the same as \code{method}
 from \code{asvDist} used to make df.}
 
-\item{thresh}{Optional output from \code{\link{thresh}}. If provided then P values of changepoints
+\item{thresh}{Optional output from \link{thresh}. If provided then P values of changepoints
 will be added as node metadata.}
 
 \item{metadata_join}{Column name of metadata that identifies nodes. Defaults to "asv".}

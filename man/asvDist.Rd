@@ -21,7 +21,7 @@ asvDist(
 \item{asvCols}{Either column names, positions, or a single character string to use as regex to
 find all asv columns.}
 
-\item{method}{A distance method compatible with \code{\link{vegan::vegdist}}, a correlation
+\item{method}{A distance method compatible with \code{vegan::vegdist}, a correlation
 coefficient for use with \code{Hmisc::rcorr} (spearman or pearson), or one of "blomqvist" or
 "gaussrank", which are implemented here in R and therefore will be slower.}
 
@@ -66,7 +66,4 @@ save(sp_dist,
 )
 
 }
-\keyword{changepoint,}
-\keyword{phenotype}
-\keyword{regression,}
-\keyword{threshold,}
+\keyword{asv}

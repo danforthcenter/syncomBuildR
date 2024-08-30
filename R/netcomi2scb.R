@@ -4,9 +4,9 @@
 #' that allows for more customized visualization such as with \link{net.plot}
 #'
 #'
-#' @param microNetObj A microNetObj object as returned by \link{NetCoMi::netConstruct}
-#' @param microNetProps A microNetProps object as returned by \link{NetCoMi::netAnalyze}
-#' @param microNetComp A microNetComp object as returned by \link{NetCoMi::netCompare}
+#' @param microNetObj A microNetObj object as returned by \code{NetCoMi::netConstruct}
+#' @param microNetProps A microNetProps object as returned by \code{NetCoMi::netAnalyze}
+#' @param microNetComp A microNetComp object as returned by \code{NetCoMi::netCompare}
 #' @param cutoff Optional value to filter edges for. If non-NULL then only edges with edgeWeight
 #' greater than this value are kept.
 #' This can be a character vector or a numeric.

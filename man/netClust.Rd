@@ -7,7 +7,7 @@
 netClust(net, method = "components", ...)
 }
 \arguments{
-\item{net}{Object returned from \code{\link{asvNet}}}
+\item{net}{Object returned from \link{asvNet}}
 
 \item{method}{Method to use for clustering. This can be a method from "components", "dbscan",
 and "kmeans" or the output from pullNode, in which case that node and it's connections are labelled
@@ -16,7 +16,7 @@ as a cluster.}
 \item{...}{Additional arguments passed to function picked by method.}
 }
 \value{
-A named list (same as net) with three elements, same as \code{\link{net}}:
+A named list (same as net) with three elements, same as \link{asvNet}:
 \itemize{
    \item{"Nodes" is a dataframe of nodes and their metadata}
    \item{"Edges" is a dataframe of edges connecting nodes.}

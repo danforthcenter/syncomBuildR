@@ -13,11 +13,11 @@ netcomi2scb(
 )
 }
 \arguments{
-\item{microNetObj}{A microNetObj object as returned by \link{NetCoMi::netConstruct}}
+\item{microNetObj}{A microNetObj object as returned by \code{NetCoMi::netConstruct}}
 
-\item{microNetProps}{A microNetProps object as returned by \link{NetCoMi::netAnalyze}}
+\item{microNetProps}{A microNetProps object as returned by \code{NetCoMi::netAnalyze}}
 
-\item{microNetComp}{A microNetComp object as returned by \link{NetCoMi::netCompare}}
+\item{microNetComp}{A microNetComp object as returned by \code{NetCoMi::netCompare}}
 
 \item{cutoff}{Optional value to filter edges for. If non-NULL then only edges with edgeWeight
 greater than this value are kept.

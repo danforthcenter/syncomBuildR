@@ -8,17 +8,17 @@ umapdf(df = NULL, cols = NULL, color = NULL, returnData = TRUE, ...)
 }
 \arguments{
 \item{df}{Dataframe to ordinate. Generally UMAP works best on principal components,
-so this is assumed to be output from \link{\code{pcadf}}.}
+so this is assumed to be output from \link{pcadf}.}
 
 \item{cols}{columns to reduce dimensions of. Can be specified with names or positions.
-Defaults to all column names starting with "pc" then numbers for use with \link{\code{pcadf}}.}
+Defaults to all column names starting with "pc" then numbers for use with \link{pcadf}.}
 
 \item{color}{column name used to color points in the umap plot.}
 
 \item{returnData}{Logical, should data be returned?
 Defaults to TRUE where data and a ggplot are returned.}
 
-\item{...}{Additional arguments passed to \link{\code{uwot::umap}}. The n_neighbors, n_components,
+\item{...}{Additional arguments passed to \code{uwot::umap}. The n_neighbors, n_components,
 and pca arguments are potentially commonly useful.}
 }
 \description{

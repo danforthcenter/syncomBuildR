@@ -9,11 +9,13 @@ b_da(
   col,
   predictors,
   zi_cutoff = 0.1,
+  priors = NULL,
   intercept = TRUE,
   backend = "cmdstanr",
   cores = 4,
   chains = 4,
-  iter = 2000
+  iter = 2000,
+  ...
 )
 }
 \arguments{
@@ -26,6 +28,10 @@ b_da(
 \item{zi_cutoff}{Proportion of zeros to consider the distribution to be zero inflated,
 defaults to 0.1.}
 
+\item{priors}{Prior distributions as \code{brmsprior} objects, defaults are shown in details.
+If left NULL (the default) then wide student priors will be used
+(\code{brms::set_prior('student_t(3,0,5)',  class="b")}).}
+
 \item{intercept}{Logical, should an intercept be used? Defaults to TRUE.}
 
 \item{backend}{Argument to control \code{brms::brm()} backend interface to Stan.}
@@ -35,10 +41,6 @@ defaults to 0.1.}
 \item{chains}{Argument to control number of chains used by \code{brms::brm()}.}
 
 \item{iter}{Argument to control number of iterations \code{brms::brm()}.}
-
-\item{priors}{Prior distributions as \code{brmsprior} objects, defaults are shown in details.
-If left NULL (the default) then wide student priors will be used
-(\code{brms::set_prior('student_t(3,0,5)',  class="b")}).}
 
 \item{...}{Further arguments passed to \code{brms::brm()}.}
 }
@@ -62,7 +64,7 @@ an NB model is that there is no zi parameter.
 \examples{
 
 
-if (FALSE) {
+if ("brms" \%in\% installed.packages()) {
   print(load("~/Desktop/stargate/SINC/sincUtils/syncomBuilder/qc_output.rdata"))
   asv[1:10, 1:10]
 

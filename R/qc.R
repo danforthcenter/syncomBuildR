@@ -41,20 +41,23 @@
 #' @examples
 #'
 #' print(load("~/scripts/SINC/sincUtils/syncomBuilder/field_2021_small_ex.rdata"))
-#' separate <- data.frame(tissue = stringr::str_extract(samps, "[:alpha:]+"))
+#' separate <- data.frame(tissue = gsub("_.*", "", gsub("[0-9]*", "", samps)))
 #' metadata <- cbind(separate, data.frame(
 #'   sample = samps,
-#'   plot = stringr::str_extract(samps, "[0-9]+")
+#'   plot = gsub("_.*", "", gsub("[A-Z]*", "", samps))
 #' ))
 #'
 #'
 #' asv <- qc(
-#'   asvTab = seqtab.print, taxa = taxa_rdp, asvAbnd = 100, sampleAbnd = 1000, normalize = "rescale",
+#'   asvTab = seqtab.print, taxa = taxa_rdp, asvAbnd = 100,
+#'   sampleAbnd = 1000, normalize = "rescale",
 #'   rmTx = list("Order in Chloroplast", "Phylum in Plantae"), separate = NULL
 #' )
 #' asv <- qc(
-#'   asvTab = seqtab.print, taxa = taxa_rdp, asvAbnd = 100, sampleAbnd = 1000, normalize = "rescale",
-#'   rmTx = list("Order in Chloroplast", "Phylum in Plantae"), separate = separate, metadata = metadata,
+#'   asvTab = seqtab.print, taxa = taxa_rdp, asvAbnd = 100,
+#'   sampleAbnd = 1000, normalize = "rescale",
+#'   rmTx = list("Order in Chloroplast", "Phylum in Plantae"),
+#'   separate = separate, metadata = metadata,
 #'   return_removed = TRUE
 #' )
 #' save(asv, file = "../qc_output.rdata")

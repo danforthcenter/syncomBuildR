@@ -14,6 +14,7 @@
 #' if the "mc.cores" option is unset
 #' @keywords combine ASVs
 #' @importFrom parallel mclapply
+#' @importFrom utils tail
 #' @import stats
 #' @return A named list of dataframes including "asv" and "links", optionally with "taxa"
 #'
@@ -88,8 +89,8 @@ mergeASVs <- function(blast, asv, taxa, shared_meta, check_taxa = TRUE,
             paste0("disagree on ", taxaLevel)
           }
         }))
-        link$agreement <- tail(taxaRes[grepl("agree to", taxaRes)], n = 1)
-        link$disagreement <- tail(taxaRes[grepl("disagree on", taxaRes)], n = 1)
+        link$agreement <- utils::tail(taxaRes[grepl("agree to", taxaRes)], n = 1)
+        link$disagreement <- utils::tail(taxaRes[grepl("disagree on", taxaRes)], n = 1)
       }
       #* make list to be returned.
       outList <- list(link = link, asvColumn = asvColumn)

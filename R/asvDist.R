@@ -4,7 +4,7 @@
 #' @param asvTab ASV table to use. Should have rows as samples and columns representing ASVs.
 #' @param asvCols Either column names, positions, or a single character string to use as regex to
 #' find all asv columns.
-#' @param method A distance method compatible with \code{\link{vegan::vegdist}}, a correlation
+#' @param method A distance method compatible with \code{vegan::vegdist}, a correlation
 #' coefficient for use with \code{Hmisc::rcorr} (spearman or pearson), or one of "blomqvist" or
 #' "gaussrank", which are implemented here in R and therefore will be slower.
 #' @param parallel How many cores to use in parallel. The parallelized component only comes into play
@@ -21,12 +21,15 @@
 #' Defaults to TRUE in which case distances/correlations between ASVs across samples are returned.
 #' If FALSE then samples are compared by their ASV composition. Note that different methods are
 #' appropriate depending on whether samples or ASVs are being considered "nodes".
-#' @keywords changepoint, threshold, regression, phenotype
-#' @import chngpt
-#' @import vegan
-#' @import parallel
+#' @keywords asv
+#' @importFrom vegan vegdist
+#' @importFrom parallel mclapply
 #' @import data.table
 #' @import ggplot2
+#' @importFrom stats setNames median qnorm
+#' @importFrom viridis scale_fill_viridis
+#' @importFrom Hmisc rcorr
+#' @importFrom compositions clr
 #' @return A dataframe showing pairwise correlations between individual ASVs/samples.
 #'
 #' @examples

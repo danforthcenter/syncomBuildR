@@ -46,7 +46,8 @@ regression of an ASV table or network.
 # a<-qc(); b<-cal(a); c<-thresh(b); d<-asvDist(a) ;
 # e<-net(d, thresh = c) ;  f<-netClust(e) ; g <- rankSamples(f)
 
-print(load("/home/jsumner/Desktop/stargate/SINC/sincUtils/syncomBuilder/net_output_clustered.rdata"))
+print(load(paste0("/home/jsumner/Desktop/stargate/SINC/",
+"sincUtils/syncomBuilder/net_output_clustered.rdata")))
 print(load("/home/jsumner/Desktop/stargate/SINC/sincUtils/syncomBuilder/cal_output.rdata"))
 print(load("/home/jsumner/Desktop/stargate/SINC/sincUtils/syncomBuilder/threshOutput.rdata"))
 

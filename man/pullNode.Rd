@@ -29,6 +29,8 @@ Character vectors are interpreted as quantiles ("0.5" corresponds to the top 50 
 
 \item{plot}{Logical, should data be plotted using \link{net.plot}.}
 
+\item{nodeCol}{Column of node information to find the node in. Defaults to "asv".}
+
 \item{keepNames}{Logical, should other nodes be filled in the plot as their node name (TRUE) or all
 as "other" (FALSE)?
 Defaults to FALSE.}

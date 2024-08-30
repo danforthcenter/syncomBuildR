@@ -33,7 +33,8 @@
 #' @examples
 #'
 #' # a<-qc(); b<-cal(a); c<-thresh(b); d<-asvDist(a) ; e<-net(d, thresh = c)
-#' print(load("/home/jsumner/Desktop/stargate/SINC/sincUtils/syncomBuilder/net_output_clustered.rdata"))
+#' print(load(paste0("/home/jsumner/Desktop/stargate/SINC/sincUtils/",
+#' "syncomBuilder/net_output_clustered.rdata")))
 #' print(load("/home/jsumner/Desktop/stargate/SINC/sincUtils/syncomBuilder/cal_output.rdata"))
 #' asv <- are_c[[1]]
 #' zinbCalibrated <- are_c[[2]][are_c[[2]]$model == "ZINB", "asv"]

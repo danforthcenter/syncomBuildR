@@ -1,7 +1,7 @@
 #' Function to cluster networks generated from \code{asvNet}.
 #'
 #'
-#' @param net Object returned from \code{\link{asvNet}}
+#' @param net Object returned from \link{asvNet}
 #' @param method Method to use for clustering. This can be a method from "components", "dbscan",
 #' and "kmeans" or the output from pullNode, in which case that node and it's connections are labelled
 #' as a cluster.
@@ -9,7 +9,7 @@
 #' @keywords network, changepoint
 #' @importFrom igraph components
 #' @importFrom dbscan dbscan
-#' @return A named list (same as net) with three elements, same as \code{\link{net}}:
+#' @return A named list (same as net) with three elements, same as \link{asvNet}:
 #' \itemize{
 #'    \item{"Nodes" is a dataframe of nodes and their metadata}
 #'    \item{"Edges" is a dataframe of edges connecting nodes.}

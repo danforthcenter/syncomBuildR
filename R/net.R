@@ -1,13 +1,13 @@
 #' Function to perform network analysis on a distance/dissimilarity matrix of a microbial community.
 #'
 #'
-#' @param df Long dataframe such as that returned from \code{\link{asvDist}}.
+#' @param df Long dataframe such as that returned from \link{asvDist}.
 #' @param metadata Optional dataframe of metadata to attach to nodes. Metadata should belong to data at
 #' the node level, so taxonomy for ASV nodes or genotype per sample nodes, but not genotype per ASV
 #' since an ASV is present in many samples.
 #' @param edge Column name of df to use for edge weighting. Typically this is the same as \code{method}
 #' from \code{asvDist} used to make df.
-#' @param thresh Optional output from \code{\link{thresh}}. If provided then P values of changepoints
+#' @param thresh Optional output from \link{thresh}. If provided then P values of changepoints
 #' will be added as node metadata.
 #' @param metadata_join Column name of metadata that identifies nodes. Defaults to "asv".
 #' @param thresh_join Column name of thresh that identifies nodes. Defaults to "asv" and there are no

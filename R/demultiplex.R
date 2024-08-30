@@ -27,6 +27,8 @@
 #'
 #' @importFrom ShortRead readFastq sread writeFastq countFastq
 #' @importFrom Biostrings reverseComplement DNAString
+#' @importFrom utils write.csv
+#' @importFrom methods is
 #' @import parallel
 #'
 #' @return Writes out fq files and summary statistics depending on writeOut and stat arguments.
@@ -80,13 +82,13 @@ demultiplex <- function(reads, barcodes, fwd = "FWD", rev = "REV", name = c("Nam
   if (is.character(reads)) {
     reads <- ShortRead::readFastq(reads)
   }
-  if (!is(reads, "ShortReadQ")) {
+  if (!methods::is(reads, "ShortReadQ")) {
     stop("reads must be a ShortReadQ object or a file path to a fastq file.")
   }
   if (is.character(barcodes)) {
     barcodes <- utils::read.delim(barcodes)
   }
-  if (!is(barcodes, "data.frame")) {
+  if (!methods::is(barcodes, "data.frame")) {
     stop("barcodes must be a data.frame or a file path to a file readable by read.delim.")
   }
   if (!all(c(fwd, rev, name) %in% colnames(barcodes))) {
@@ -178,7 +180,7 @@ demultiplex <- function(reads, barcodes, fwd = "FWD", rev = "REV", name = c("Nam
         groupedReads = ShortRead::countFastq(paste0(name, ".fq"))[1, 1]
       )
       stats$ratio <- signif(stats$groupedReads / stats$totalReads, digits = 4)
-      write.csv(stats, file = paste0(name, ".csv"), row.names = FALSE)
+      utils::write.csv(stats, file = paste0(name, ".csv"), row.names = FALSE)
       return(stats)
     }
   }, mc.cores = cores)
@@ -263,7 +265,7 @@ demultiplex <- function(reads, barcodes, fwd = "FWD", rev = "REV", name = c("Nam
       groupedReads = ShortRead::countFastq(paste0(name, ".fq"))[1, 1]
     )
     stats$ratio <- signif(stats$groupedReads / stats$totalReads, digits = 4)
-    write.csv(stats, file = paste0(name, ".csv"), row.names = FALSE)
+    utils::write.csv(stats, file = paste0(name, ".csv"), row.names = FALSE)
     return(stats)
   }
 }

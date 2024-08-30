@@ -31,7 +31,7 @@
 #' @examples
 #'
 #'
-#' if (FALSE) {
+#' if ("brms" %in% installed.packages()) {
 #'   print(load("~/Desktop/stargate/SINC/sincUtils/syncomBuilder/qc_output.rdata"))
 #'   asv[1:10, 1:10]
 #'
@@ -47,8 +47,9 @@
 #'   ex <- b_da(df, col, predictors, zi_cutoff, intercept = FALSE)
 #' }
 #'
-b_da <- function(df, col, predictors, zi_cutoff = 0.1, intercept = TRUE,
-                 backend = "cmdstanr", cores = 4, chains = 4, iter = 2000) {
+b_da <- function(df, col, predictors, zi_cutoff = 0.1, priors = NULL,
+                 intercept = TRUE, backend = "cmdstanr",
+                 cores = 4, chains = 4, iter = 2000, ...) {
   if (any(missing(df), missing(col), missing(predictors))) {
     stop("df, col, and predictors must be specified")
   }

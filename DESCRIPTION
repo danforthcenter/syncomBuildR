@@ -5,7 +5,6 @@ Description: General utilities that have been helpful in making code for SINC pr
 Version: 0.1.0
 Author: Josh Sumner
 Maintainer: Josh Sumner <jsumner@danforthcenter.org>
-Description: 
 License: GPL-2
 Encoding: UTF-8
 LazyData: true
@@ -25,8 +24,15 @@ Imports:
     dbscan,
     igraph,
     ShortRead,
-    plyr
+    plyr,
+    ComplexUpset,
+    ape,
+    patchwork,
+    plotly,
+    seqinr,
+    rBLAST
 Suggests: 
     knitr,
+    brms,
     rmarkdown
 VignetteBuilder: knitr
