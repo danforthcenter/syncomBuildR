@@ -6,8 +6,8 @@ x <- lintr::lint_package(path = "~/syncomBuildR/",
                                                     object_name_linter(styles = c("snake_case", "symbols",
                                                                                   "camelCase", "dotted.case",
                                                                                   "lowercase", "UPPERCASE")),
-                                                    brace_linter(allow_single_line = TRUE),
-                                                    cyclocomp_linter = NULL
+                                                    brace_linter(allow_single_line = TRUE)#,
+                                                   # cyclocomp_linter = NULL
                     ))
 length(x)
 x
@@ -18,7 +18,7 @@ style_pkg("~/syncomBuildR", dry = "off", scope = "line_breaks")
 style_pkg("~/syncomBuildR", dry = "off", scope = "tokens")
 
 if(FALSE){
-  file = "~/syncomBuildR/R/asvDist.R"
+  file = "~/syncomBuildR/R/netPlot.R"
   styler::style_file(file, scope = "line_breaks")
   lintr::lint(file, linters = lintr::linters_with_defaults(lintr::line_length_linter(length = 105L),
                                                            lintr::object_name_linter(styles = c("snake_case", "symbols",
