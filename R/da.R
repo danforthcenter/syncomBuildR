@@ -15,7 +15,7 @@
 #' @examples
 #'
 #' da(asv, col = "ASV2", predictors = "tissue", zi_cutoff = 0.1)
-#' 
+#'
 #' @export
 
 da <- function(df, col, predictors, zi_cutoff = 0.1) {

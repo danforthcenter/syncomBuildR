@@ -29,7 +29,6 @@
 #'
 #' @return A brmsfit object
 #' @examples
-#'
 #' \donttest{
 #' if ("brms" %in% installed.packages()) {
 #'   ex <- b_da(asv, col = "ASV1", predictors = "tissue", intercept = FALSE)

@@ -39,25 +39,33 @@ threshUpset <- function(thresh, mode = "phenotype",
 
 
 .pheno_upset_plot <- function(thresh, pvalcol = "p.value.", cutoff = 0.05, cores = 1) {
-  sig <- do.call(rbind, parallel::mclapply(unique(thresh$asv), function(asv){
+  sig <- do.call(rbind, parallel::mclapply(unique(thresh$asv), function(asv) {
     sub <- thresh[!grepl("Intercept", thresh$Source) & thresh$asv == asv, ]
-    if(any(sub[[pvalcol]] < cutoff)){
+    if (any(sub[[pvalcol]] < cutoff)) {
       return(sub)
-    } else{NULL}
-  }, mc.cores=cores))
+    } else {
+      NULL
+    }
+  }, mc.cores = cores))
   if (is.null(sig)) {
     stop("No data with p.values below cutoff")
   }
-  sub_upsetData <- sig[, c("phenotype", pvalcol, "asv")]
-  sub_upsetData[[pvalcol]] <- ifelse(sub_upsetData[[pvalcol]] < cutoff, TRUE, FALSE)
-  data.table::setDT(sub_upsetData)
-  upsetPlotData <- as.data.frame(data.table::dcast(sub_upsetData, asv ~ phenotype, value.var = pvalcol))
+  sub_upset_data <- sig[, c("phenotype", pvalcol, "asv")]
+  sub_upset_data[[pvalcol]] <- ifelse(sub_upset_data[[pvalcol]] < cutoff, TRUE, FALSE)
+  data.table::setDT(sub_upset_data)
+  upsetPlotData <- as.data.frame(data.table::dcast(sub_upset_data,
+                                                   asv ~ phenotype,
+                                                   value.var = pvalcol))
   p <- ComplexUpset::upset(upsetPlotData, intersect = colnames(upsetPlotData)[-1])
-  p[[2]] <- p[[2]] + 
-    ggplot2::labs(title = paste0("ASV ~ Phenotype Correlations"),
-                  subtitle = paste0("With ", pvalcol, " < ", cutoff)) +
-    ggplot2::theme(legend.title.align = NULL,
-                   legend.text.align = NULL)
+  p[[2]] <- p[[2]] +
+    ggplot2::labs(
+      title = paste0("ASV ~ Phenotype Correlations"),
+      subtitle = paste0("With ", pvalcol, " < ", cutoff)
+    ) +
+    ggplot2::theme(
+      legend.title.align = NULL,
+      legend.text.align = NULL
+    )
   return(p)
 }
 
@@ -65,7 +73,7 @@ threshUpset <- function(thresh, mode = "phenotype",
 #' @noRd
 
 .pvalue_upset_plot <- function(thresh, pvalcol = "p.value.") {
-  df <- do.call(rbind, lapply(split(thresh, thresh$phenotype), function(d){
+  df <- do.call(rbind, lapply(split(thresh, thresh$phenotype), function(d) {
     d$p.adj.bonferroni <- p.adjust(d[[pvalcol]], method = "bonferroni")
     d$p.adj.holm <- p.adjust(d[[pvalcol]], method = "holm")
     d$p.adj.hochberg <- p.adjust(d[[pvalcol]], method = "hochberg")
@@ -74,11 +82,13 @@ threshUpset <- function(thresh, mode = "phenotype",
     d$p.adj.none <- p.adjust(d[[pvalcol]], method = "none")
     return(d)
   }))
-  
-  adj_results <- as.data.frame(do.call(cbind,
-                                       lapply(df[, grepl("p.adj", colnames(df))], function(col){
-                                         col<0.05
-                                       })))
+
+  adj_results <- as.data.frame(do.call(
+    cbind,
+    lapply(df[, grepl("p.adj", colnames(df))], function(col) {
+      col < 0.05
+    })
+  ))
   p0 <- ComplexUpset::upset(adj_results, intersect = colnames(adj_results))
   p0[[2]] <- p0[[2]] +
     ggplot2::labs(title = paste0("P adjustment options")) +

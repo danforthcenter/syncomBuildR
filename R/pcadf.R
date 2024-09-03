@@ -21,9 +21,11 @@
 #' @importFrom ape pcoa
 #'
 #' @examples
-#' 
-#' x <- pcadf(df = asv, cols = NULL,
-#'            color = "tissue", returnData = TRUE, ncp = NULL)
+#'
+#' x <- pcadf(
+#'   df = asv, cols = NULL,
+#'   color = "tissue", returnData = TRUE, ncp = NULL
+#' )
 #' x$plot
 #'
 #' @export
@@ -47,15 +49,15 @@ pcadf <- function(df = NULL, cols = NULL, color = NULL, returnData = TRUE, ncp =
     coords <- as.data.frame(pca$ind)
     coords <- coords[, grepl("coord", colnames(coords))]
     colnames(coords) <- gsub("coord.Dim.", "pc", colnames(coords))
-    pca.df <- cbind(df[, -cols], coords) 
+    pca.df <- cbind(df[, -cols], coords)
   } else {
     d <- vegan::vegdist(as.matrix(df[, cols]), method = distance)
     pca <- ape::pcoa(d, correction = "none")
     pc1Var <- round(pca$values$Relative_eig[1], 3) * 100
     pc2Var <- round(pca$values$Relative_eig[2], 3) * 100
-    coords <- as.data.frame(pca$vectors[, c(1:min(ncp, ncol(pca$vectors)))])
+    coords <- as.data.frame(pca$vectors[, seq_len(min(ncp, ncol(pca$vectors)))])
     colnames(coords) <- gsub("Axis.", "pc", colnames(coords))
-    pca.df <- cbind(df[, -cols], coords) 
+    pca.df <- cbind(df[, -cols], coords)
   }
   if (length(color) > 1) {
     pca.df[[paste0(color, collapse = ".")]] <- interaction(pca.df[, c(color)])

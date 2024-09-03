@@ -30,8 +30,10 @@
 #'
 #' @examples
 #'
-#' taxa <- c("Bacteria", "Proteobacteria", "Betaproteobacteria", "Burkholderiales", 
-#'           "Burkholderiaceae", "Paraburkholderia", NA)
+#' taxa <- c(
+#'   "Bacteria", "Proteobacteria", "Betaproteobacteria", "Burkholderiales",
+#'   "Burkholderiaceae", "Paraburkholderia", NA
+#' )
 #' taxa <- matrix(rep(taxa, 10), nrow = 10, byrow = TRUE)
 #' colnames(taxa) <- c("Kingdom", "Phylum", "Class", "Order", "Family", "Genus", "Species")
 #' rownames(taxa) <- paste0("ASV", 1:10)

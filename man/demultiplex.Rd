@@ -57,36 +57,36 @@ Function to demultiplex sequences either to single files or to multiple files fo
 \examples{
 # these examples are not run because they require specific fastq files.
 \dontrun{
-  library(ShortRead)
-  library(Biostrings)
-  library(parallel)
-  setwd("~/scripts/SINC/sincUtils/syncomBuilder/nastya96WellEx")
+library(ShortRead)
+library(Biostrings)
+library(parallel)
+setwd("~/scripts/SINC/sincUtils/syncomBuilder/nastya96WellEx")
 
-  barcodes <- read.delim("barcode_tab.tsv")
-  name <- c("Name", "Well")
-  reads <- ShortRead::readFastq("Plate11_R1_001.fastq.gz")
+barcodes <- read.delim("barcode_tab.tsv")
+name <- c("Name", "Well")
+reads <- ShortRead::readFastq("Plate11_R1_001.fastq.gz")
 
-  demultiplex(reads, barcodes[1:10, ],
-    fwd = "FWD", rev = "REV",
-    name = name, mode = "dada", cores = 10, writeOut = "tests", stat = FALSE
-  )
+demultiplex(reads, barcodes[1:10, ],
+  fwd = "FWD", rev = "REV",
+  name = name, mode = "dada", cores = 10, writeOut = "tests", stat = FALSE
+)
 
-  path <- paste0(
-    "/run/user/1000/gvfs/smb-share:server=nas01,share=research/bart_lab/",
-    "Previous_people/Mingsheng_Qi/research_dr/SINC/limiting_dilution/20210314/p2p11_rawseq"
-  )
-  barcodes <- read.csv(paste0(path, "/barcodetable1.csv"))
-  barcodes$exp <- "exp"
-  reads <- ShortRead::readFastq(paste0(path, "/210314S05P10_merge.fq"))
+path <- paste0(
+  "/run/user/1000/gvfs/smb-share:server=nas01,share=research/bart_lab/",
+  "Previous_people/Mingsheng_Qi/research_dr/SINC/limiting_dilution/20210314/p2p11_rawseq"
+)
+barcodes <- read.csv(paste0(path, "/barcodetable1.csv"))
+barcodes$exp <- "exp"
+reads <- ShortRead::readFastq(paste0(path, "/210314S05P10_merge.fq"))
 
-  x <- demultiplex(reads, barcodes,
-    fwd = "FWD_primer", rev = "REV_primer", name = c("exp"), mode = "general",
-    writeOut = TRUE, stat = TRUE, cores = 10
-  )
-  x
-  # benchmarking against:
-  # "plate","totalReads","groupedReads","ratio"
-  # "P10",234509,154507,0.6589
+x <- demultiplex(reads, barcodes,
+  fwd = "FWD_primer", rev = "REV_primer", name = c("exp"), mode = "general",
+  writeOut = TRUE, stat = TRUE, cores = 10
+)
+x
+# benchmarking against:
+# "plate","totalReads","groupedReads","ratio"
+# "P10",234509,154507,0.6589
 }
 
 }

@@ -55,10 +55,12 @@ rankSamples <- function(asvTab, thresh, network = NULL, id = "sample", groups = 
     })
   }
   if (is.null(groups)) {
-    groups <- thresh[thresh$phenotype %in% phenotypes &
-                       thresh$Source != "(Intercept)" &
-                       thresh$p.value < p.cutoff,
-                     thresh_group]
+    groups <- thresh[
+      thresh$phenotype %in% phenotypes &
+        thresh$Source != "(Intercept)" &
+        thresh$p.value < p.cutoff,
+      thresh_group
+    ]
   }
   if (network_mode) {
     clusterCol <- thresh$clusterType[1]

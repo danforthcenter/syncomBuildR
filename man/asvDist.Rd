@@ -45,7 +45,8 @@ If FALSE then samples are compared by their ASV composition. Note that different
 appropriate depending on whether samples or ASVs are being considered "nodes".}
 }
 \value{
-A dataframe showing pairwise correlations between individual ASVs/samples.
+A dataframe showing pairwise correlations between individual ASVs/samples. If plot is TRUE
+then a list is returned with the dataframe as the "data" element and the plot as the "plot" element.
 }
 \description{
 Function to make distance/dissimilarity data from an ASV table.

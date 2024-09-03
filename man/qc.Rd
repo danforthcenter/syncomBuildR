@@ -74,21 +74,25 @@ plot_numbers <- rep(seq(10, 21, 1), each = 3)
 tissues <- c("re", "rr", "s")
 sample_numbers <- paste0("S", 1:36)
 samples <- paste(plot_numbers, tissues, sample_numbers, sep = "_")
-metadata <- data.frame(plot = plot_numbers,
-                       tissue = rep(tissues, times = 12),
-                       sample = samples)
+metadata <- data.frame(
+  plot = plot_numbers,
+  tissue = rep(tissues, times = 12),
+  sample = samples
+)
 asvs <- matrix(floor(rlnorm(360, log(1), 1.5)), ncol = 10)
 colnames(asvs) <- paste0("ASV", 1:10)
-taxa <- c("Bacteria", "Proteobacteria", "Betaproteobacteria", "Burkholderiales", 
-          "Burkholderiaceae", "Paraburkholderia", NA)
+taxa <- c(
+  "Bacteria", "Proteobacteria", "Betaproteobacteria", "Burkholderiales",
+  "Burkholderiaceae", "Paraburkholderia", NA
+)
 taxa <- matrix(rep(taxa, 10), nrow = 10, byrow = TRUE)
 colnames(taxa) <- c("Kingdom", "Phylum", "Class", "Order", "Family", "Genus", "Species")
 rownames(taxa) <- colnames(asvs)
 asv <- qc(
- asvTab = asvs, taxa = taxa, asvAbnd = 10,
- sampleAbnd = 10, normalize = "rescale",
- rmTx = list("Order in Chloroplast", "Phylum in Plantae"), separate = NULL,
- metadata = metadata
+  asvTab = asvs, taxa = taxa, asvAbnd = 10,
+  sampleAbnd = 10, normalize = "rescale",
+  rmTx = list("Order in Chloroplast", "Phylum in Plantae"), separate = NULL,
+  metadata = metadata
 )
 
 }

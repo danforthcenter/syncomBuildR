@@ -25,15 +25,17 @@
 #'
 #' @examples
 #'
-#' taxa <- c("Bacteria", "Proteobacteria", "Betaproteobacteria", "Burkholderiales", 
-#'           "Burkholderiaceae", "Paraburkholderia", NA)
+#' taxa <- c(
+#'   "Bacteria", "Proteobacteria", "Betaproteobacteria", "Burkholderiales",
+#'   "Burkholderiaceae", "Paraburkholderia", NA
+#' )
 #' taxa <- matrix(rep(taxa, 10), nrow = 10, byrow = TRUE)
 #' colnames(taxa) <- c("Kingdom", "Phylum", "Class", "Order", "Family", "Genus", "Species")
 #' rownames(taxa) <- paste0("ASV", 1:10)
 #' # taxonomy data if used should have ASV names explicitly as a column
 #' taxa_df <- as.data.frame(taxa)
 #' taxa_df$asv <- rownames(taxa_df)
-#' 
+#'
 #' sp_dist <- asvDist(asv, method = "spearman", clr_transform = TRUE, edgeFilter = 0.5)
 #' net_data <- asvNet(sp_dist, taxa_df, edge = "spearman")
 #'

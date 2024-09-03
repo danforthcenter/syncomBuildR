@@ -42,8 +42,10 @@ Function to run a PCA, plot and return the data with PC coordinates
 }
 \examples{
 
-x <- pcadf(df = asv, cols = NULL,
-           color = "tissue", returnData = TRUE, ncp = NULL)
+x <- pcadf(
+  df = asv, cols = NULL,
+  color = "tissue", returnData = TRUE, ncp = NULL
+)
 x$plot
 
 }

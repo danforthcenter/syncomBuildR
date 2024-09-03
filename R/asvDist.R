@@ -30,7 +30,8 @@
 #' @importFrom viridis scale_fill_viridis
 #' @importFrom Hmisc rcorr
 #' @importFrom compositions clr
-#' @return A dataframe showing pairwise correlations between individual ASVs/samples.
+#' @return A dataframe showing pairwise correlations between individual ASVs/samples. If plot is TRUE
+#' then a list is returned with the dataframe as the "data" element and the plot as the "plot" element.
 #'
 #' @examples
 #'
@@ -97,12 +98,12 @@ asvDist <- function(asvTab, asvCols = NULL, method = "spearman",
   } else if (method %in% scb_correlations) {
     matched_fun <- get(paste0(".scb_", method))
     ldf <- do.call(rbind, parallel::mclapply(asvCols, function(ac1) {
-      remaining_asvCols <- c(ac1, asvCols[-c(1:which(asvCols == ac1))])
-      do.call(rbind, lapply(remaining_asvCols, function(ac2) {
+      remaining_asv_cols <- c(ac1, asvCols[-c(1:which(asvCols == ac1))])
+      do.call(rbind, lapply(remaining_asv_cols, function(ac2) {
         data.frame(c1 = ac1, c2 = ac2, d = matched_fun(
           as.numeric(mat[ac1, ]),
           as.numeric(mat[ac2, ])
-          ) )
+        ))
       }))
     }))
     ldf <- stats::setNames(ldf, c("c1", "c2", method))
@@ -111,7 +112,9 @@ asvDist <- function(asvTab, asvCols = NULL, method = "spearman",
   #* *plotting*
   if (plot) {
     # consider grouping things here maybe with hclust.
-    p <- ggplot2::ggplot(ldf, ggplot2::aes(x = .data[["c1"]], y = .data[["c2"]], fill = ldf[[method]])) +
+    p <- ggplot2::ggplot(ldf, ggplot2::aes(x = .data[["c1"]],
+                                           y = .data[["c2"]],
+                                           fill = ldf[[method]])) +
       ggplot2::geom_tile(color = NA, linewidth = 0) +
       viridis::scale_fill_viridis(na.value = "grey100") +
       ggplot2::labs(fill = method) +
@@ -121,7 +124,6 @@ asvDist <- function(asvTab, asvCols = NULL, method = "spearman",
         axis.line = ggplot2::element_blank()
       ) +
       ggplot2::theme_minimal()
-    print(p)
   }
 
   #* *filter long data* [based on strength or P value or both]
@@ -138,6 +140,9 @@ asvDist <- function(asvTab, asvCols = NULL, method = "spearman",
     } else {
       stop("edgeFilter must be character or numeric, see ?asvDist for details.")
     }
+  }
+  if (plot) {
+    ldf <- list("data" = ldf, "plot" = p)
   }
   #* *return data*
   return(ldf)
@@ -159,7 +164,8 @@ asvDist <- function(asvTab, asvCols = NULL, method = "spearman",
 
 .scb_gaussrank <- function(x, y) {
   out <- cor(stats::qnorm(rank(x) / (length(x) + 1)),
-             stats::qnorm(rank(y) / (length(y) + 1)),
-             method="pearson")
+    stats::qnorm(rank(y) / (length(y) + 1)),
+    method = "pearson"
+  )
   return(out)
 }
