@@ -37,11 +37,9 @@ Function to plot results of a changepoint model with data returned from \code{th
 }
 \examples{
 
-# a<-qc(); b<-cal(a); c<-thresh(b)
-print(load("~/scripts/SINC/sincUtils/syncomBuilder/threshOutput.rdata"))
-head(threshMods)
-
-threshPlot(threshMods, asv, "ASV9")
+asv$biomass_z <- rnorm(nrow(asv))
+tm <- thresh(asv, "biomass_z")
+threshPlot(tm, asv, "ASV9")
 
 }
 \keyword{changepoint,}

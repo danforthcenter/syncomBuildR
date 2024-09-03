@@ -55,7 +55,7 @@ If both are TRUE then summary stats are returned as a dataframe.
 Function to demultiplex sequences either to single files or to multiple files for use with dada2.
 }
 \examples{
-
+# these examples are not run because they require specific fastq files.
 \dontrun{
   library(ShortRead)
   library(Biostrings)
@@ -84,8 +84,6 @@ Function to demultiplex sequences either to single files or to multiple files fo
     writeOut = TRUE, stat = TRUE, cores = 10
   )
   x
-
-
   # benchmarking against:
   # "plate","totalReads","groupedReads","ratio"
   # "P10",234509,154507,0.6589

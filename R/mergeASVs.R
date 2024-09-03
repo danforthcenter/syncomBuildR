@@ -19,27 +19,47 @@
 #' @return A named list of dataframes including "asv" and "links", optionally with "taxa"
 #'
 #' @examples
-#' \dontrun{
-#' res <- read.csv("blast_2022_vs_2021.csv")
-#' print(load("~/scripts/SINC/field_2021/microbiome/sinc_field_2021_asvTable.rdata"))
-#' asv21 <- asv
-#' taxa21 <- taxa
-#' colnames(asv21)[c(1, 7)] <- c("genotype", "tissue")
-#' print(load("~/scripts/SINC/field_2022/microbiome/2022_asvTable.rdata"))
 #'
-#' blast <- res
-#' asv <- list("d1" = asv22, "d2" = asv21)
-#' taxa <- list("d1" = taxa22, "d2" = taxa21)
-#' shared_meta <- c("genotype", "tissue") # shared metadata to keep from both tables
-#'
-#' ex <- mergeASVs(blast, asv, taxa, shared_meta)
+#' if ("rBLAST" %in% installed.packages() && rBLAST::has_blast()) {
+#' seqs1 <- list(
+#' ASV9 = paste0("GTGCCAGCAGCCGCGGTAATACGAAGGGGGCTAGCGTTGCTCGGAATCACTGGGCGT",
+#' "AAAGGGTGCGTAGGCGGGTCTTTAAGTCAGGGGTGAAATCCTGGAGCTCAACTCCAGAACTGCCT",
+#' "TTGATACTGAAGATCTTGAGTTCGGGAGAGGTGAGTGGAACTGCGAGTGTAGAGGTGAAATTCGTA",
+#' "GATATTCGCAAGAACACCAGTGGCGAAGGCGGCTCACTGGCCCGATACTGACGCTGAGGCACGAAAGCGT",
+#' "GGGGAGCAAACAGGATTAGATACCCTGGTAGTCCACGCCGTAAACGATGAATGCCAGCCGTTAGTGGGTT",
+#' "TACTCACTAGTGGCGCAGCTAACGCTTTAAGCATTCCGCCTGGGGAGTACGGTCGCAAGATTAAAACTCAAATGAATTGACGG"), 
+#' ASV10 = paste0("GTGCCAGCCGCCGCGGTAATACGAAGGGGGCTAGCGTTGCTCGGAATCACTGGGCGTAAAGGGTGCGTAGGCGGGTCT",
+#' "TTAAGTCAGGGGTGAAATCCTGGAGCTCAACTCCAGAACTGCCTTTGATACTGAAGATCTTGAGTTCGGGAGAGGTGAGTGGAACTG",
+#' "CGAGTGTAGAGGTGAAATTCGTAGATATTCGCAAGAACACCAGTGGCGAAGGCGGCTCACTGGCCCGATACTGACGCTGAGGCACGAA",
+#' "AGCGTGGGGAGCAAACAGGATTAGATACCCTGGTAGTCCACGCCGTAAACGATGAATGCCAGCCGTTAGTGGGTTTACTCACTAGTGGCG",
+#' "CAGCTAACGCTTTAAGCATTCCGCCTGGGGAGTACGGTCGCAAGATTAAAACTCAAATGAATTGACGG")
+#' )
+#' seqs2 <- list(
+#' ASV1 = paste0("GTGCCAGCAGCCGCGGTAATACAGAGGGTGCAAGCGTTAATCGGAATTACTGGGCGTAAAGCGCGCGTAGGTGGTTTGTTAAGT",
+#' "TGGATGTGAAATCCCCGGGCTCAACCTGGGAACTGCATTCAAAACTGACAAGCTAGAGTATGGTAGAGGGTGGTGGAATTTCCTGTGTAGCGGTGAA",
+#' "ATGCGTAGATATAGGAAGGAACACCAGTGGCGAAGGCGACCACCTGGACTGATACTGACACTGAGGTGCGAAAGCGTGGGGAGCAAACAGGATTAGAT",
+#' "ACCCTGGTAGTCCACGCCGTAAACGATGTCAACTAGCCGTTGGGAGCCTTGAGCTCTTAGTGGCGCAGCTAACGCATTAAGTTGACCGCCTGGGGA",
+#' "GTACGGCCGCAAGGTTAAAACTCAAATGAATTGACGG"),
+#' ASV2 = paste0("GTGCCAGCCGCCGCGGTAATACAGAGGGTGCAAGCGTTAATCGGAATTACTGGGCGTAAAGCGCGCGTAGGTGGTTTGTTAA",
+#' "GTTGGATGTGAAATCCCCGGGCTCAACCTGGGAACTGCATTCAAAACTGACAAGCTAGAGTATGGTAGAGGGTGGTGGAATTTCCTGTGTAGCGGT",
+#' "GAAATGCGTAGATATAGGAAGGAACACCAGTGGCGAAGGCGACCACCTGGACTGATACTGACACTGAGGTGCGAAAGCGTGGGGAGCAAACAGGAT",
+#' "TAGATACCCTGGTAGTCCACGCCGTAAACGATGTCAACTAGCCGTTGGGAGCCTTGAGCTCTTAGTGGCGCAGCTAACGCATTAAGTTGACCGCCTG",
+#' "GGGAGTACGGCCGCAAGGTTAAAACTCAAATGAATTGACGG")
+#' )
+#' blast <- blastASVs(seqs1, seqs2, cutoff = 0)
+#' asv1 <- data.frame("ASV9" = c(1:5), "ASV10" = c(6:10))
+#' asv2 <- data.frame("ASV1" = c(1:5), "ASV2" = c(6:10))
+#' asv_table_list <- list(asv1, asv2)
+#' ex <- mergeASVs(blast, asv_table_list, min_pident = 80)
+#' 
 #' }
+#'
 #' @export
 
-mergeASVs <- function(blast, asv, taxa, shared_meta, check_taxa = TRUE,
+mergeASVs <- function(blast, asv, taxa = NULL, shared_meta = NULL, check_taxa = TRUE,
                       min_pident = 99.5, cores = getOption("mc.cores", 1)) {
   #* label which experiment things are from in a dataframe
-  new_asv_metadata <- data.frame("experiment" = rep(c("d1", "d2"), c(nrow(asv$d1), nrow(asv$d2))))
+  new_asv_metadata <- data.frame("experiment" = rep(c("d1", "d2"), c(nrow(asv[[1]]), nrow(asv[[2]]))))
   #* assemble other metadata and bind it to the new_asv_metadata
   if (!is.null(shared_meta)) {
     shared_metadata <- stats::setNames(as.data.frame(do.call(cbind, lapply(shared_meta, function(col) {
@@ -53,7 +73,7 @@ mergeASVs <- function(blast, asv, taxa, shared_meta, check_taxa = TRUE,
   dList <- split(blast, blast$seq1_id)
   #* Main looping function that will run on each ASV in parallel according to cores/"mc.cores" option
   #* Begin main loop
-  linkage_data <- parallel::mclapply(seq_along(dList)[1:10], function(i) {
+  linkage_data <- parallel::mclapply(seq_along(dList), function(i) {
     d <- dList[[i]]
     #* in case there is no match return original counts from first ASV table padded with NAs
     asvColumn <- setNames(data.frame(
@@ -160,9 +180,10 @@ mergeASVs <- function(blast, asv, taxa, shared_meta, check_taxa = TRUE,
   }
   #* find columns from second table that are not included already
   #* this would happen whenever there are some matches below the pident cutoff
-  n1 <- ncol(final_output$new_asv_counts)
+  n1 <- 1
   remaining_columns <- setdiff(colnames(asv[[2]]), links$db_id)
   if (length(remaining_columns) > 0) {
+    n1 <- max(ncol(final_output$new_asv_counts), n1)
     #* need to make another set of ASV counts, grab taxa information, and make links.
     pt2_asv_counts <- do.call(cbind, lapply(seq_along(remaining_columns), function(i) {
       col <- remaining_columns[i]

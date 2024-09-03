@@ -41,11 +41,9 @@ a ggplot, optionally a dataframe and FactoMineR::PCA output if returnData is TRU
 Function to run a PCA, plot and return the data with PC coordinates
 }
 \examples{
-print(load("~/scripts/SINC/sincUtils/syncomBuilder/cal_output.rdata"))
-asv <- are_c[[1]]
-zinbCalibrated <- are_c[[2]][are_c[[2]]$model == "ZINB", "asv"]
-asv <- are_c[[1]][, c("tissue", "plot", "row", "genotype", "biomass", "sd", zinbCalibrated)]
-x <- pcadf(df = asv, cols = NULL, color = c("tissue", "genotype"), returnData = TRUE, ncp = NULL)
+
+x <- pcadf(df = asv, cols = NULL,
+           color = "tissue", returnData = TRUE, ncp = NULL)
 x$plot
 
 }

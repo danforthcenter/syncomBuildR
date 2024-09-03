@@ -19,11 +19,11 @@
 #'
 #' @examples
 #'
-#' # a<-qc(); b<-cal(a); c<-thresh(b)
-#' print(load("~/scripts/SINC/sincUtils/syncomBuilder/threshOutput.rdata"))
-#' head(threshMods)
-#' threshMods[1:317, "phenotype"] <- "not_biomass"
-#' threshUpset(threshMods)
+#' set.seed(123)
+#' asv$biomass_z <- rnorm(nrow(asv))
+#' tm <- thresh(asv, "biomass_z")
+#' tm[11:20, "phenotype"] <- "not_biomass_z"
+#' threshUpset(tm, cutoff = 0.5)
 #'
 #' @export
 
@@ -45,9 +45,11 @@ threshUpset <- function(thresh, mode = "phenotype",
       return(sub)
     } else{NULL}
   }, mc.cores=cores))
-  
+  if (is.null(sig)) {
+    stop("No data with p.values below cutoff")
+  }
   sub_upsetData <- sig[, c("phenotype", pvalcol, "asv")]
-  sub_upsetData[[pvalcol]] <- ifelse(sub_upsetData[[pvalcol]] < cutoff, 1, 0)
+  sub_upsetData[[pvalcol]] <- ifelse(sub_upsetData[[pvalcol]] < cutoff, TRUE, FALSE)
   data.table::setDT(sub_upsetData)
   upsetPlotData <- as.data.frame(data.table::dcast(sub_upsetData, asv ~ phenotype, value.var = pvalcol))
   p <- ComplexUpset::upset(upsetPlotData, intersect = colnames(upsetPlotData)[-1])
@@ -75,7 +77,7 @@ threshUpset <- function(thresh, mode = "phenotype",
   
   adj_results <- as.data.frame(do.call(cbind,
                                        lapply(df[, grepl("p.adj", colnames(df))], function(col){
-                                         as.numeric(col<0.05)
+                                         col<0.05
                                        })))
   p0 <- ComplexUpset::upset(adj_results, intersect = colnames(adj_results))
   p0[[2]] <- p0[[2]] +

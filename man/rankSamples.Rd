@@ -9,7 +9,7 @@ rankSamples(
   asvTab,
   thresh,
   network = NULL,
-  id,
+  id = "sample",
   groups = NULL,
   phenotypes = NULL,
   p.cutoff = 0.05
@@ -24,7 +24,7 @@ rankSamples(
 with \code{\link{netClust}}. Defaults to NULL in which case the asv table is used and thresh
 is assumed to be changepoint regressions at the asv level.}
 
-\item{id}{The name of the column containing sample names.}
+\item{id}{The name of the column containing sample names, defaults to "sample".}
 
 \item{groups}{Optionally specify which ASVs/Clusters should be used. If NULL, the default,
 then significant models (p value below p.cutoff) are used to find groups.}
@@ -43,35 +43,8 @@ regression of an ASV table or network.
 }
 \examples{
 
-# a<-qc(); b<-cal(a); c<-thresh(b); d<-asvDist(a) ;
-# e<-net(d, thresh = c) ;  f<-netClust(e) ; g <- rankSamples(f)
-
-print(load(paste0("~/scripts/SINC/",
-"sincUtils/syncomBuilder/net_output_clustered.rdata")))
-print(load("~/scripts/SINC/sincUtils/syncomBuilder/cal_output.rdata"))
-print(load("~/scripts/SINC/sincUtils/syncomBuilder/threshOutput.rdata"))
-
-asv <- are_c[[1]]
-zinbCalibrated <- are_c[[2]][are_c[[2]]$model == "ZINB", "asv"]
-asv <- are_c[[1]][, c("tissue", "plot", "row", "genotype", "biomass", "sd", zinbCalibrated)]
-
-netThresh_output <- netThresh(net_data,
-  asvTab = asv, asvCols = NULL,
-  clusterCol = "kmeans_cluster", cluster = NULL, phenoCols = "biomass",
-  model = "hinge", calibratePheno = "genotype"
-)
-
-asv$sample <- paste0(asv$plot, asv$tissue)
-
-network_ranking <- rankSamples(
-  asvTab = asv, thresh = netThresh_output, network = net_data,
-  id = "sample", groups = NULL, phenotypes = NULL, p.cutoff = 0.85
-)
-head(network_ranking)
-asvTable_ranking <- rankSamples(
-  asvTab = asv, thresh = threshMods, network = NULL,
-  id = "sample", groups = NULL, phenotypes = NULL, p.cutoff = 0.05
-)
-head(asvTable_ranking)
+asv$biomass_z <- rnorm(nrow(asv))
+tm <- thresh(asv, "biomass_z")
+x <- rankSamples(asv, tm, id = "sample")
 
 }

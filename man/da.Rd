@@ -24,19 +24,6 @@ Function to assess differential abundance of microbe counts or pseudo counts
 }
 \examples{
 
-# Using uncalibrated data
+da(asv, col = "ASV2", predictors = "tissue", zi_cutoff = 0.1)
 
-print(load("~/scripts/SINC/sincUtils/syncomBuilder/qc_output.rdata"))
-asv[1:10, 1:10]
-
-df <- asv[, 1:20]
-sapply(df[, 3:20], function(c) mean(c == 0))
-
-col <- "ASV9"
-predictors <- "tissue"
-zi_cutoff <- 0.1
-
-df[[predictors]] <- relevel(factor(df[[predictors]]), "AS")
-
-da(df, col, predictors, zi_cutoff)
 }

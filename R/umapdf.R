@@ -3,7 +3,8 @@
 #' @param df Dataframe to ordinate. Generally UMAP works best on principal components,
 #' so this is assumed to be output from \link{pcadf}.
 #' @param cols columns to reduce dimensions of. Can be specified with names or positions.
-#' Defaults to all column names starting with "pc" then numbers for use with \link{pcadf}.
+#' Defaults to all column names starting with "pc" or with "ASV" (case insensitive) then numbers
+#' for use with \link{pcadf} and dada2 output.
 #' @param color column name used to color points in the umap plot.
 #' @param returnData Logical, should data be returned?
 #' Defaults to TRUE where data and a ggplot are returned.
@@ -15,19 +16,15 @@
 #' @import uwot
 #'
 #' @examples
-#' print(load("~/scripts/SINC/sincUtils/syncomBuilder/cal_output.rdata"))
-#' asv <- are_c[[1]]
-#' zinbCalibrated <- are_c[[2]][are_c[[2]]$model == "ZINB", "asv"]
-#' asv <- are_c[[1]][, c("tissue", "plot", "row", "genotype", "biomass", "sd", zinbCalibrated)]
-#' pdf <- pcadf(df = asv, cols = NULL, color = c("tissue", "genotype"), returnData = TRUE, ncp = NULL)
-#' udf <- umapdf(df = pdf$data, cols = NULL, color = c("tissue", "genotype"),
-#' returnData = TRUE, pca = 50)
+#' # generally a PCA is a good first step, where pcad(...)$data would be used in place
+#' # of asv here.
+#' udf <- umapdf(df = asv, cols = NULL, color = "tissue", returnData = TRUE)
 #'
 #' @export
 
 umapdf <- function(df = NULL, cols = NULL, color = NULL, returnData = TRUE, ...) {
   if (is.null(cols)) {
-    cols <- which(grepl("^pc[0-9]+", colnames(df)))
+    cols <- which(grepl("^pc[0-9]+|^ASV|asv[0-9]+", colnames(df)))
   } else if (is.character(cols) && length(cols) == 1) {
     cols <- which(grepl(cols, colnames(df)))
   } else if (!is.numeric(cols)) {

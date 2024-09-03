@@ -33,20 +33,9 @@
 #' @return A dataframe showing pairwise correlations between individual ASVs/samples.
 #'
 #' @examples
-#' \dontrun{
-#' # a<-qc(); b<-cal(a); c<-thresh(b); d<-asvDist(a)
-#' print(load("~/syncomBuilder/threshOutput.rdata"))
+#'
 #' sp_dist <- asvDist(asv, method = "spearman", clr_transform = TRUE, edgeFilter = 0.5)
-#' unfiltered_sp_dist <- asvDist(asv, method = "spearman", clr_transform = TRUE, edgeFilter = NULL)
-#' dim(sp_dist)
-#' euc <- asvDist(asv, method = "euclidean", clr_transform = FALSE, edgeFilter = NULL)
-#' bray <- asvDist(asv, method = "bray", clr_transform = FALSE, edgeFilter = NULL)
-#' save(sp_dist,
-#'   euc,
-#'   bray,
-#'   file = "~/syncomBuilder/asvDist_output.rdata"
-#' )
-#' }
+#'
 #' @export
 
 asvDist <- function(asvTab, asvCols = NULL, method = "spearman",

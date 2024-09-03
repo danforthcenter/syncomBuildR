@@ -35,11 +35,11 @@ Function to plot results of a changepoint models as upset plots
 }
 \examples{
 
-# a<-qc(); b<-cal(a); c<-thresh(b)
-print(load("~/scripts/SINC/sincUtils/syncomBuilder/threshOutput.rdata"))
-head(threshMods)
-threshMods[1:317, "phenotype"] <- "not_biomass"
-threshUpset(threshMods)
+set.seed(123)
+asv$biomass_z <- rnorm(nrow(asv))
+tm <- thresh(asv, "biomass_z")
+tm[11:20, "phenotype"] <- "not_biomass_z"
+threshUpset(tm, cutoff = 0.5)
 
 }
 \keyword{changepoint,}

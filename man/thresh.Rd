@@ -42,18 +42,8 @@ communities/clusters vs phenotypes.
 }
 \examples{
 
-# a<-qc(); b<-cal(a); c<-thresh(b)
-print(load("~/scripts/SINC/sincUtils/syncomBuilder/cal_output.rdata"))
-asv <- are_c[[1]]
-zinbCalibrated <- are_c[[2]][are_c[[2]]$model == "ZINB", "asv"]
-asv <- are_c[[1]][, c("tissue", "plot", "row", "genotype", "biomass", "sd", zinbCalibrated)]
-
-threshMods <- thresh(
-  asvTab = asv[, 1:10], phenoCols = "biomass",
-  model = "hinge", cores = 1, calibratePheno = "genotype"
-)
-dim(threshMods)
-head(threshMods)
+asv$biomass_z <- rnorm(nrow(asv))
+tm <- thresh(asv, "biomass_z")
 
 }
 \keyword{changepoint,}

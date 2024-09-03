@@ -43,9 +43,10 @@ that allows for more customized visualization such as with \link{net.plot}
 }
 \examples{
 
-if (FALSE) {
-  # pending
-}
+library(NetCoMi)
+microNetObj <- NetCoMi::netConstruct(as.matrix(asv[, grepl("ASV", colnames(asv))]),
+  measure = "spearman", sparsMethod = "t-test", alpha = 0.7)
+net <- netcomi2scb(microNetObj)
 
 }
 \keyword{changepoint}

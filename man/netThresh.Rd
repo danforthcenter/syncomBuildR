@@ -57,17 +57,22 @@ Function to aggregate clustered networks overall phenotypic impacts.
 }
 \examples{
 
-# a<-qc(); b<-cal(a); c<-thresh(b); d<-asvDist(a) ; e<-net(d, thresh = c)
-print(load("~/scripts/SINC/sincUtils/syncomBuilder/net_output_clustered.rdata"))
-print(load("~/scripts/SINC/sincUtils/syncomBuilder/cal_output.rdata"))
-asv <- are_c[[1]]
-zinbCalibrated <- are_c[[2]][are_c[[2]]$model == "ZINB", "asv"]
-asv <- are_c[[1]][, c("tissue", "plot", "row", "genotype", "biomass", "sd", zinbCalibrated)]
-
+taxa <- c("Bacteria", "Proteobacteria", "Betaproteobacteria", "Burkholderiales", 
+          "Burkholderiaceae", "Paraburkholderia", NA)
+taxa <- matrix(rep(taxa, 10), nrow = 10, byrow = TRUE)
+colnames(taxa) <- c("Kingdom", "Phylum", "Class", "Order", "Family", "Genus", "Species")
+rownames(taxa) <- paste0("ASV", 1:10)
+# taxonomy data if used should have ASV names explicitly as a column
+taxa_df <- as.data.frame(taxa)
+taxa_df$asv <- rownames(taxa_df)
+sp_dist <- asvDist(asv, method = "spearman", clr_transform = TRUE, edgeFilter = 0.5)
+net_data <- asvNet(sp_dist, taxa_df, edge = "spearman")
+net_data <- netClust(net = net_data, "components")
+asv$biomass_z <- rnorm(nrow(asv))
 netThresh_output <- netThresh(net_data,
   asvTab = asv, asvCols = NULL,
-  clusterCol = "kmeans_cluster", cluster = NULL, phenoCols = "biomass",
-  model = "hinge", calibratePheno = "genotype"
+  clusterCol = "component_cluster", cluster = NULL, phenoCols = "biomass_z",
+  model = "hinge", calibratePheno = "tissue"
 )
 
 }

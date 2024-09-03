@@ -30,27 +30,15 @@
 #' @return A brmsfit object
 #' @examples
 #'
-#' \dontrun{
+#' \donttest{
 #' if ("brms" %in% installed.packages()) {
-#'   print(load("~/scripts/SINC/sincUtils/syncomBuilder/qc_output.rdata"))
-#'   asv[1:10, 1:10]
-#'
-#'   df <- asv[, 1:20]
-#'   sapply(df[, 3:20], function(c) mean(c == 0))
-#'
-#'   col <- "ASV9"
-#'   predictors <- "tissue"
-#'   zi_cutoff <- 0.1
-#'
-#'   df[[predictors]] <- relevel(factor(df[[predictors]]), "AS")
-#'
-#'   ex <- b_da(df, col, predictors, zi_cutoff, intercept = FALSE)
+#'   ex <- b_da(asv, col = "ASV1", predictors = "tissue", intercept = FALSE)
 #' }
 #' }
 #' @export
 b_da <- function(df, col, predictors, zi_cutoff = 0.1, priors = NULL,
                  intercept = TRUE, backend = "cmdstanr",
-                 cores = 4, chains = 4, iter = 2000, ...) {
+                 cores = getOption("mc.cores", 1), chains = 2, iter = 1000, ...) {
   if (any(missing(df), missing(col), missing(predictors))) {
     stop("df, col, and predictors must be specified")
   }

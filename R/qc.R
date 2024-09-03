@@ -37,30 +37,29 @@
 #' In that case the string "Class contains plant, other" would search for matches to "plant|other" in
 #' the Class column of the taxonomy. More general regex patterns are supported.
 #'
-#'
 #' @examples
 #'
-#' print(load("~/scripts/SINC/sincUtils/syncomBuilder/field_2021_small_ex.rdata"))
-#' separate <- data.frame(tissue = gsub("_.*", "", gsub("[0-9]*", "", samps)))
-#' metadata <- cbind(separate, data.frame(
-#'   sample = samps,
-#'   plot = gsub("_.*", "", gsub("[A-Z]*", "", samps))
-#' ))
-#'
-#'
+#' set.seed(123)
+#' plot_numbers <- rep(seq(10, 21, 1), each = 3)
+#' tissues <- c("re", "rr", "s")
+#' sample_numbers <- paste0("S", 1:36)
+#' samples <- paste(plot_numbers, tissues, sample_numbers, sep = "_")
+#' metadata <- data.frame(plot = plot_numbers,
+#'                        tissue = rep(tissues, times = 12),
+#'                        sample = samples)
+#' asvs <- matrix(floor(rlnorm(360, log(1), 1.5)), ncol = 10)
+#' colnames(asvs) <- paste0("ASV", 1:10)
+#' taxa <- c("Bacteria", "Proteobacteria", "Betaproteobacteria", "Burkholderiales", 
+#'           "Burkholderiaceae", "Paraburkholderia", NA)
+#' taxa <- matrix(rep(taxa, 10), nrow = 10, byrow = TRUE)
+#' colnames(taxa) <- c("Kingdom", "Phylum", "Class", "Order", "Family", "Genus", "Species")
+#' rownames(taxa) <- colnames(asvs)
 #' asv <- qc(
-#'   asvTab = seqtab.print, taxa = taxa_rdp, asvAbnd = 100,
-#'   sampleAbnd = 1000, normalize = "rescale",
-#'   rmTx = list("Order in Chloroplast", "Phylum in Plantae"), separate = NULL
+#'  asvTab = asvs, taxa = taxa, asvAbnd = 10,
+#'  sampleAbnd = 10, normalize = "rescale",
+#'  rmTx = list("Order in Chloroplast", "Phylum in Plantae"), separate = NULL,
+#'  metadata = metadata
 #' )
-#' asv <- qc(
-#'   asvTab = seqtab.print, taxa = taxa_rdp, asvAbnd = 100,
-#'   sampleAbnd = 1000, normalize = "rescale",
-#'   rmTx = list("Order in Chloroplast", "Phylum in Plantae"),
-#'   separate = separate, metadata = metadata,
-#'   return_removed = TRUE
-#' )
-#' save(asv, file = "../qc_output.rdata")
 #'
 #' @export
 
@@ -170,7 +169,7 @@ qc <- function(file = NULL, asvTab = NULL, taxa = NULL, asvAbnd = 100, sampleAbn
       median_vec <- apply(asvTabFilt / rowMeans(asvTab, na.rm = TRUE), 2, median, na.rm = TRUE) + 1
       normalizedAsvTab <- t(apply(asvTabFilt, 1, function(x) x / median_vec))
       rownames(normalizedAsvTab) <- rownames(asvTabFilt)
-      asvTab <- normalizedAsvTab
+      asvTabFilt <- normalizedAsvTab
     } else {
       warning(paste0(
         "Available options for normalization are NULL, 'pqn', and 'rescale', ",
@@ -180,12 +179,12 @@ qc <- function(file = NULL, asvTab = NULL, taxa = NULL, asvAbnd = 100, sampleAbn
   }
 
   if (!is.null(metadata)) {
-    asvTab <- cbind(metadata, asvTabFilt)
+    asvTabFilt <- cbind(metadata, asvTabFilt)
   }
   if (return_removed) {
-    out <- list("asv" = asvTab, "removed" = removed)
+    out <- list("asv" = asvTabFilt, "removed" = removed)
   } else {
-    out <- asvTab
+    out <- asvTabFilt
   }
   return(out)
 }

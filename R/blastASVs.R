@@ -20,16 +20,36 @@
 #' @return A dataframe of blast results
 #'
 #' @examples
-#' \dontrun{
-#' seqdf <- read.csv("~/scripts/SINC/sincUtils/syncomBuilder/sequencesPerYear.csv")
-#' seqs1 <- as.list(seqdf[seqdf$year == "21", "sequence"])
-#' names1 <- seqdf[seqdf$year == "21", "number"]
-#' seqs2 <- as.list(seqdf[seqdf$year == "22", "sequence"])
-#' names2 <- seqdf[seqdf$year == "22", "number"]
-#' names(seqs1) <- names1
-#' names(seqs2) <- names2
-#' blastASVs(seqs1, seqs2, 0.99)
+#'
+#' if ("rBLAST" %in% installed.packages() && rBLAST::has_blast()) {
+#' seqs1 <- list(
+#' ASV9 = paste0("GTGCCAGCAGCCGCGGTAATACGAAGGGGGCTAGCGTTGCTCGGAATCACTGGGCGT",
+#' "AAAGGGTGCGTAGGCGGGTCTTTAAGTCAGGGGTGAAATCCTGGAGCTCAACTCCAGAACTGCCT",
+#' "TTGATACTGAAGATCTTGAGTTCGGGAGAGGTGAGTGGAACTGCGAGTGTAGAGGTGAAATTCGTA",
+#' "GATATTCGCAAGAACACCAGTGGCGAAGGCGGCTCACTGGCCCGATACTGACGCTGAGGCACGAAAGCGT",
+#' "GGGGAGCAAACAGGATTAGATACCCTGGTAGTCCACGCCGTAAACGATGAATGCCAGCCGTTAGTGGGTT",
+#' "TACTCACTAGTGGCGCAGCTAACGCTTTAAGCATTCCGCCTGGGGAGTACGGTCGCAAGATTAAAACTCAAATGAATTGACGG"), 
+#' ASV10 = paste0("GTGCCAGCCGCCGCGGTAATACGAAGGGGGCTAGCGTTGCTCGGAATCACTGGGCGTAAAGGGTGCGTAGGCGGGTCT",
+#' "TTAAGTCAGGGGTGAAATCCTGGAGCTCAACTCCAGAACTGCCTTTGATACTGAAGATCTTGAGTTCGGGAGAGGTGAGTGGAACTG",
+#' "CGAGTGTAGAGGTGAAATTCGTAGATATTCGCAAGAACACCAGTGGCGAAGGCGGCTCACTGGCCCGATACTGACGCTGAGGCACGAA",
+#' "AGCGTGGGGAGCAAACAGGATTAGATACCCTGGTAGTCCACGCCGTAAACGATGAATGCCAGCCGTTAGTGGGTTTACTCACTAGTGGCG",
+#' "CAGCTAACGCTTTAAGCATTCCGCCTGGGGAGTACGGTCGCAAGATTAAAACTCAAATGAATTGACGG")
+#' )
+#' seqs2 <- list(
+#' ASV1 = paste0("GTGCCAGCAGCCGCGGTAATACAGAGGGTGCAAGCGTTAATCGGAATTACTGGGCGTAAAGCGCGCGTAGGTGGTTTGTTAAGT",
+#' "TGGATGTGAAATCCCCGGGCTCAACCTGGGAACTGCATTCAAAACTGACAAGCTAGAGTATGGTAGAGGGTGGTGGAATTTCCTGTGTAGCGGTGAA",
+#' "ATGCGTAGATATAGGAAGGAACACCAGTGGCGAAGGCGACCACCTGGACTGATACTGACACTGAGGTGCGAAAGCGTGGGGAGCAAACAGGATTAGAT",
+#' "ACCCTGGTAGTCCACGCCGTAAACGATGTCAACTAGCCGTTGGGAGCCTTGAGCTCTTAGTGGCGCAGCTAACGCATTAAGTTGACCGCCTGGGGA",
+#' "GTACGGCCGCAAGGTTAAAACTCAAATGAATTGACGG"),
+#' ASV2 = paste0("GTGCCAGCCGCCGCGGTAATACAGAGGGTGCAAGCGTTAATCGGAATTACTGGGCGTAAAGCGCGCGTAGGTGGTTTGTTAA",
+#' "GTTGGATGTGAAATCCCCGGGCTCAACCTGGGAACTGCATTCAAAACTGACAAGCTAGAGTATGGTAGAGGGTGGTGGAATTTCCTGTGTAGCGGT",
+#' "GAAATGCGTAGATATAGGAAGGAACACCAGTGGCGAAGGCGACCACCTGGACTGATACTGACACTGAGGTGCGAAAGCGTGGGGAGCAAACAGGAT",
+#' "TAGATACCCTGGTAGTCCACGCCGTAAACGATGTCAACTAGCCGTTGGGAGCCTTGAGCTCTTAGTGGCGCAGCTAACGCATTAAGTTGACCGCCTG",
+#' "GGGAGTACGGCCGCAAGGTTAAAACTCAAATGAATTGACGG")
+#' )
+#' blastASVs(seqs1, seqs2, cutoff = 0)
 #' }
+#'
 #' @export
 
 
@@ -37,13 +57,14 @@ blastASVs <- function(seqs1, seqs2, cutoff = 97.5, db = NULL, maxMatches = Inf,
                       cores = getOption("mc.cores", 1)) {
   delete_db <- FALSE
   if (is.null(db)) {
+    tmp_file <- tempdir()
     timestamp <- round(as.numeric(Sys.time()))
-    db <- paste0("db_", timestamp, "/db")
+    db <- paste0(tmp_file, "/db_", timestamp, "/db")
     seqinr::write.fasta(seqs2, names(seqs2),
-      file.out = paste0(timestamp, ".fasta")
+      file.out = paste0(tmp_file, "/", timestamp, ".fasta")
     )
     rBLAST::makeblastdb(
-      file = paste0(timestamp, ".fasta"),
+      file = paste0(tmp_file, "/", timestamp, ".fasta"),
       db_name = db, dbtype = "nucl"
     )
     delete_db <- TRUE
@@ -72,11 +93,13 @@ blastASVs <- function(seqs1, seqs2, cutoff = 97.5, db = NULL, maxMatches = Inf,
     return(res)
   }, mc.cores = cores))
   if (delete_db) {
-    file.remove(paste0(timestamp, ".fasta"))
-    for (file in list.files(gsub("[/]db", "", db))) {
-      file.remove(file)
-    }
-    file.remove(gsub("/db", "", db))
+    #file.remove(paste0(timestamp, ".fasta"))
+    unlink(paste0(tmp_file, "/", timestamp, ".fasta"))
+    unlink(paste0(tmp_file, "/db_", timestamp), recursive = TRUE)
+    # for (file in list.files(gsub("[/]db", "", db))) {
+    #   file.remove(file)
+    # }
+    # file.remove(gsub("/db", "", db))
   }
   return(res)
 }
