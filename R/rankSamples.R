@@ -17,9 +17,10 @@
 #'
 #' @examples
 #'
+#' set.seed(123)
 #' asv$biomass_z <- rnorm(nrow(asv))
 #' tm <- thresh(asv, "biomass_z")
-#' x <- rankSamples(asv, tm, id = "sample")
+#' x <- rankSamples(asv, tm, id = "sample", p.cutoff = 0.5)
 #'
 #' @export
 
@@ -61,6 +62,10 @@ rankSamples <- function(asvTab, thresh, network = NULL, id = "sample", groups = 
         thresh$p.value < p.cutoff,
       thresh_group
     ]
+    if (length(groups) < 1) {
+      message("No models had p-values below p.cutoff")
+      return(NULL)
+    }
   }
   if (network_mode) {
     clusterCol <- thresh$clusterType[1]
@@ -86,7 +91,9 @@ rankSamples <- function(asvTab, thresh, network = NULL, id = "sample", groups = 
       setNames(data.frame(asvTab[[id]], asvTab[, groups]), c(id, groups)),
       asvTab[, starting_ncol:ncol(asvTab)]
     )
-    out$mean_rank <- rowMeans(out[, c(groups, "mean_pheno_rank")])
+    out$mean_rank <- rowMeans(
+      as.data.frame(out[, c(groups, "mean_pheno_rank")])
+    )
   }
   out <- out[sort(out$mean_rank, decreasing = FALSE, index.return = TRUE)$ix, ]
   out$overall_rank <- seq_len(nrow(out))
