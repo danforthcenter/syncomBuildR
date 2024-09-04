@@ -39,5 +39,7 @@ Depends:
 Suggests: 
     knitr,
     brms,
+    NetCoMi,
     rmarkdown
+Remotes: stefpeschel/NetCoMi
 VignetteBuilder: knitr

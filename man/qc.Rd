@@ -18,8 +18,8 @@ qc(
 )
 }
 \arguments{
-\item{file}{A file path to an Rdata object containing DADA2 output in such as that from DADA2
-examples (function?)}
+\item{file}{A file path to an Rdata object containing DADA2 output formatted per sinc standards
+(ie, following the dada2 vignette conventions).}
 
 \item{asvTab}{ASV table from DADA2. If a file path is given then this defaults to seqtab.print if
 left NULL for consistency with common DADA2 examples and previous SINC work.}

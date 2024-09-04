@@ -11,7 +11,6 @@ b_da(
   zi_cutoff = 0.1,
   priors = NULL,
   intercept = TRUE,
-  backend = "cmdstanr",
   cores = getOption("mc.cores", 1),
   chains = 2,
   iter = 1000,
@@ -33,8 +32,6 @@ If left NULL (the default) then wide student priors will be used
 (\code{brms::set_prior('student_t(3,0,5)',  class="b")}).}
 
 \item{intercept}{Logical, should an intercept be used? Defaults to TRUE.}
-
-\item{backend}{Argument to control \code{brms::brm()} backend interface to Stan.}
 
 \item{cores}{Argument to control number of cores to use in parallel \code{brms::brm()}.}
 

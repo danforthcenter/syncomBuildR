@@ -9,7 +9,6 @@
 #' If left NULL (the default) then wide student priors will be used
 #' (\code{brms::set_prior('student_t(3,0,5)',  class="b")}).
 #' @param intercept Logical, should an intercept be used? Defaults to TRUE.
-#' @param backend Argument to control \code{brms::brm()} backend interface to Stan.
 #' @param chains Argument to control number of chains used by \code{brms::brm()}.
 #' @param cores Argument to control number of cores to use in parallel \code{brms::brm()}.
 #' @param iter Argument to control number of iterations \code{brms::brm()}.
@@ -36,8 +35,7 @@
 #' }
 #' @export
 b_da <- function(df, col, predictors, zi_cutoff = 0.1, priors = NULL,
-                 intercept = TRUE, backend = "cmdstanr",
-                 cores = getOption("mc.cores", 1), chains = 2, iter = 1000, ...) {
+                 intercept = TRUE, cores = getOption("mc.cores", 1), chains = 2, iter = 1000, ...) {
   if (any(missing(df), missing(col), missing(predictors))) {
     stop("df, col, and predictors must be specified")
   }
@@ -60,15 +58,15 @@ b_da <- function(df, col, predictors, zi_cutoff = 0.1, priors = NULL,
       family = "zero_inflated_negbinomial"
     )
     mod <- brms::brm(form, df,
-      prior = priors, backend = backend, chains = chains, cores = cores,
-      iter = iter
+      prior = priors, chains = chains, cores = cores,
+      iter = iter, ...
     )
   } else {
     form <- brms::bf(as.formula(paste0(col, "~", paste(predictors, collapse = "+"))),
       family = "negbinomial"
     )
     mod <- brms::brm(form, df,
-      prior = priors, backend = backend, chains = chains, cores = cores,
+      prior = priors, chains = chains, cores = cores,
       iter = iter
     )
   }

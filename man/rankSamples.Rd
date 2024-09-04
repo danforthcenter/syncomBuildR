@@ -43,8 +43,9 @@ regression of an ASV table or network.
 }
 \examples{
 
+set.seed(123)
 asv$biomass_z <- rnorm(nrow(asv))
 tm <- thresh(asv, "biomass_z")
-x <- rankSamples(asv, tm, id = "sample")
+x <- rankSamples(asv, tm, id = "sample", p.cutoff = 0.5)
 
 }
