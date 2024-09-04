@@ -18,7 +18,6 @@
 #' @import ggplot2
 #' @importFrom FactoMineR PCA
 #' @importFrom uwot umap
-#' @importFrom ape pcoa
 #'
 #' @examples
 #'

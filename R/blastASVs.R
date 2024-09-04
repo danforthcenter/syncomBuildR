@@ -12,10 +12,7 @@
 #' @param maxMatches An optional number of maximum matches to return per sequence in seqs1.
 #' Defaults to Inf, which will return all matches above the cutoff.
 #' @param cores Number of cores optionally to run in parallel. Defaults to 1 if "mc.cores" is not set.
-#' @keywords calibrate, ZINB, NB
-#' @importFrom rBLAST makeblastdb blast
-#' @importFrom Biostrings DNAStringSet
-#' @importFrom seqinr write.fasta
+#' @keywords BLAST
 #' @import parallel
 #' @return A dataframe of blast results
 #'

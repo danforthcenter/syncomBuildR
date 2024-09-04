@@ -28,12 +28,13 @@
 #'
 #' @return A brmsfit object
 #' @examples
-#' \donttest{
+#' \dontrun{
 #' if ("brms" %in% installed.packages()) {
-#'   ex <- b_da(asv, col = "ASV1", predictors = "tissue", intercept = FALSE)
+#'   ex <- b_da(asv, col = "ASV1", predictors = "tissue", intercept = FALSE, chains = 1, iter = 500)
 #' }
 #' }
 #' @export
+
 b_da <- function(df, col, predictors, zi_cutoff = 0.1, priors = NULL,
                  intercept = TRUE, cores = getOption("mc.cores", 1), chains = 2, iter = 1000, ...) {
   if (any(missing(df), missing(col), missing(predictors))) {

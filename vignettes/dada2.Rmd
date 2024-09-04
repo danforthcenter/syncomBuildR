@@ -130,7 +130,7 @@ names(filtRs) <- samps
 
 ### Filter and trimming
 print("Filtering and trimming")
-out <- filterAndTrim(fnFs, filtFs, fnRs, filtRs,
+out <- dada2::filterAndTrim(fnFs, filtFs, fnRs, filtRs,
   truncLen = truncLength, trimLeft = trimLeft, trimRight = trimRight,
   maxN = 0, maxEE = c(2, 2), truncQ = 2, rm.phix = TRUE,
   compress = TRUE, multithread = cores
@@ -138,32 +138,32 @@ out <- filterAndTrim(fnFs, filtFs, fnRs, filtRs,
 
 ### Learning error rates
 print("Learning error rates")
-errF <- learnErrors(filtFs, multithread = cores)
-errR <- learnErrors(filtRs, multithread = cores)
+errF <- dada2::learnErrors(filtFs, multithread = cores)
+errR <- dada2::learnErrors(filtRs, multithread = cores)
 
 ### Identifying unique sequences
 print("Identifying unique sequences")
-dadaFs <- dada(filtFs, err = errF, multithread = cores)
-dadaRs <- dada(filtRs, err = errR, multithread = cores)
+dadaFs <- dada2::dada(filtFs, err = errF, multithread = cores)
+dadaRs <- dada2::dada(filtRs, err = errR, multithread = cores)
 
 ### Merging reads
 print("Merging reads")
-mergers <- mergePairs(dadaFs, filtFs, dadaRs, filtRs, verbose = cores)
+mergers <- dada2::mergePairs(dadaFs, filtFs, dadaRs, filtRs, verbose = cores)
 
 ### Generate ASV table
 print("Generate ASV table")
-seqtab <- makeSequenceTable(mergers)
+seqtab <- dada2::makeSequenceTable(mergers)
 
 ### Removing Chimeras
 print("Removing Chimeras")
-seqtab.nochim <- removeBimeraDenovo(seqtab, method = "consensus", multithread = cores)
+seqtab.nochim <- dada2::removeBimeraDenovo(seqtab, method = "consensus", multithread = cores)
 seqtab.print <- seqtab.nochim
 colnames(seqtab.print) <- paste0("ASV", seq_len(length(colnames(seqtab.print))))
 write.csv(seqtab.print, "dada2_asv_table.csv", quote = FALSE)
 
 ### Track sequences
 print("Tracking sequences")
-getN <- function(x) sum(getUniques(x))
+getN <- function(x) sum(dada2::getUniques(x))
 track <- cbind(
   out, sapply(dadaFs, getN),
   sapply(dadaRs, getN),
@@ -185,12 +185,12 @@ write.fasta(
 
 ### Assign taxonomy
 print("Assigning taxonomy")
-taxa_rdp <- assignTaxonomy(seqtab.nochim, pathToRDP, multithread = cores)
-taxa_rdp <- addSpecies(taxa_rdp, pathToRDPSpec)
+taxa_rdp <- dada2::assignTaxonomy(seqtab.nochim, pathToRDP, multithread = cores)
+taxa_rdp <- dada2::addSpecies(taxa_rdp, pathToRDPSpec)
 rownames(taxa_rdp) <- paste0("ASV", seq_len(length(asvseq)))
 write.csv(taxa_rdp, "dada2_rdp_taxonomy.csv", quote = FALSE)
-taxa_silva <- assignTaxonomy(seqtab.nochim, pathToSILVA, multithread = cores)
-taxa_silva <- addSpecies(taxa_silva, pathToSILVASpec)
+taxa_silva <- dada2::assignTaxonomy(seqtab.nochim, pathToSILVA, multithread = cores)
+taxa_silva <- dada2::addSpecies(taxa_silva, pathToSILVASpec)
 rownames(taxa_silva) <- paste0("ASV", seq_len(length(asvseq)))
 write.csv(taxa_silva, "dada2_silva_taxonomy.csv", quote = FALSE)
 

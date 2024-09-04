@@ -78,6 +78,4 @@ if ("rBLAST" \%in\% installed.packages() && rBLAST::has_blast()) {
 }
 
 }
-\keyword{NB}
-\keyword{ZINB,}
-\keyword{calibrate,}
+\keyword{BLAST}
