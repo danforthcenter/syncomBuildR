@@ -32,26 +32,28 @@
 #'     ),
 #'     ASV10 = paste0(
 #'       "GTGCCAGCCGCCGCGGTAATACGAAGGGGGCTAGCGTTGCTCGGAATCACTGGGCGTAAAGGGTGCGTAGGCGGGTCT",
-#'       "TTAAGTCAGGGGTGAAATCCTGGAGCTCAACTCCAGAACTGCCTTTGATACTGAAGATCTTGAGTTCGGGAGAGGTGAGTGGAACTG",
-#'       "CGAGTGTAGAGGTGAAATTCGTAGATATTCGCAAGAACACCAGTGGCGAAGGCGGCTCACTGGCCCGATACTGACGCTGAGGCACGAA",
-#'       "AGCGTGGGGAGCAAACAGGATTAGATACCCTGGTAGTCCACGCCGTAAACGATGAATGCCAGCCGTTAGTGGGTTTACTCACTAGTGGCG",
-#'       "CAGCTAACGCTTTAAGCATTCCGCCTGGGGAGTACGGTCGCAAGATTAAAACTCAAATGAATTGACGG"
+#'       "TTAAGTCAGGGGTGAAATCCTGGAGCTCAACTCCAGAACTGCCTTTGATACTGAAGATCTTGAGTTCGGGAGAGGTGAGT",
+#'       "GGAACTGCGAGTGTAGAGGTGAAATTCGTAGATATTCGCAAGAACACCAGTGGCGAAGGCGGCTCACTGGCCCGATACT",
+#'       "GACGCTGAGGCACGAAAGCGTGGGGAGCAAACAGGATTAGATACCCTGGTAGTCCACGCCGTAAACGATGAATGCCAGCC",
+#'       "GTTAGTGGGTTTACTCACTAGTGGCGCAGCTAACGCTTTAAGCATTCCGCCTGGGGAGTACGGTCGCAAGATTAAAACT",
+#'       "CAAATGAATTGACGG"
 #'     )
 #'   )
 #'   seqs2 <- list(
 #'     ASV1 = paste0(
 #'       "GTGCCAGCAGCCGCGGTAATACAGAGGGTGCAAGCGTTAATCGGAATTACTGGGCGTAAAGCGCGCGTAGGTGGTTTGTTAAGT",
-#'       "TGGATGTGAAATCCCCGGGCTCAACCTGGGAACTGCATTCAAAACTGACAAGCTAGAGTATGGTAGAGGGTGGTGGAATTTCCTGTGTAGC",
-#'       "GGTGAAATGCGTAGATATAGGAAGGAACACCAGTGGCGAAGGCGACCACCTGGACTGATACTGACACTGAGGTGCGAAAGCGTGGGGAGCA",
-#'       "AACAGGATTAGATACCCTGGTAGTCCACGCCGTAAACGATGTCAACTAGCCGTTGGGAGCCTTGAGCTCTTAGTGGCGCAGCTAACGCATT",
-#'       "AAGTTGACCGCCTGGGGAGTACGGCCGCAAGGTTAAAACTCAAATGAATTGACGG"
+#'       "TGGATGTGAAATCCCCGGGCTCAACCTGGGAACTGCATTCAAAACTGACAAGCTAGAGTATGGTAGAGGGTGGTGGAATTTCCT",
+#'       "GTGTAGCGGTGAAATGCGTAGATATAGGAAGGAACACCAGTGGCGAAGGCGACCACCTGGACTGATACTGACACTGAGGTGC",
+#'       "GAAAGCGTGGGGAGCAAACAGGATTAGATACCCTGGTAGTCCACGCCGTAAACGATGTCAACTAGCCGTTGGGAGCCTTG",
+#'       "AGCTCTTAGTGGCGCAGCTAACGCATTAAGTTGACCGCCTGGGGAGTACGGCCGCAAGGTTAAAACTCAAATGAATTGACGG"
 #'     ),
 #'     ASV2 = paste0(
 #'       "GTGCCAGCCGCCGCGGTAATACAGAGGGTGCAAGCGTTAATCGGAATTACTGGGCGTAAAGCGCGCGTAGGTGGTTTGTTAA",
-#'       "GTTGGATGTGAAATCCCCGGGCTCAACCTGGGAACTGCATTCAAAACTGACAAGCTAGAGTATGGTAGAGGGTGGTGGAATTTCCTGTGTAG",
-#'       "CGGTGAAATGCGTAGATATAGGAAGGAACACCAGTGGCGAAGGCGACCACCTGGACTGATACTGACACTGAGGTGCGAAAGCGTGGGGAGC",
-#'       "AAACAGGATTAGATACCCTGGTAGTCCACGCCGTAAACGATGTCAACTAGCCGTTGGGAGCCTTGAGCTCTTAGTGGCGCAGCTAACGC",
-#'       "ATTAAGTTGACCGCCTGGGGAGTACGGCCGCAAGGTTAAAACTCAAATGAATTGACGG"
+#'       "GTTGGATGTGAAATCCCCGGGCTCAACCTGGGAACTGCATTCAAAACTGACAAGCTAGAGTATGGTAGAGGGTGGTGGAATT",
+#'       "TCCTGTGTAGCGGTGAAATGCGTAGATATAGGAAGGAACACCAGTGGCGAAGGCGACCACCTGGACTGATACTGACACTGA",
+#'       "GGTGCGAAAGCGTGGGGAGCAAACAGGATTAGATACCCTGGTAGTCCACGCCGTAAACGATGTCAACTAGCCGTTGGGAG",
+#'       "CCTTGAGCTCTTAGTGGCGCAGCTAACGCATTAAGTTGACCGCCTGGGGAGTACGGCCGCAAGGTTAAAACTCAAATGAA",
+#'       "TTGACGG"
 #'     )
 #'   )
 #'   blast <- blastASVs(seqs1, seqs2, cutoff = 0)
@@ -79,7 +81,45 @@ mergeASVs <- function(blast, asv, taxa = NULL, shared_meta = NULL, check_taxa = 
   #* split the blastASVs results by sequence in table 1
   dList <- split(blast, blast$seq1_id)
   #* Main looping function that will run on each ASV in parallel according to cores/"mc.cores" option
-  #* Begin main loop
+  linkage_data <- .merge_asvs_make_links(asv, dList, min_pident, check_taxa, taxa, cores)
+  #* bind results from the main loop part of the function
+  links <- do.call(rbind, lapply(linkage_data, function(lst) {
+    lst$link
+  }))
+  new_asv_counts <- do.call(cbind, lapply(linkage_data, function(lst) {
+    lst$asvColumn
+  }))
+  #* add metadata to new_asv_counts
+  new_asv_table <- cbind(new_asv_metadata, new_asv_counts)
+  #* Final output is a list, initializing it here
+  final_output <- list(
+    "asv" = new_asv_table,
+    "links" = links
+  )
+  if (!is.null(taxa)) {
+    new_taxa <- do.call(rbind, lapply(linkage_data, function(lst) {
+      lst$taxa
+    }))
+    #* check for bad taxa matches
+    if (any(as.numeric(table(new_taxa$ASVnumber)) > 1)) {
+      warning(paste0(
+        "Some non-unique taxa information, ",
+        "check taxonomy results carefully for duplicated ASVnumbers"
+      ))
+    }
+    #* add to final_output list
+    final_output$taxa <- new_taxa
+  }
+  #* find columns from second table that are not included already
+  #* this would happen whenever there are some matches below the pident cutoff
+  final_output <- .merge_asvs_remaining(asv, links, final_output, check_taxa, taxa)
+  return(final_output)
+}
+
+#' @keywords internal
+#' @noRd
+
+.merge_asvs_make_links <- function(asv, dList, min_pident, check_taxa, taxa, cores) {
   linkage_data <- parallel::mclapply(seq_along(dList), function(i) {
     d <- dList[[i]]
     #* in case there is no match return original counts from first ASV table padded with NAs
@@ -156,37 +196,14 @@ mergeASVs <- function(blast, asv, taxa = NULL, shared_meta = NULL, check_taxa = 
       }
     }
     return(outList)
-  }, mc.cores = cores) # end main loop
-  #* bind results from the main loop part of the function
-  links <- do.call(rbind, lapply(linkage_data, function(lst) {
-    lst$link
-  }))
-  new_asv_counts <- do.call(cbind, lapply(linkage_data, function(lst) {
-    lst$asvColumn
-  }))
-  #* add metadata to new_asv_counts
-  new_asv_table <- cbind(new_asv_metadata, new_asv_counts)
-  #* Final output is a list, initializing it here
-  final_output <- list(
-    "asv" = new_asv_table,
-    "links" = links
-  )
-  if (!is.null(taxa)) {
-    new_taxa <- do.call(rbind, lapply(linkage_data, function(lst) {
-      lst$taxa
-    }))
-    #* check for bad taxa matches
-    if (any(as.numeric(table(new_taxa$ASVnumber)) > 1)) {
-      warning(paste0(
-        "Some non-unique taxa information, ",
-        "check taxonomy results carefully for duplicated ASVnumbers"
-      ))
-    }
-    #* add to final_output list
-    final_output$taxa <- new_taxa
-  }
-  #* find columns from second table that are not included already
-  #* this would happen whenever there are some matches below the pident cutoff
+  }, mc.cores = cores)
+  return(linkage_data)
+}
+
+#' @keywords internal
+#' @noRd
+
+.merge_asvs_remaining <- function(asv, links, final_output, check_taxa, taxa) {
   n1 <- 1
   remaining_columns <- setdiff(colnames(asv[[2]]), links$db_id)
   if (length(remaining_columns) > 0) {

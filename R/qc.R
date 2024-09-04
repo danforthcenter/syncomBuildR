@@ -1,7 +1,7 @@
 #' Ease of use quality control function for DADA2 output.
 #'
-#' @param file A file path to an Rdata object containing DADA2 output in such as that from DADA2
-#' examples (function?)
+#' @param file A file path to an Rdata object containing DADA2 output formatted per sinc standards
+#' (ie, following the dada2 vignette conventions).
 #' @param asvTab ASV table from DADA2. If a file path is given then this defaults to seqtab.print if
 #' left NULL for consistency with common DADA2 examples and previous SINC work.
 #' @param taxa A taxonomy file for the ASVs in asvTab. This defaults to taxa_rdp if left NULL.
@@ -71,6 +71,45 @@ qc <- function(file = NULL, asvTab = NULL, taxa = NULL, asvAbnd = 100, sampleAbn
                normalize = "rescale",
                rmTx = list("Order in Chloroplast", "Phylum in Plantae", "Kingdom in Eukaryota"),
                separate = NULL, metadata = NULL, return_removed = FALSE) {
+  file_helper_output <- .qc_file_helper(file, asvTab, taxa)
+  asvTab <- as.data.frame(file_helper_output$asvTab)
+  taxa <- as.data.frame(file_helper_output$taxa)
+  split <- !is.null(separate)
+  if (is.null(metadata) && is.data.frame(separate)) {
+    metadata <- separate
+  }
+  #* `Taxa filtering`
+  taxa_filtering_output <- .qc_taxa_filter(asvTab, taxa, rmTx)
+  asvTab <- taxa_filtering_output$asvTab
+  taxa <- taxa_filtering_output$taxa
+  #* `Sample Abundance filtering`
+  sample_filtering_output <- .qc_sample_abundance_filter(asvTab, sampleAbnd, metadata, return_removed,
+                                                         separate, split)
+  asvTab <- sample_filtering_output$asvTab
+  metadata <- sample_filtering_output$metadata
+  removed <- sample_filtering_output$removed
+  #* `ASV Abundance filtering`
+  asv_filtering_output <- .qc_asv_abundance_filter(asvTab, removed, split, separate)
+  asvTab <- asv_filtering_output$asvTab
+  removed <- asv_filtering_output$removed
+  #* `Normalization`
+  asvTab <- .qc_normalization(asvTab, normalize)
+  #* `Return ASV table`
+  if (!is.null(metadata)) {
+    asvTab <- cbind(metadata, asvTab)
+  }
+  if (return_removed) {
+    out <- list("asv" = asvTab, "removed" = removed)
+  } else {
+    out <- asvTab
+  }
+  return(out)
+}
+
+#' @keywords internal
+#' @noRd
+
+.qc_file_helper <- function(file, asvTab, taxa) {
   if (!is.null(file)) {
     seqtab.print <- NULL
     taxa_rdp <- NULL
@@ -78,19 +117,18 @@ qc <- function(file = NULL, asvTab = NULL, taxa = NULL, asvAbnd = 100, sampleAbn
     asvTab <- seqtab.print
     taxa <- taxa_rdp
   }
-  asvTab <- as.data.frame(asvTab)
-  taxa <- as.data.frame(taxa)
-  split <- !is.null(separate)
-  if (is.null(metadata) && is.data.frame(separate)) {
-    metadata <- separate
-  }
+  return(list("asvTab" = asvTab, "taxa" = taxa))
+}
 
+#' @keywords internal
+#' @noRd
+
+.qc_taxa_filter <- function(asvTab, taxa, rmTx) {
   if (!is.null(rmTx)) {
     indsL <- lapply(rmTx, function(stri) {
       taxaLevel <- strsplit(stri, " ")[[1]][1]
       affector <- strsplit(stri, " ")[[1]][2]
       values <- trimws(gsub(",", "", strsplit(stri, " ")[[1]][-c(1:2)]))
-
       if (affector %in% c("in", "is", "=")) {
         indL <- lapply(values, function(value) {
           index <- taxa[[taxaLevel]] != value # flag F if the row in taxa should be removed
@@ -108,7 +146,15 @@ qc <- function(file = NULL, asvTab = NULL, taxa = NULL, asvAbnd = 100, sampleAbn
     taxa <- taxa[keep_index, ]
     asvTab <- asvTab[, keep_index]
   }
+  return(list("asvTab" = asvTab, "taxa" = taxa))
+}
 
+#' @keywords internal
+#' @noRd
+
+.qc_sample_abundance_filter <- function(asvTab, sampleAbnd, metadata,
+                                        return_removed, separate, split) {
+  removed <- NULL
   if (!is.null(sampleAbnd)) {
     originalRowNames <- rownames(asvTab)
     if (!split) {
@@ -143,52 +189,57 @@ qc <- function(file = NULL, asvTab = NULL, taxa = NULL, asvAbnd = 100, sampleAbn
   } else {
     asvTabSampFilt <- asvTab
   }
+  return(list("asvTab" = asvTabSampFilt, "removed" = removed, "metadata" = metadata))
+}
+
+#' @keywords internal
+#' @noRd
+
+.qc_asv_abundance_filter <- function(asvTab, asvAbnd, removed, split, separate) {
   if (!is.null(asvAbnd)) {
     if (!split) {
-      asvTabFilt <- asvTabSampFilt[, colSums(asvTabSampFilt) >= asvAbnd]
+      asvTabFilt <- asvTab[, colSums(asvTab) >= asvAbnd]
     } else {
       asvTabFilt <- do.call(
         plyr::rbind.fill,
-        lapply(split(asvTabSampFilt, interaction(separate, drop = TRUE)), function(d) {
+        lapply(split(asvTab, interaction(separate, drop = TRUE)), function(d) {
           d[, colSums(d) >= asvAbnd]
         })
       )
     }
-    if (return_removed) {
-      removed <- list()
+    if (!is.null(removed)) {
       removed$cols <- asvTab[, -which(colnames(asvTabFilt) %in% colnames(asvTab))]
     }
   } else {
-    asvTabFilt <- asvTabSampFilt
+    asvTabFilt <- asvTab
   }
+  return(list("asvTab" = asvTabFilt, "removed" = removed))
+}
+
+#' @keywords internal
+#' @noRd
+
+.qc_normalization <- function(asvTab, normalize) {
   if (!is.null(normalize)) {
     if (normalize == "rescale") {
-      scaleFactor <- exp(mean(log(rowSums(asvTabFilt, na.rm = TRUE))))
-      asvTabFilt <- as.data.frame(
-        t(apply(asvTabFilt, MARGIN = 1, FUN = function(i) {
+      scaleFactor <- exp(mean(log(rowSums(asvTab, na.rm = TRUE))))
+      normalizedAsvTab <- as.data.frame(
+        t(apply(asvTab, MARGIN = 1, FUN = function(i) {
           round(scaleFactor * i / sum(i, na.rm = TRUE))
         }))
       )
     } else if (normalize == "pqn") {
-      median_vec <- apply(asvTabFilt / rowMeans(asvTab, na.rm = TRUE), 2, median, na.rm = TRUE) + 1
-      normalizedAsvTab <- t(apply(asvTabFilt, 1, function(x) x / median_vec))
-      rownames(normalizedAsvTab) <- rownames(asvTabFilt)
-      asvTabFilt <- normalizedAsvTab
+      median_vec <- apply(asvTab / rowMeans(asvTab, na.rm = TRUE), 2, median, na.rm = TRUE) + 1
+      normalizedAsvTab <- t(apply(asvTab, 1, function(x) x / median_vec))
+      rownames(normalizedAsvTab) <- rownames(asvTab)
     } else {
-      warning(paste0(
+      stop(paste0(
         "Available options for normalization are NULL, 'pqn', and 'rescale', ",
         normalize, " is not implemented"
       ))
     }
-  }
-
-  if (!is.null(metadata)) {
-    asvTabFilt <- cbind(metadata, asvTabFilt)
-  }
-  if (return_removed) {
-    out <- list("asv" = asvTabFilt, "removed" = removed)
   } else {
-    out <- asvTabFilt
+    normalizedAsvTab <- asvTab
   }
-  return(out)
+  return(normalizedAsvTab)
 }
