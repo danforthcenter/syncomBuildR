@@ -7,8 +7,7 @@ x <- lintr::lint_package(path = "~/syncomBuildR/",
                                                     object_name_linter(styles = c("snake_case", "symbols",
                                                                                   "camelCase", "dotted.case",
                                                                                   "lowercase", "UPPERCASE")),
-                                                    brace_linter(allow_single_line = TRUE)#,
-                                                   # cyclocomp_linter = NULL
+                                                    brace_linter(allow_single_line = TRUE)
                     ))
 length(x)
 x
