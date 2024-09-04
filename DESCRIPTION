@@ -43,6 +43,6 @@ Suggests:
     seqinr,
     rmarkdown
 Remotes:
-    github::stefpeschel/NetCoMi
-    github::mhahsler/rBLAST
+    stefpeschel/NetCoMi
+    mhahsler/rBLAST
 VignetteBuilder: knitr
