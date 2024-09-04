@@ -1,7 +1,8 @@
 Package: syncomBuildR
 Type: Package
 Title: Microbiome analysis from DADA2 to synthetic community generation
-Description: General utilities that have been helpful in making code for SINC projects cleaner, more concise, and more consistent. Not fit for public consumption at this point.
+Description: General utilities that have been helpful in making code for SINC projects cleaner,
+more concise, and more consistent. Not fit for public consumption at this point.
 Version: 0.1.0
 Author: Josh Sumner
 Maintainer: Josh Sumner <jsumner@danforthcenter.org>
