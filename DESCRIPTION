@@ -32,15 +32,15 @@ Imports:
     ComplexUpset,
     plotly,
     Hmisc,
-    ape,
     compositions
-Suggests: 
+Suggests:
     knitr,
     brms,
     NetCoMi,
     ShortRead,
     Biostrings,
     seqinr,
+    ape,
     rBLAST,
     rmarkdown
 Remotes: github::mhahsler/rBLAST,

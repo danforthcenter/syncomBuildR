@@ -34,6 +34,7 @@
 #' }
 #' }
 #' @export
+
 b_da <- function(df, col, predictors, zi_cutoff = 0.1, priors = NULL,
                  intercept = TRUE, cores = getOption("mc.cores", 1), chains = 2, iter = 1000, ...) {
   if (any(missing(df), missing(col), missing(predictors))) {
