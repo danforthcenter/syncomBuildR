@@ -42,5 +42,7 @@ Suggests:
     brms,
     NetCoMi,
     rmarkdown
-Remotes: stefpeschel/NetCoMi
+Remotes:
+    github::stefpeschel/NetCoMi
+    github::mhahsler/rBLAST
 VignetteBuilder: knitr
