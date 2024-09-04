@@ -30,7 +30,7 @@
 #' @examples
 #' \donttest{
 #' if ("brms" %in% installed.packages()) {
-#'   ex <- b_da(asv, col = "ASV1", predictors = "tissue", intercept = FALSE)
+#'   ex <- b_da(asv, col = "ASV1", predictors = "tissue", intercept = FALSE, chains = 1, iter = 500)
 #' }
 #' }
 #' @export

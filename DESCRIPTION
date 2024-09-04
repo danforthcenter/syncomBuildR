@@ -24,23 +24,23 @@ Imports:
     chngpt,
     uwot,
     pscl,
-    Biostrings,
     dbscan,
     igraph,
-    ShortRead,
     ComplexUpset,
     plotly,
-    seqinr,
     Hmisc,
     ape,
-    compositions,
-    rBLAST
+    compositions
 Depends:
     R (>= 2.10)
 Suggests: 
     knitr,
     brms,
     NetCoMi,
+    ShortRead,
+    Biostrings,
+    rBLAST,
+    seqinr,
     rmarkdown
 Remotes:
     github::stefpeschel/NetCoMi

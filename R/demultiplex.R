@@ -25,8 +25,6 @@
 #'
 #' @keywords demultiplex, dada2
 #'
-#' @importFrom ShortRead readFastq sread writeFastq countFastq
-#' @importFrom Biostrings reverseComplement DNAString
 #' @importFrom utils write.csv
 #' @importFrom methods is
 #' @import parallel
