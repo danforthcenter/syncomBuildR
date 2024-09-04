@@ -1,5 +1,6 @@
 library(lintr)
 library(styler)
+devtools::load_all("~/syncomBuildR")
 
 x <- lintr::lint_package(path = "~/syncomBuildR/",
                     linters = linters_with_defaults(line_length_linter(length = 105L),
