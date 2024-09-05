@@ -70,12 +70,18 @@ netThresh <- function(net, asvTab, asvCols = NULL, clusterCol = NULL, cluster = 
   #* `take nodes in a given cluster and aggregate a count in the asv table`
   clust_ag <- do.call(cbind, lapply(cluster, function(clust) {
     asvs_in_cluster <- nodes[nodes[[clusterCol]] == clust, "asv"]
-    setNames(data.frame(rowSums(asvTab[, c(asvs_in_cluster)])), c(paste0("cluster_", clust)))
+    setNames(
+      data.frame(
+        rowSums(
+          as.data.frame(asvTab[, c(asvs_in_cluster)])
+          )
+        ), c(paste0("cluster_", clust)))
   }))
   clusterColumns <- colnames(clust_ag)
   clust_ag <- cbind(asvTab[, -which(colnames(asvTab) %in% asvCols)], clust_ag)
   #* `calibrate phenotype by calibratePheno`
   netThreshOut <- do.call(rbind, lapply(phenoCols, function(phenotype) {
+    clust_ag <- clust_ag[!is.na(clust_ag[[phenotype]]), ]
     if (!is.null(calibratePheno)) {
       formString <- paste0(phenotype, "~", paste0(calibratePheno, collapse = "+"))
       clust_ag[[phenotype]] <- residuals(lm(as.formula(formString), data = clust_ag))
@@ -109,6 +115,7 @@ netThresh <- function(net, asvTab, asvCols = NULL, clusterCol = NULL, cluster = 
           out$phenotype <- phenotype
           out$model <- model
           out$clusterType <- clusterCol
+          out$model_id <- paste(clusterCol, col, phenotype, model, sep = "_")
           if (!is.null(calibratePheno)) {
             out$calibratePheno <- formString
           }

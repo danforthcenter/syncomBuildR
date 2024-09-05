@@ -38,7 +38,8 @@ threshPlot <- function(thresh, asv, asvCols = NULL, phenotype = NULL, unit = "as
     clusters <- unique(nodes[[clusterCol]])
     clust_ag <- do.call(cbind, lapply(clusters, function(clust) {
       asvs_in_cluster <- nodes[nodes[[clusterCol]] == clust, "asv"]
-      setNames(data.frame(rowSums(asv[, c(asvs_in_cluster)])), c(paste0("cluster_", clust)))
+      setNames(data.frame(rowSums(as.data.frame(asv[, c(asvs_in_cluster)]))),
+               c(paste0("cluster_", clust)))
     }))
     asv <- cbind(asv[, -which(grepl("ASV", colnames(asv)))], clust_ag)
   }
