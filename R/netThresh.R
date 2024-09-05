@@ -74,8 +74,9 @@ netThresh <- function(net, asvTab, asvCols = NULL, clusterCol = NULL, cluster = 
       data.frame(
         rowSums(
           as.data.frame(asvTab[, c(asvs_in_cluster)])
-          )
-        ), c(paste0("cluster_", clust)))
+        )
+      ), c(paste0("cluster_", clust))
+    )
   }))
   clusterColumns <- colnames(clust_ag)
   clust_ag <- cbind(asvTab[, -which(colnames(asvTab) %in% asvCols)], clust_ag)
