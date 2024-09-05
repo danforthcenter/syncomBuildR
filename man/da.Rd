@@ -17,7 +17,7 @@ da(df, col, predictors, zi_cutoff = 0.1)
 defaults to 0.1.}
 }
 \value{
-A data frame of model results.
+A data frame of model results and Log2 fold changes.
 }
 \description{
 Function to assess differential abundance of microbe counts or pseudo counts
