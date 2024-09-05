@@ -22,7 +22,7 @@ da <- function(df, col, predictors, zi_cutoff = 0.1) {
   if (any(missing(df), missing(col), missing(predictors))) {
     stop("df, col, and predictors must be specified")
   }
-  log2_values <- log2(df[[col]]+0.0001)
+  log2_values <- log2(df[[col]] + 0.0001)
   vals <- split(log2_values, df[, c(predictors)])
   df[[col]] <- round(df[[col]]) # in case of calibrated pseudo counts
   if (mean(df[[col]] == 0) > zi_cutoff) {
