@@ -112,9 +112,11 @@ asvDist <- function(asvTab, asvCols = NULL, method = "spearman",
   #* *plotting*
   if (plot) {
     # consider grouping things here maybe with hclust.
-    p <- ggplot2::ggplot(ldf, ggplot2::aes(x = .data[["c1"]],
-                                           y = .data[["c2"]],
-                                           fill = ldf[[method]])) +
+    p <- ggplot2::ggplot(ldf, ggplot2::aes(
+      x = .data[["c1"]],
+      y = .data[["c2"]],
+      fill = ldf[[method]]
+    )) +
       ggplot2::geom_tile(color = NA, linewidth = 0) +
       viridis::scale_fill_viridis(na.value = "grey100") +
       ggplot2::labs(fill = method) +

@@ -83,8 +83,10 @@ qc <- function(file = NULL, asvTab = NULL, taxa = NULL, asvAbnd = 100, sampleAbn
   asvTab <- taxa_filtering_output$asvTab
   taxa <- taxa_filtering_output$taxa
   #* `Sample Abundance filtering`
-  sample_filtering_output <- .qc_sample_abundance_filter(asvTab, sampleAbnd, metadata, return_removed,
-                                                         separate, split)
+  sample_filtering_output <- .qc_sample_abundance_filter(
+    asvTab, sampleAbnd, metadata, return_removed,
+    separate, split
+  )
   asvTab <- sample_filtering_output$asvTab
   metadata <- sample_filtering_output$metadata
   removed <- sample_filtering_output$removed
