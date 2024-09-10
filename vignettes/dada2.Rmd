@@ -215,12 +215,14 @@ library(stringr)
 library(seqinr)
 print(paste0("Loaded Libraries at ", Sys.time()))
 ### Specify file paths to sequences
-pathToSeq_21 <- paste0(
+path_to_seq_21 <- paste0(
   "/scratch/mounted_bartlab_data/sinc/field/microbiome_2021/",
-  "Bart2_Project_008_Merged/sequences/")
-pathToSeq_22 <-paste0(
+  "Bart2_Project_008_Merged/sequences/"
+)
+path_to_seq_22 <- paste0(
   "/scratch/mounted_bartlab_data/sinc/field/microbiome_2022/",
-  "Bart2_Project_009/field2022_samples_fastqs/")
+  "Bart2_Project_009/field2022_samples_fastqs/"
+)
 ### Specify file paths to taxonomy databases
 pathToRDP <- "/scratch/rdp_train_set_18.fa.gz"
 # for ease I am copying these to scratch instead of reading from S3
@@ -229,7 +231,7 @@ pathToRDP <- "/scratch/rdp_train_set_18.fa.gz"
 # reauthenticate.
 pathToRDPSpec <- "/scratch/rdp_species_assignment_18_withBart.fa.gz"
 ### Specify dada2 parameters
-truncLength <- c(250,175) # length after which to truncate forward and reverse reads, respectively
+truncLength <- c(250, 175) # length after which to truncate forward and reverse reads, respectively
 trimLeft <- 0
 trimRight <- 0
 cores <- 48 # corresponding to m5.24xlarge instance cores, you'd change this per your machine.
@@ -238,93 +240,106 @@ print(paste0("Defined Paths/Args at ", Sys.time()))
 #* `Start dada2 process`
 
 ### Find samples for 2021
-samps_21 <- unique(sub("_R\\d_.*", "",basename(list.files(pathToSeq_21, pattern="*.fastq*"))))
-samps_21<-samps_21[!grepl("^MM|Bart2_Project_008_Merged-fastqs.zip", samps_21)] # remove other samples
+samps_21 <- unique(sub("_R\\d_.*", "", basename(list.files(path_to_seq_21, pattern = "*.fastq*"))))
+samps_21 <- samps_21[!grepl("^MM|Bart2_Project_008_Merged-fastqs.zip", samps_21)] # remove other samples
 # there are 144 mesocosm samples and a zip file that shouldn't be included here.
 print(paste0("Detected ", length(samps_21), " samples for processing"))
 
 ### Find samples for 2022
-samps_22 <- unique(sub("_R\\d_.*", "",basename(list.files(pathToSeq_22, pattern="*.fastq*"))))
+samps_22 <- unique(sub("_R\\d_.*", "", basename(list.files(path_to_seq_22, pattern = "*.fastq*"))))
 print(paste0("Detected ", length(samps_22), " samples for processing"))
 
 ### Combine 2021 and 2022 samples into one object
 
-fnFs_21 <- sort(list.files(pathToSeq_21, pattern="_R1_001.fastq", full.names = TRUE))
-fnRs_21 <- sort(list.files(pathToSeq_21, pattern="_R2_001.fastq", full.names = TRUE))
+fn_fs_21 <- sort(list.files(path_to_seq_21, pattern = "_R1_001.fastq", full.names = TRUE))
+fn_rs_21 <- sort(list.files(path_to_seq_21, pattern = "_R2_001.fastq", full.names = TRUE))
 # remove mesocosm samples
-field_sample_index_Fs <- unlist(lapply(fnFs_21, function(path){
+field_sample_index_fs <- unlist(lapply(fn_fs_21, function(path) {
   segments <- strsplit(path, "[/]")[[1]]
   nm <- segments[length(segments)]
   !grepl("^MM", nm)
 }))
-field_sample_index_Rs <- unlist(lapply(fnRs_21, function(path){
+field_sample_index_rs <- unlist(lapply(fn_rs_21, function(path) {
   segments <- strsplit(path, "[/]")[[1]]
   nm <- segments[length(segments)]
   !grepl("^MM", nm)
 }))
-fnFs_21 <- fnFs_21[field_sample_index_Fs]
-fnRs_21 <- fnRs_21[field_sample_index_Rs]
+fn_fs_21 <- fn_fs_21[field_sample_index_fs]
+fn_rs_21 <- fn_rs_21[field_sample_index_rs]
 
-filtFs_21 <- file.path("/scratch/filtered", paste0(samps_21, "_F_filt.fastq.gz"))
-filtRs_21 <- file.path("/scratch/filtered", paste0(samps_21, "_R_filt.fastq.gz"))
-names(filtFs_21) <- samps_21
-names(filtRs_21) <- samps_21
+filt_fs_21 <- file.path("/scratch/filtered", paste0(samps_21, "_F_filt.fastq.gz"))
+filt_rs_21 <- file.path("/scratch/filtered", paste0(samps_21, "_R_filt.fastq.gz"))
+names(filt_fs_21) <- samps_21
+names(filt_rs_21) <- samps_21
 
-fnFs_22 <- sort(list.files(pathToSeq_22, pattern="_R1_001.fastq", full.names = TRUE))
-fnRs_22 <- sort(list.files(pathToSeq_22, pattern="_R2_001.fastq", full.names = TRUE))
-filtFs_22 <- file.path("/scratch/filtered", paste0(samps_22, "_F_filt.fastq.gz"))
-filtRs_22 <- file.path("/scratch/filtered", paste0(samps_22, "_R_filt.fastq.gz"))
-names(filtFs_22) <- samps_22
-names(filtRs_22) <- samps_22
+fn_fs_22 <- sort(list.files(path_to_seq_22, pattern = "_R1_001.fastq", full.names = TRUE))
+fn_rs_22 <- sort(list.files(path_to_seq_22, pattern = "_R2_001.fastq", full.names = TRUE))
+filt_fs_22 <- file.path("/scratch/filtered", paste0(samps_22, "_F_filt.fastq.gz"))
+filt_rs_22 <- file.path("/scratch/filtered", paste0(samps_22, "_R_filt.fastq.gz"))
+names(filt_fs_22) <- samps_22
+names(filt_rs_22) <- samps_22
 
-fnFs <- c(fnFs_21, fnFs_22)
-fnRs <- c(fnRs_21, fnRs_22)
-filtFs <- c(filtFs_21, filtFs_22)
-filtRs <- c(filtRs_21, filtRs_22)
+fnFs <- c(fn_fs_21, fn_fs_22)
+fnRs <- c(fn_rs_21, fn_rs_22)
+filtFs <- c(filt_fs_21, filt_fs_22)
+filtRs <- c(filt_rs_21, filt_rs_22)
 
 ### Filter and Trim
 
 print(paste0("Filtering and trimming at ", Sys.time()))
 out <- c(NA, NA)
-out <- tryCatch({
-  filterAndTrim(fnFs, filtFs, fnRs, filtRs, truncLen=truncLength, trimLeft=trimLeft,
-                       trimRight=trimRight, maxN=0, maxEE=c(2,2), truncQ=2, rm.phix=TRUE,
-                       compress=TRUE, multithread=cores)
-}, error = function(err){
-  message("Error caught during filterAndTrim, it is likely that you ran out of storage: ")
-  message(conditionMessage(err))
-  c(length(fnFs), NA)
-  })
+out <- tryCatch(
+  {
+    filterAndTrim(fnFs, filtFs, fnRs, filtRs,
+      truncLen = truncLength, trimLeft = trimLeft,
+      trimRight = trimRight, maxN = 0, maxEE = c(2, 2), truncQ = 2, rm.phix = TRUE,
+      compress = TRUE, multithread = cores
+    )
+  },
+  error = function(err) {
+    message("Error caught during filterAndTrim, it is likely that you ran out of storage: ")
+    message(conditionMessage(err))
+    c(length(fnFs), NA)
+  }
+)
 
 print(paste0("Finding successful filtered sequences at ", Sys.time()))
-filtFs_attempted <- filtFs
-filtRs_attempted <- filtRs
+filt_fs_attempted <- filtFs
+filt_rs_attempted <- filtRs
 filtFs <- filtFs[file.exists(filtFs)]
 filtRs <- filtRs[file.exists(filtRs)]
-if(length(filtFs) != length(filtFs_attempted)) {
-  print(paste0("NOT ALL FORWARD SEQUENCES SUCCEEDED IN FILTERING STEP, EXPECTED ", 
-               length(filtFs_attempted), " BUT ONLY HAVE ", length(filtFs)))
+if (length(filtFs) != length(filt_fs_attempted)) {
+  print(paste0(
+    "NOT ALL FORWARD SEQUENCES SUCCEEDED IN FILTERING STEP, EXPECTED ",
+    length(filt_fs_attempted), " BUT ONLY HAVE ", length(filtFs)
+  ))
 }
-if(length(filtRs) != length(filtRs_attempted)) {
-  print(paste0("NOT ALL REVERSE SEQUENCES SUCCEEDED IN FILTERING STEP, EXPECTED ", 
-               length(filtRs_attempted), " BUT ONLY HAVE ", length(filtRs)))
+if (length(filtRs) != length(filt_rs_attempted)) {
+  print(paste0(
+    "NOT ALL REVERSE SEQUENCES SUCCEEDED IN FILTERING STEP, EXPECTED ",
+    length(filt_rs_attempted), " BUT ONLY HAVE ", length(filtRs)
+  ))
 }
 
 ### Learning error rates
-loessErrfun_mod <- function (trans) {
+loess_err_fun_mod <- function(trans) {
   qq <- as.numeric(colnames(trans))
   est <- matrix(0, nrow = 0, ncol = length(qq))
   for (nti in c("A", "C", "G", "T")) {
     for (ntj in c("A", "C", "G", "T")) {
       if (nti != ntj) {
         errs <- trans[paste0(nti, "2", ntj), ]
-        tot <- colSums(trans[paste0(nti, "2", c("A",
-                                                "C", "G", "T")), ])
-        rlogp <- log10((errs + 1)/tot)
+        tot <- colSums(trans[paste0(nti, "2", c(
+          "A",
+          "C", "G", "T"
+        )), ])
+        rlogp <- log10((errs + 1) / tot)
         rlogp[is.infinite(rlogp)] <- NA
-        df <- data.frame(q = qq, errs = errs, tot = tot,
-                         rlogp = rlogp)
-        mod.lo <- loess(rlogp ~ q, df, weights = log10(tot),span = 2)
+        df <- data.frame(
+          q = qq, errs = errs, tot = tot,
+          rlogp = rlogp
+        )
+        mod.lo <- loess(rlogp ~ q, df, weights = log10(tot), span = 2)
         pred <- predict(mod.lo, qq)
         maxrli <- max(which(!is.na(pred)))
         minrli <- min(which(!is.na(pred)))
@@ -334,35 +349,43 @@ loessErrfun_mod <- function (trans) {
       }
     }
   }
-  MAX_ERROR_RATE <- 0.25
-  MIN_ERROR_RATE <- 1e-07
-  est[est > MAX_ERROR_RATE] <- MAX_ERROR_RATE
-  est[est < MIN_ERROR_RATE] <- MIN_ERROR_RATE
-  err <- rbind(1 - colSums(est[1:3, ]), est[1:3, ], est[4,
-  ], 1 - colSums(est[4:6, ]), est[5:6, ], est[7:8, ], 1 -
-    colSums(est[7:9, ]), est[9, ], est[10:12, ], 1 - colSums(est[10:12,
-    ]))
-  rownames(err) <- paste0(rep(c("A", "C", "G", "T"), each = 4),
-                          "2", c("A", "C", "G", "T"))
+  max_error_rate <- 0.25
+  min_error_rate <- 1e-07
+  est[est > max_error_rate] <- max_error_rate
+  est[est < min_error_rate] <- min_error_rate
+  err <- rbind(1 - colSums(est[1:3, ]),
+               est[1:3, ],
+               est[4, ],
+               1 - colSums(est[4:6, ]),
+               est[5:6, ],
+               est[7:8, ],
+               1 - colSums(est[7:9, ]),
+               est[9, ],
+               est[10:12, ],
+               1 - colSums(est[10:12, ]))
+  rownames(err) <- paste0(
+    rep(c("A", "C", "G", "T"), each = 4),
+    "2", c("A", "C", "G", "T")
+  )
   colnames(err) <- colnames(trans)
   return(err)
 }
 
 print(paste0("Learning error rates at ", Sys.time()))
-errF = learnErrors(filtFs, multithread = cores, errorEstimationFunction = loessErrfun_mod)
-errR = learnErrors(filtRs, multithread = cores, errorEstimationFunction = loessErrfun_mod)
+errF <- learnErrors(filtFs, multithread = cores, errorEstimationFunction = loess_err_fun_mod)
+errR <- learnErrors(filtRs, multithread = cores, errorEstimationFunction = loess_err_fun_mod)
 
 print(paste0("Dereplicating Fastq files ", Sys.time()))
 derepFs <- derepFastq(filtFs, verbose = FALSE)
 derepRs <- derepFastq(filtRs, verbose = FALSE)
 
 print(paste0("Denoising to unique sequences at ", Sys.time()))
-dadaFs <- dada(derepFs, err=errF, multithread=cores, verbose = FALSE)
-dadaRs <- dada(derepRs, err=errR, multithread=cores, verbose = FALSE)
+dadaFs <- dada(derepFs, err = errF, multithread = cores, verbose = FALSE)
+dadaRs <- dada(derepRs, err = errR, multithread = cores, verbose = FALSE)
 
 ### Merging reads
 print(paste0("Merging reads at ", Sys.time()))
-mergers <- mergePairs(dadaFs, filtFs, dadaRs, filtRs, verbose=cores)
+mergers <- mergePairs(dadaFs, filtFs, dadaRs, filtRs, verbose = cores)
 
 ### Generate ASV table
 print(paste0("Generating ASV table at ", Sys.time()))
@@ -370,25 +393,28 @@ seqtab <- makeSequenceTable(mergers)
 
 ### Removing Chimeras
 print(paste0("Removing Chimeras at ", Sys.time()))
-seqtab.nochim <- removeBimeraDenovo(seqtab, method="consensus", multithread=cores)
+seqtab.nochim <- removeBimeraDenovo(seqtab, method = "consensus", multithread = cores)
 seqtab.print <- seqtab.nochim
-colnames(seqtab.print) <- paste0("ASV",1:length(colnames(seqtab.print)))
-#write.csv(seqtab.print,"field2022_dada2_run_asv_table.csv",quote=F)
+colnames(seqtab.print) <- paste0("ASV", seq_len(length(colnames(seqtab.print))))
 
 ### Track sequences
 print(paste0("Tracking sequences at ", Sys.time()))
-getN <- function(x) sum(getUniques(x))
-tryCatch({
-  track <- cbind(out, sapply(dadaFs, getN), sapply(dadaRs, getN),
-                 sapply(mergers, getN), rowSums(seqtab.nochim))
-  colnames(track) <- c("input", "filtered", "denoisedF", "denoisedR", "merged", "nonchim")
-  rownames(track) <- c(filtFs, filtRs) # normally would be samps, but with how I am combining
-  # things that is not a great option.
-  # write.csv(track,"field2022_dada2_run_sequence_tracking.csv",row.names=T,quote=F)
-}, error = function(err){
-  message("Had an error making tracking object")
-  message(conditionMessage(err))
-})
+getN <- function(x) sum(dada2::getUniques(x))
+tryCatch(
+  {
+    track <- cbind(
+      out, sapply(dadaFs, getN), sapply(dadaRs, getN),
+      sapply(mergers, getN), rowSums(seqtab.nochim)
+    )
+    colnames(track) <- c("input", "filtered", "denoisedF", "denoisedR", "merged", "nonchim")
+    rownames(track) <- c(filtFs, filtRs) # normally would be samps, but with how I am combining
+    # things that is not a great option.
+  },
+  error = function(err) {
+    message("Had an error making tracking object")
+    message(conditionMessage(err))
+  }
+)
 
 ### Generate fasta file
 print(paste0("Generating fasta file at ", Sys.time()))
@@ -398,18 +424,18 @@ asvseq <- colnames(seqtab.nochim)
 
 ### Assign taxonomy
 print(paste0("Assigning taxonomy at ", Sys.time()))
-taxa_rdp <- assignTaxonomy(seqtab.nochim, pathToRDP, multithread=cores)
+taxa_rdp <- assignTaxonomy(seqtab.nochim, pathToRDP, multithread = cores)
 print(paste0("Adding species at ", Sys.time()))
 taxa_rdp <- addSpecies(taxa_rdp, pathToRDPSpec)
-rownames(taxa_rdp) <- paste0("ASV",1:length(asvseq))
-# write.csv(taxa_rdp,"field2022_dada2_run_rdp_taxonomy.csv",quote=F)
+rownames(taxa_rdp) <- paste0("ASV", seq_len(length(asvseq)))
 
 ### Save everything in RData
 print(paste0("Creating RData Object at ", Sys.time()))
 save(fnFs, fnRs, filtFs, filtRs, out, errF, errR, dadaFs, dadaRs, mergers,
-     seqtab, seqtab.nochim, track, seqtab.print, asvseq, taxa_rdp, 
-     filtFs_attempted, filtRs_attempted,
-     file="/scratch/run_dada2_results.rdata")
+  seqtab, seqtab.nochim, track, seqtab.print, asvseq, taxa_rdp,
+  filt_fs_attempted, filt_rs_attempted,
+  file = "/scratch/run_dada2_results.rdata"
+)
 print(paste0("Done at", Sys.time()))
 ```
 
@@ -640,8 +666,3 @@ ggplot(track, aes(x = variable, y = value, group = id, color = interaction(depth
     strip.text.y = element_text(size = 14, color = "white")
   )
 ```
-
-
-
-
-

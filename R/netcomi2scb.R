@@ -27,10 +27,10 @@
 #' @examples
 #' \dontrun{
 #' if ("NetCoMi" %in% installed.packages()) {
-#' microNetObj <- NetCoMi::netConstruct(as.matrix(asv[, grepl("ASV", colnames(asv))]),
-#'   measure = "spearman", sparsMethod = "t-test", alpha = 0.7
-#' )
-#' net <- netcomi2scb(microNetObj)
+#'   microNetObj <- NetCoMi::netConstruct(as.matrix(asv[, grepl("ASV", colnames(asv))]),
+#'     measure = "spearman", sparsMethod = "t-test", alpha = 0.7
+#'   )
+#'   net <- netcomi2scb(microNetObj)
 #' }
 #' }
 #' @export

@@ -54,8 +54,9 @@ threshUpset <- function(thresh, mode = "phenotype",
   sub_upset_data[[pvalcol]] <- ifelse(sub_upset_data[[pvalcol]] < cutoff, TRUE, FALSE)
   data.table::setDT(sub_upset_data)
   upsetPlotData <- as.data.frame(data.table::dcast(sub_upset_data,
-                                                   asv ~ phenotype,
-                                                   value.var = pvalcol))
+    asv ~ phenotype,
+    value.var = pvalcol
+  ))
   p <- ComplexUpset::upset(upsetPlotData, intersect = colnames(upsetPlotData)[-1])
   p[[2]] <- p[[2]] +
     ggplot2::labs(
