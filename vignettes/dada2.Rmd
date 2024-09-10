@@ -1,12 +1,12 @@
 ---
-title: "DADA2 For SINC"
+title: "DADA2 For SINC using AWS"
 author: "Josh Sumner, DDPSC Data Science Core Facility"
 output: 
   html_document:
     toc: true
     number_sections: false
     code_folding: show
-date: "2023-08-23"
+date: "2024-09-10"
 vignette: >
   %\VignetteIndexEntry{dada2}
   %\VignetteEngine{knitr::rmarkdown}
@@ -22,64 +22,167 @@ library(data.table)
 library(ggplot2)
 ```
 
+## Introduction
 
-## DADA2 for SINC
+Scale-Out Computing on AWS (SOCA) is the replacement for our local compute cluster that was accessible
+through stargate. There are docs that will cover the basics of using SOCA/S3 that Noah and Josh R put
+together as they were preparing the center to migrate to AWS. Those can be found [here](https://docs.google.com/document/d/1NdfYnbF7iT6VDSrKsCwh57z5aYbjJHsHGCMBzWVVGyA/edit#heading=h.ifc0b6hs1hz7). Those will cover most of what you need for general information and the point of this document will
+be to go over the steps that I did to run `dada2` on the field 2021 and field 2022 samples (together)
+in case there are parts of this which are useful to you in the future.
 
-Microbiome research has shifted from using Operating Taxonomic Units (OTUs) to using Amplicon Sequence Variants (ASVs). Originally, OTUs were used to minimize error introduced by sequencers and because of the assumption that taxonomically similar variants of an organism would be minimally different. So OTUs are made by clustering similar observed sequences. Conversely, ASVs denoise sequences through modeling the error rate and avoid clustering altogether. This difference makes ASVs more specific (they identify a single unique sequence) and comparable across experiments (again due to being a unique sequence). In R we can generate ASV tables from fastq files using the `dada2` package.
+## Using SOCA
 
-This vignette will go over:
+Note that I am writing these as someone using linux and without cyberduck/other filesharing GUIs.
+There may be times that it is easier for you to do something different depending on your OS/expertise.
 
-- where to find dada2 resources
-- how to set up dada2 jobs on stargate
-- an example dada2 script
+### Accessing SOCA
 
-## DADA2 Resources
-
-The best place for in depth explanations of the `dada2` steps is in the [vignettes on bioconductor](https://bioconductor.org/packages/devel/bioc/vignettes/dada2/inst/doc/dada2-intro.html) which link to several papers with more details.
-
-## Running DADA2 on stargate
-
-The local data science cluster uses HT Condor to schedule jobs. You can submit a job to the cluster with a command like:
-
-```
-condor_submit dada2.submit
-```
-
-where `dada2.submit` is a text file similar to this:
+First you need to be able to access SOCA (probably from command line). To do that you need to follow
+the instructions [here](https://soca.datasci.danforthcenter.org/ssh) to get a `YOURNAME_soca_privatekey.pem`
+file. Once you have that file you can use it to ssh into the SOCA head node. Generally it will be easiest
+to make an alias for that similar to below.
 
 ```
-####################
-#
-# Example Vanilla Universe Job
-# Simple HTCondor submit description file
-#
-####################
-
-name             = run_dada2
-universe         = vanilla
-getenv           = true
-executable       = Rscript
-arguments        = yourFile.R
-log              = /home/yourUsername/path/to/logs/$(name).log
-output           = /home/yourUsername/path/to/logs/$(name).out
-error            = /home/yourUsername/path/to/logs/$(name).error
-request_cpus     = 10
-request_memory   = 40G
-notification     = Always
-
-##  Do not edit  ##
-accounting_group=group_sinc
-###################
-
-queue
+cd
+nano .bashrc # or vim or emacs or however you want to edit the file
+# then add:
+# alias soca='ssh -i /path/to/soca_privatekey.pem username@3.140.76.124'
+# for instance mine is:
+# alias soca='ssh -i /home/josh/Desktop/jsumner_soca_privatekey.pem jsumner@3.140.76.124'
 ```
 
-## Example DADA2 script
+Now restart bash (open a new terminal) and run `soca` which should take you to the head node.
 
-Here we go through an example dada2 script which would be provided to the submit file above in `arguments = yourFile.R`.
+### Job Setup on the head node
+
+On the head node there is a job template setup tool that you can use to make an empty job template with
+all default settings.
+
+```
+[jsumner@ip-10-0-0-38 ~]$ job-template myjob.sh
+Created job file myjob.sh.
+Edit the job file to add/edit parameters and job information.
+Submit the job using the command: qsub <jobfile>, or for interactive jobs: qsub -I <jobfile>
+Additional parameters are documented at
+https://awslabs.github.io/scale-out-computing-on-aws/tutorials/integration-ec2-job-parameters/
+```
+
+Note that for our purposes it makes sense to start off by running a smallish machine interactively so
+that you can make sure that you have installed and can load all of the R packages you'll need before
+spinning up a larger machine.
+
+That job file has several PBS settings, although [more are documented online](https://awslabs.github.io/scale-out-computing-on-aws/tutorials/integration-ec2-job-parameters/#scratch_size). Other than the PBS settings and variables the rest is a normal .sh script.
+
+```
+[jsumner@ip-10-0-0-38 ~]$ cat myjob.sh
+#!/bin/bash
+## BEGIN PBS SETTINGS: Note PBS lines MUST start with #
+#PBS -N jobname
+#PBS -V -j oe -o jobname.qlog
+#PBS -P bart
+#PBS -q normal
+#PBS -l nodes=1
+#PBS -l instance_type=t3.nano
+#PBS -l system_metrics=True
+## END PBS SETTINGS
+## BEGIN JOB
+
+## END JOB
+```
+
+### Job Customization
+
+Next you'll need to customize the job to work for your specific needs.
+
+#### PBS settings
+
+First we name the job, here I'm naming it `run_dada2`. This is just useful for tracking the job in the
+queue. 
+
+Next we specify where to write logs, I am writing them to `run_dada2.qlog` so that I know they are from
+the `run_dada2.sh` job and related to the `run_dada2.R` file that we'll also write.
+
+Then we specify that we are running this as part of the bart lab. I do not change the queue or the number
+of nodes from the default.
+
+We do change the instance type to a larger machine. `m5.16xlarge` is a 32 core x 256 GiB machine, but
+a `c5.24xlarge` instance might be better (48 core x 192 GiB machine) since it has more cores and is
+slightly less expensive per hour. I was using the `m5.16xlarge` out of an abundance of caution for
+memory while testing and one of those tests happened to be the version that worked first.
+It is very unlikely that 192 is too little memory for this job though, so you should explore options.
+
+One type of memory that we do need to worry about is the `/scratch/` memory. When you start a compute
+instance that is a machine that exists while your job runs, then when your job finishes the machine goes
+away. While the machine runs there is a directory called `/scratch/` where you can write files that will
+not incur the (rather expensive) storage costs on EBS (the head node you access with your `soca` ssh
+alias). The problem is that the `/scratch/` directory WILL DISAPPEAR when your job concludes, so you'll
+need to copy things to someplace else before ending the job. Additionally, `dada2` wants to read fastq
+files then write a bunch of filtered fastq files to someplace else. The `/scratch/` folder is the most
+obvious place to write those files since they may change based on different parameters you set within
+the R script and we don't want to store them forever since they are just intermediate data. By default
+there is very little disk memory in `/scratch/` so we specify that we want a machine with 25Gb of storage
+there. Similar to the machine memory, 25Gb is a very generous estimate, but it is something where erring
+on the side of caution can save a lot of headaches. This folder will have filtered fastq files, some
+taxonomy files, and all your Rdata output in it at the end of your job, better to not have it fail at
+the very end due to memory limits. To specify `/scratch/` storage we add a `scratch_size=25` line in our
+PBS settings.
+
+The complete setup chunk looks like this:
+
+```
+#!/bin/bash
+## BEGIN PBS SETTINGS: Note PBS lines MUST start with #
+#PBS -N run_dada2
+#PBS -V -j oe -o run_dada2.qlog
+#PBS -P bart
+#PBS -q normal
+#PBS -l nodes=1
+#PBS -l instance_type=m5.16xlarge
+#PBS -l system_metrics=True
+#PBS -l scratch_size=25
+## END PBS SETTINGS
+## BEGIN JOB
+```
 
 
-The dada2 script can stay the same between experiments with the exception of the truncation lengths, which should be picked using `plotQualityProfile`. 
+#### Reading Data from S3
+
+Now we need to make sure our job can get data from S3. Your S3 storage is not available by default from
+SOCA, so the first step will be to mount S3 to some location. To do that we mount S3 to some local folder.
+
+For consistency it is probably best for that folder to be in `/scratch/` so that there is no chance
+of strange storage costs and to keep our actual locale clean. This also means that you need to make that
+folder as part of your job. *Note, Noah tested whether mounting S3 to a folder other than scratch caused any unexpected storage costs and it did not, but this is still probably best practice.*
+
+In this example I mount two locations because I have an AWS profile for bart lab and for datascience and
+unfortunately I need data from both and to write to the datascience side (where my main file storage is).
+
+```
+# make mountpoints in scratch
+mkdir /scratch/mounted_bartlab_data
+mkdir /scratch/mounted_datasci
+
+# mount S3
+mount-s3 --profile jsumner_bart ddpsc-bartlab-data /scratch/mounted_bartlab_data
+mount-s3 --profile jsumner_datasci ddpsc-datascience /scratch/mounted_datasci
+```
+
+For the mount to work you will need to configure AWS sso. The first time you do that you will need
+to be on the head SOCA node and run `aws configure sso`. That should set up a `.aws` folder in your
+home directory where you can then add a `credentials` file per the [usual instructions](https://docs.google.com/document/d/1NdfYnbF7iT6VDSrKsCwh57z5aYbjJHsHGCMBzWVVGyA/edit#heading=h.ok2nu7ilieq7). Note that for some (terrible) reason you will need to refresh your credentials every 12 hours.
+
+To make refreshing your credentials less annoying you might define some alias to open the file in an editor,
+but there is currently no getting around that this is a real pain.
+
+#### Running `dada2`
+
+Now we are finally ready to run dada2/whatever our job is. We'll add `Rscript dada2_prep/run_dada2.R`
+to our job file and write the R script.
+
+##### Read Quality
+
+One of the inputs that you might frequently want to change would be the truncation length in the
+forward and reverse directions.
 
 ```{r, eval = FALSE}
 plotQualityProfile(c("100ARE_S1_R1_001.fastq.gz", "100ARR_S2_R1_001.fastq.gz")) # forward
@@ -99,115 +202,376 @@ Using those plots we can set the truncLength values for our dada2 script. You sh
 
 Apart from the truncation lengths you may also want to point to different taxonomic databases (pathToRDP, pathToSILVA, etc) than those shown here, but for SINC projects these are what we have been using.
 
-Those changes would all be made in the `Args` section, the rest should work as is for your data.
+Those changes would all be made in the first section of the script, the rest should work as is for your data.
+
+The R script in this case is somewhat modified from the normal dada2 run, but not in any particularly
+dramatic ways. Basically there are just a few things added to make troubleshooting across the AWS setting
+easier and some extra steps to combine the fastq files from two experiments. See comments in script below.
 
 ```{r, eval = FALSE}
+### Load packages
 library(dada2)
 library(stringr)
 library(seqinr)
-
-### Args
-pathToSeq <- "/home/jsumner/SINC/field_2021/microbiome/sequences/field_samples"
-pathToRDP <- "/home/jsumner/microbiome/Taxa/rdp_train_set_18.fa.gz"
-pathToRDPSpec <- "/home/jsumner/microbiome/Taxa/rdp_species_assignment_18_withBart.fa.gz"
-pathToSILVA <- "/home/jsumner/microbiome/Taxa/silva_nr99_v138.1_train_set.fa.gz"
-pathToSILVASpec <- "/home/jsumner/microbiome/Taxa/silva_species_assignment_v138.1_withBart.fa.gz"
-truncLength <- c(250, 175) # length after which to truncate forward and reverse reads, respectively
+print(paste0("Loaded Libraries at ", Sys.time()))
+### Specify file paths to sequences
+pathToSeq_21 <- paste0(
+  "/scratch/mounted_bartlab_data/sinc/field/microbiome_2021/",
+  "Bart2_Project_008_Merged/sequences/")
+pathToSeq_22 <-paste0(
+  "/scratch/mounted_bartlab_data/sinc/field/microbiome_2022/",
+  "Bart2_Project_009/field2022_samples_fastqs/")
+### Specify file paths to taxonomy databases
+pathToRDP <- "/scratch/rdp_train_set_18.fa.gz"
+# for ease I am copying these to scratch instead of reading from S3
+# this is only to try to prevent problems if S3 unmounts after credentials expire and it happens to
+# hit the assignTaxonomy step before you
+# reauthenticate.
+pathToRDPSpec <- "/scratch/rdp_species_assignment_18_withBart.fa.gz"
+### Specify dada2 parameters
+truncLength <- c(250,175) # length after which to truncate forward and reverse reads, respectively
 trimLeft <- 0
 trimRight <- 0
-cores <- 10 # this should be the number of cores specified in your submit file
+cores <- 48 # corresponding to m5.24xlarge instance cores, you'd change this per your machine.
+print(paste0("Defined Paths/Args at ", Sys.time()))
 
-### Housekeeping
-samps <- unique(sub("_R\\d_.*", "", basename(list.files(pathToSeq, pattern = "*.fastq*"))))
-samps <- samps[!grepl("^MM", samps)] # this was to remove samples from a different experiment
-print(paste0("Detected ", length(samps), " samples for processing"))
-fnFs <- sort(list.files(pathToSeq, pattern = "_R1_001.fastq", full.names = TRUE))
-fnRs <- sort(list.files(pathToSeq, pattern = "_R2_001.fastq", full.names = TRUE))
-filtFs <- file.path(pathToSeq, "filtered", paste0(samps, "_F_filt.fastq.gz"))
-filtRs <- file.path(pathToSeq, "filtered", paste0(samps, "_R_filt.fastq.gz"))
-names(filtFs) <- samps
-names(filtRs) <- samps
+#* `Start dada2 process`
 
-### Filter and trimming
-print("Filtering and trimming")
-out <- dada2::filterAndTrim(fnFs, filtFs, fnRs, filtRs,
-  truncLen = truncLength, trimLeft = trimLeft, trimRight = trimRight,
-  maxN = 0, maxEE = c(2, 2), truncQ = 2, rm.phix = TRUE,
-  compress = TRUE, multithread = cores
-)
+### Find samples for 2021
+samps_21 <- unique(sub("_R\\d_.*", "",basename(list.files(pathToSeq_21, pattern="*.fastq*"))))
+samps_21<-samps_21[!grepl("^MM|Bart2_Project_008_Merged-fastqs.zip", samps_21)] # remove other samples
+# there are 144 mesocosm samples and a zip file that shouldn't be included here.
+print(paste0("Detected ", length(samps_21), " samples for processing"))
+
+### Find samples for 2022
+samps_22 <- unique(sub("_R\\d_.*", "",basename(list.files(pathToSeq_22, pattern="*.fastq*"))))
+print(paste0("Detected ", length(samps_22), " samples for processing"))
+
+### Combine 2021 and 2022 samples into one object
+
+fnFs_21 <- sort(list.files(pathToSeq_21, pattern="_R1_001.fastq", full.names = TRUE))
+fnRs_21 <- sort(list.files(pathToSeq_21, pattern="_R2_001.fastq", full.names = TRUE))
+# remove mesocosm samples
+field_sample_index_Fs <- unlist(lapply(fnFs_21, function(path){
+  segments <- strsplit(path, "[/]")[[1]]
+  nm <- segments[length(segments)]
+  !grepl("^MM", nm)
+}))
+field_sample_index_Rs <- unlist(lapply(fnRs_21, function(path){
+  segments <- strsplit(path, "[/]")[[1]]
+  nm <- segments[length(segments)]
+  !grepl("^MM", nm)
+}))
+fnFs_21 <- fnFs_21[field_sample_index_Fs]
+fnRs_21 <- fnRs_21[field_sample_index_Rs]
+
+filtFs_21 <- file.path("/scratch/filtered", paste0(samps_21, "_F_filt.fastq.gz"))
+filtRs_21 <- file.path("/scratch/filtered", paste0(samps_21, "_R_filt.fastq.gz"))
+names(filtFs_21) <- samps_21
+names(filtRs_21) <- samps_21
+
+fnFs_22 <- sort(list.files(pathToSeq_22, pattern="_R1_001.fastq", full.names = TRUE))
+fnRs_22 <- sort(list.files(pathToSeq_22, pattern="_R2_001.fastq", full.names = TRUE))
+filtFs_22 <- file.path("/scratch/filtered", paste0(samps_22, "_F_filt.fastq.gz"))
+filtRs_22 <- file.path("/scratch/filtered", paste0(samps_22, "_R_filt.fastq.gz"))
+names(filtFs_22) <- samps_22
+names(filtRs_22) <- samps_22
+
+fnFs <- c(fnFs_21, fnFs_22)
+fnRs <- c(fnRs_21, fnRs_22)
+filtFs <- c(filtFs_21, filtFs_22)
+filtRs <- c(filtRs_21, filtRs_22)
+
+### Filter and Trim
+
+print(paste0("Filtering and trimming at ", Sys.time()))
+out <- c(NA, NA)
+out <- tryCatch({
+  filterAndTrim(fnFs, filtFs, fnRs, filtRs, truncLen=truncLength, trimLeft=trimLeft,
+                       trimRight=trimRight, maxN=0, maxEE=c(2,2), truncQ=2, rm.phix=TRUE,
+                       compress=TRUE, multithread=cores)
+}, error = function(err){
+  message("Error caught during filterAndTrim, it is likely that you ran out of storage: ")
+  message(conditionMessage(err))
+  c(length(fnFs), NA)
+  })
+
+print(paste0("Finding successful filtered sequences at ", Sys.time()))
+filtFs_attempted <- filtFs
+filtRs_attempted <- filtRs
+filtFs <- filtFs[file.exists(filtFs)]
+filtRs <- filtRs[file.exists(filtRs)]
+if(length(filtFs) != length(filtFs_attempted)) {
+  print(paste0("NOT ALL FORWARD SEQUENCES SUCCEEDED IN FILTERING STEP, EXPECTED ", 
+               length(filtFs_attempted), " BUT ONLY HAVE ", length(filtFs)))
+}
+if(length(filtRs) != length(filtRs_attempted)) {
+  print(paste0("NOT ALL REVERSE SEQUENCES SUCCEEDED IN FILTERING STEP, EXPECTED ", 
+               length(filtRs_attempted), " BUT ONLY HAVE ", length(filtRs)))
+}
 
 ### Learning error rates
-print("Learning error rates")
-errF <- dada2::learnErrors(filtFs, multithread = cores)
-errR <- dada2::learnErrors(filtRs, multithread = cores)
+loessErrfun_mod <- function (trans) {
+  qq <- as.numeric(colnames(trans))
+  est <- matrix(0, nrow = 0, ncol = length(qq))
+  for (nti in c("A", "C", "G", "T")) {
+    for (ntj in c("A", "C", "G", "T")) {
+      if (nti != ntj) {
+        errs <- trans[paste0(nti, "2", ntj), ]
+        tot <- colSums(trans[paste0(nti, "2", c("A",
+                                                "C", "G", "T")), ])
+        rlogp <- log10((errs + 1)/tot)
+        rlogp[is.infinite(rlogp)] <- NA
+        df <- data.frame(q = qq, errs = errs, tot = tot,
+                         rlogp = rlogp)
+        mod.lo <- loess(rlogp ~ q, df, weights = log10(tot),span = 2)
+        pred <- predict(mod.lo, qq)
+        maxrli <- max(which(!is.na(pred)))
+        minrli <- min(which(!is.na(pred)))
+        pred[seq_along(pred) > maxrli] <- pred[[maxrli]]
+        pred[seq_along(pred) < minrli] <- pred[[minrli]]
+        est <- rbind(est, 10^pred)
+      }
+    }
+  }
+  MAX_ERROR_RATE <- 0.25
+  MIN_ERROR_RATE <- 1e-07
+  est[est > MAX_ERROR_RATE] <- MAX_ERROR_RATE
+  est[est < MIN_ERROR_RATE] <- MIN_ERROR_RATE
+  err <- rbind(1 - colSums(est[1:3, ]), est[1:3, ], est[4,
+  ], 1 - colSums(est[4:6, ]), est[5:6, ], est[7:8, ], 1 -
+    colSums(est[7:9, ]), est[9, ], est[10:12, ], 1 - colSums(est[10:12,
+    ]))
+  rownames(err) <- paste0(rep(c("A", "C", "G", "T"), each = 4),
+                          "2", c("A", "C", "G", "T"))
+  colnames(err) <- colnames(trans)
+  return(err)
+}
 
-### Identifying unique sequences
-print("Identifying unique sequences")
-dadaFs <- dada2::dada(filtFs, err = errF, multithread = cores)
-dadaRs <- dada2::dada(filtRs, err = errR, multithread = cores)
+print(paste0("Learning error rates at ", Sys.time()))
+errF = learnErrors(filtFs, multithread = cores, errorEstimationFunction = loessErrfun_mod)
+errR = learnErrors(filtRs, multithread = cores, errorEstimationFunction = loessErrfun_mod)
+
+print(paste0("Dereplicating Fastq files ", Sys.time()))
+derepFs <- derepFastq(filtFs, verbose = FALSE)
+derepRs <- derepFastq(filtRs, verbose = FALSE)
+
+print(paste0("Denoising to unique sequences at ", Sys.time()))
+dadaFs <- dada(derepFs, err=errF, multithread=cores, verbose = FALSE)
+dadaRs <- dada(derepRs, err=errR, multithread=cores, verbose = FALSE)
 
 ### Merging reads
-print("Merging reads")
-mergers <- dada2::mergePairs(dadaFs, filtFs, dadaRs, filtRs, verbose = cores)
+print(paste0("Merging reads at ", Sys.time()))
+mergers <- mergePairs(dadaFs, filtFs, dadaRs, filtRs, verbose=cores)
 
 ### Generate ASV table
-print("Generate ASV table")
-seqtab <- dada2::makeSequenceTable(mergers)
+print(paste0("Generating ASV table at ", Sys.time()))
+seqtab <- makeSequenceTable(mergers)
 
 ### Removing Chimeras
-print("Removing Chimeras")
-seqtab.nochim <- dada2::removeBimeraDenovo(seqtab, method = "consensus", multithread = cores)
+print(paste0("Removing Chimeras at ", Sys.time()))
+seqtab.nochim <- removeBimeraDenovo(seqtab, method="consensus", multithread=cores)
 seqtab.print <- seqtab.nochim
-colnames(seqtab.print) <- paste0("ASV", seq_len(length(colnames(seqtab.print))))
-write.csv(seqtab.print, "dada2_asv_table.csv", quote = FALSE)
+colnames(seqtab.print) <- paste0("ASV",1:length(colnames(seqtab.print)))
+#write.csv(seqtab.print,"field2022_dada2_run_asv_table.csv",quote=F)
 
 ### Track sequences
-print("Tracking sequences")
-getN <- function(x) sum(dada2::getUniques(x))
-track <- cbind(
-  out, sapply(dadaFs, getN),
-  sapply(dadaRs, getN),
-  sapply(mergers, getN),
-  rowSums(seqtab.nochim)
-)
-colnames(track) <- c("input", "filtered", "denoisedF", "denoisedR", "merged", "nonchim")
-rownames(track) <- samps
-write.csv(track, "dada2_sequence_tracking.csv", row.names = TRUE, quote = FALSE)
+print(paste0("Tracking sequences at ", Sys.time()))
+getN <- function(x) sum(getUniques(x))
+tryCatch({
+  track <- cbind(out, sapply(dadaFs, getN), sapply(dadaRs, getN),
+                 sapply(mergers, getN), rowSums(seqtab.nochim))
+  colnames(track) <- c("input", "filtered", "denoisedF", "denoisedR", "merged", "nonchim")
+  rownames(track) <- c(filtFs, filtRs) # normally would be samps, but with how I am combining
+  # things that is not a great option.
+  # write.csv(track,"field2022_dada2_run_sequence_tracking.csv",row.names=T,quote=F)
+}, error = function(err){
+  message("Had an error making tracking object")
+  message(conditionMessage(err))
+})
 
 ### Generate fasta file
-print("Generate fasta file")
+print(paste0("Generating fasta file at ", Sys.time()))
 asvseq <- colnames(seqtab.nochim)
-write.fasta(
-  sequences = lapply(asvseq, identity),
-  names = paste0("ASV", seq_len(length(asvseq))),
-  file.out = "dada2_asv.fasta"
-)
+# write.fasta(sequences = lapply(asvseq,identity),names=paste0("ASV",1:length(asvseq)),
+# file.out = "field2022_dada2_run_asv.fasta")
 
 ### Assign taxonomy
-print("Assigning taxonomy")
-taxa_rdp <- dada2::assignTaxonomy(seqtab.nochim, pathToRDP, multithread = cores)
-taxa_rdp <- dada2::addSpecies(taxa_rdp, pathToRDPSpec)
-rownames(taxa_rdp) <- paste0("ASV", seq_len(length(asvseq)))
-write.csv(taxa_rdp, "dada2_rdp_taxonomy.csv", quote = FALSE)
-taxa_silva <- dada2::assignTaxonomy(seqtab.nochim, pathToSILVA, multithread = cores)
-taxa_silva <- dada2::addSpecies(taxa_silva, pathToSILVASpec)
-rownames(taxa_silva) <- paste0("ASV", seq_len(length(asvseq)))
-write.csv(taxa_silva, "dada2_silva_taxonomy.csv", quote = FALSE)
+print(paste0("Assigning taxonomy at ", Sys.time()))
+taxa_rdp <- assignTaxonomy(seqtab.nochim, pathToRDP, multithread=cores)
+print(paste0("Adding species at ", Sys.time()))
+taxa_rdp <- addSpecies(taxa_rdp, pathToRDPSpec)
+rownames(taxa_rdp) <- paste0("ASV",1:length(asvseq))
+# write.csv(taxa_rdp,"field2022_dada2_run_rdp_taxonomy.csv",quote=F)
 
 ### Save everything in RData
-print("Creating RData Object")
-save(fnFs, fnRs, samps, filtFs, filtRs, out, errF, errR, dadaFs, dadaRs,
-  mergers, seqtab, seqtab.nochim, track, seqtab.print,
-  asvseq, taxa_rdp, taxa_silva,
-  file = "dada2_output.RData"
-)
-print("Done!")
+print(paste0("Creating RData Object at ", Sys.time()))
+save(fnFs, fnRs, filtFs, filtRs, out, errF, errR, dadaFs, dadaRs, mergers,
+     seqtab, seqtab.nochim, track, seqtab.print, asvseq, taxa_rdp, 
+     filtFs_attempted, filtRs_attempted,
+     file="/scratch/run_dada2_results.rdata")
+print(paste0("Done at", Sys.time()))
+```
+
+#### Saving data
+
+If you are confident in your ability to keep the credentials up to date then this is very easy and you
+will just copy the data from `/scratch/yourdata.rdata` to
+`/scratch/mountpoint/wherever/it/goes/next`.
+
+For an extra layer of protection we can wrap that part of our job in an if/else statement in case something
+has gone wrong and the mountpoint is no longer connected. Here we check that the mountpoint contains some
+directory that exists on S3. If that directory is found then we make the target destination and write our
+output to it. If the directory did not exist then we write the data to local storage on the soca head node.
+
+Note that if you write data to the local head node on soca it will be very expensive to store it there
+long term and you should make sure to check soon if you need to move something in an interactive job
+from soca to S3 (ie, qsub -I job.sh, mount S3, copy from local to S3, check that it is in S3, delete the 
+local copy). Note that here I broke up the `cp` lines so that the entire thing is within margins, but
+you should have those each as one line.
+
+```
+# if the mounted directory exists then
+if [ -d /scratch/mounted_datasci/shares/datascience/users/jsumner/SINC/ ]; then
+   # write to S3
+   cp /scratch/run_dada2_results.rdata
+      /scratch/mounted_datasci/shares/datascience/users/jsumner/SINC/
+   mkdir  /scratch/mounted_datasci/shares/datascience/users/jsumner/SINC/dada2_soca/
+   cp /scratch/run_dada2_results.rdata
+      /scratch/mounted_datasci/shares/datascience/users/jsumner/SINC/dada2_soca/
+else  # if the mount is not there then
+   # write to EBS storage
+   cp /scratch/run_dada2_results.rdata /shares/datascience/users/jsumner/dada2_prep/temp_storage/.
+fi
+```
+
+#### Job Cleanup
+
+It is probably not very important, but it's nice to unmount S3 from wherever you put it. 
+
+```
+fusermount -u /scratch/mounted_bartlab_data
+fusermount -u /scratch/mounted_datasci
+```
+
+### Complete Job File
+
+So your complete job file would look like this, with the R script defined above.
+
+```
+#!/bin/bash
+## BEGIN PBS SETTINGS: Note PBS lines MUST start with #
+#PBS -N run_dada2
+#PBS -V -j oe -o run_dada2.qlog
+#PBS -P bart
+#PBS -q normal
+#PBS -l nodes=1
+#PBS -l instance_type=m5.24xlarge
+#PBS -l system_metrics=True
+#PBS -l scratch_size=200
+## END PBS SETTINGS
+## BEGIN JOB
+
+# make mountpoints in scratch
+mkdir /scratch/mounted_bartlab_data
+mkdir /scratch/mounted_datasci
+
+# mount S3
+mount-s3 --profile jsumner_bart ddpsc-bartlab-data /scratch/mounted_bartlab_data
+mount-s3 --profile jsumner_datasci ddpsc-datascience /scratch/mounted_datasci
+
+# Copy taxa databases to scratch for ease of use
+cp /scratch/mounted_datasci/shares/datascience/users/jsumner/microbiome/Taxa/rdp_train_set_18.fa.gz
+   /scratch/rdp_train_set_18.fa.gz
+cp /scratch/mounted_datasci/shares/datascience/users/jsumner/microbiome/Taxa/rdp_species_assignment_18_withBart.fa.gz /scratch/rdp_species_assignment_18_withBart.fa.gz
+
+Rscript dada2_prep/run_dada2.R
+
+# if the mounted directory exists then
+if [ -d /scratch/mounted_datasci/shares/datascience/users/jsumner/SINC/ ]; then
+   # write to S3
+   cp /scratch/run_dada2_results.rdata /scratch/mounted_datasci/shares/datascience/users/jsumner/SINC/
+   mkdir  /scratch/mounted_datasci/shares/datascience/users/jsumner/SINC/dada2_soca/
+   cp /scratch/run_dada2_results.rdata
+      /scratch/mounted_datasci/shares/datascience/users/jsumner/SINC/dada2_soca/
+else  # if the mount is not there then
+   # write to EBS storage
+   cp /scratch/run_dada2_results.rdata /shares/datascience/users/jsumner/dada2_prep/temp_storage/.
+fi
+
+fusermount -u /scratch/mounted_bartlab_data
+fusermount -u /scratch/mounted_datasci
+
+## END JOB
+
+```
+
+### Miscellaneous Errors
+
+#### Archived S3 Objects
+
+You may get an error copying the taxonomy files to `/scratch/`. If it is an input/output error then the problem is most likely that the data is archived. You will need to recover the data.
+
+```
+[jsumner@ip-10-0-77-133 dada2_prep]$ cp /scratch/mounted_datasci/shares/datascience/users/jsumner/microbiome/Taxa/rdp_species_assignment_18_withBart.fa.gz
+/scratch/.
+cp: error reading ‘/scratch/mounted_datasci/shares/datascience/users/jsumner/microbiome/Taxa/rdp_species_assignment_18_withBart.fa.gz’: Input/output error
+cp: failed to extend ‘/scratch/./rdp_species_assignment_18_withBart.fa.gz’: Input/output error
+```
+
+In R this would show up as an error like this:
+
+```
+Error in tax[[1]] : subscript out of bounds
+Calls: assignTaxonomy -> grepl -> is.factor
+Execution halted
+```
+
+#### Running out of scratch memory
+
+If you run out of scratch memory then you may see messages like this:
+
+```
+[1] "Filtering and trimming"
+Creating output directory: /scratch/filtered
+Error in filterAndTrim(fnFs, filtFs, fnRs, filtRs, truncLen = truncLength,  : 
+  These are the errors (up to 5) encountered in individual cores...
+Error in writeFastq(fqF, fout[[1]], "w", compress = compress) : 
+  failed to write record 3937
+Error in writeFastq(fqR, fout[[2]], "w", compress = compress) : 
+  failed to write record 12722
+Error in writeFastq(fqF, fout[[1]], "w", compress = compress) : 
+  failed to write record 286
+Error in writeFastq(fqF, fout[[1]], "w", compress = compress) : 
+  failed to write record 315
+Error in writeFastq(fqF, fout[[1]], "w", compress = compress) : 
+  failed to write record 2482
+In addition: Warning message:
+In mclapply(seq_len(n), do_one, mc.preschedule = mc.preschedule,  :
+  all scheduled cores encountered errors in user code
+Execution halted
+```
+
+You might also get more esoteric error messages, like this one that just says the process was killed.
+This happened after assigning taxonomy but before being done, so it probably has to do with writing out
+the rdata file. After this I went from a c5.24xlarge machine to an m5.24xlarge machine and upped the
+scratch storage from 25Gb to 100Gb. I do not know which of those was necessary, but scratch seems like
+the most likely candidate.
+
+```
+/var/spool/pbs/mom_priv/jobs/18146.ip-10.SC: line 26:  5623 Killed Rscript dada2_prep/run_dada2.R
 ```
 
 
-## Tracking DADA2
+In this case, request more scratch memory.
 
-While the job is running on stargate you can monitor the log files and use `condor_fullstat | grep yourUsername` to see your job's usage and `condor_chart {cpu or mem or disk} yourJobPID` where your job PID is found from `condor_fullstat`. 
+#### Running out of memory
+
+If you run out of machine memory then you will see errors about not being able to assign objects.
+In that case you need a larger instance.
+
+
+## Tracking DADA2
 
 When the job is done running you can check the progress using the `track` object in the `dada2_output` rdata (which is the same as the `dada2_sequence_tracking.csv` file). That will show you where your data are being filtered the most and allow you to compare trends between experiments if that is of interest.
 
