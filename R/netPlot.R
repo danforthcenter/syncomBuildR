@@ -106,9 +106,9 @@ net.plot <- function(net, fill = NULL, shape = NULL, size = 3, edgeWeight = NULL
   }
   if (method == "plotly") {
     if (is.null(facet)) {
-      p <- .plotlyNetPlot(nodes, edges, edgeWeight, fill, shape, facet)
+      p <- .plotlyNetPlot(nodes, edges, edgeWeight, fill, shape, facet, size)
     } else {
-      p <- .facetedPlotlyNetPlot(nodes, edges, edgeWeight, fill, shape, facet)
+      p <- .facetedPlotlyNetPlot(nodes, edges, edgeWeight, fill, shape, facet, size)
     }
   } else {
     p <- .ggNetPlot(nodes, edges, edgeWeight, fill, shape, facet, size)
@@ -217,7 +217,11 @@ net.plot <- function(net, fill = NULL, shape = NULL, size = 3, edgeWeight = NULL
 #' @importFrom plotly plot_ly add_segments add_markers layout
 #' @noRd
 
-.plotlyNetPlot <- function(nodes, edges, edgeWeight = NULL, fill = NULL, shape = NULL, facet = NULL) {
+.plotlyNetPlot <- function(nodes, edges, edgeWeight = NULL,
+                           fill = NULL, shape = NULL, facet = NULL, size = NULL) {
+  if (is.null(size)) {
+    size <- "strength"
+  }
   p <- plotly::plot_ly(data = nodes)
   p <- plotly::add_segments(
     p = p, data = edges,
@@ -239,7 +243,7 @@ net.plot <- function(net, fill = NULL, shape = NULL, size = 3, edgeWeight = NULL
       p = p, data = nodes,
       x = ~V1,
       y = ~V2,
-      text = ~ paste0(asv, "\n", "strength: ", round(nodes[["strength"]], 1)),
+      text = ~ paste0(asv, "\n", size, ": " , round(nodes[[v]], 1)),
       hoverinfo = "text",
       type = "scatter",
       mode = "markers",
@@ -257,8 +261,8 @@ net.plot <- function(net, fill = NULL, shape = NULL, size = 3, edgeWeight = NULL
       x = ~V1,
       y = ~V2,
       text = ~ paste0(
-        asv, "\n", "strength: ",
-        round(nodes[["strength"]], 1), "\n",
+        asv, "\n", size, ": ",
+        round(nodes[[size]], 1), "\n",
         nodes[[fill]]
       ),
       hoverinfo = "text",
@@ -285,14 +289,14 @@ net.plot <- function(net, fill = NULL, shape = NULL, size = 3, edgeWeight = NULL
 #' @noRd
 
 .facetedPlotlyNetPlot <- function(nodes, edges, edgeWeight = NULL, fill = NULL,
-                                  shape = NULL, facet = NULL) {
+                                  shape = NULL, facet = NULL, size = NULL) {
   nodes <- nodes[!is.na(nodes[[facet]]), ]
   ps <- lapply(unique(nodes[[facet]]), function(fct) {
     sub_nodes <- nodes[nodes[[facet]] == fct, ]
     sub_edges <- edges[edges$to %in% nodes$asv || edges$from %in% nodes$asv, ]
     .plotlyNetPlot(sub_nodes, sub_edges,
       edgeWeight = edgeWeight, fill = fill,
-      shape = shape, facet = facet
+      shape = shape, facet = facet, size = size
     )
   })
   p <- plotly::subplot(ps,
