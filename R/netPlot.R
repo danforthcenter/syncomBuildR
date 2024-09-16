@@ -243,7 +243,7 @@ net.plot <- function(net, fill = NULL, shape = NULL, size = 3, edgeWeight = NULL
       p = p, data = nodes,
       x = ~V1,
       y = ~V2,
-      text = ~ paste0(asv, "\n", size, ": " , round(nodes[[v]], 1)),
+      text = ~ paste0(asv, "\n", size, ": ", round(nodes[[v]], 1)),
       hoverinfo = "text",
       type = "scatter",
       mode = "markers",

@@ -37,7 +37,7 @@ as "other" (FALSE)? Defaults to FALSE.}
 
 \item{order}{The order of connection to include, defaults to 1. If Node A has an Edge to Node B,
 and Node B has an edge to Node C, but Node A does not have an edge to Node C then A to C is a 2nd
-order connection, and Node C would only be included if order \ge 2.}
+order connection, and Node C would only be included if order >= 2.}
 }
 \value{
 A list with a subset network and optionally a ggplot.
