@@ -11,7 +11,8 @@ pullNode(
   edgeFilter = NULL,
   plot = TRUE,
   nodeCol = "asv",
-  keepNames = FALSE
+  keepNames = FALSE,
+  order = 1
 )
 }
 \arguments{
@@ -32,8 +33,11 @@ Character vectors are interpreted as quantiles ("0.5" corresponds to the top 50 
 \item{nodeCol}{Column of node information to find the node in. Defaults to "asv".}
 
 \item{keepNames}{Logical, should other nodes be filled in the plot as their node name (TRUE) or all
-as "other" (FALSE)?
-Defaults to FALSE.}
+as "other" (FALSE)? Defaults to FALSE.}
+
+\item{order}{The order of connection to include, defaults to 1. If Node A has an Edge to Node B,
+and Node B has an edge to Node C, but Node A does not have an edge to Node C then A to C is a 2nd
+order connection, and Node C would only be included if order \ge 2.}
 }
 \value{
 A list with a subset network and optionally a ggplot.
