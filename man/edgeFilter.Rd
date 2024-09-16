@@ -10,7 +10,8 @@ edgeFilter(net, filter, edge = "spearman")
 \item{net}{Object returned from \link{asvNet}.}
 
 \item{filter}{Value to filter edges for. If non-NULL then only edges with edgeWeight greater than
-this value are kept. This can be a character vector or a numeric.}
+this value are kept. This can be a character vector or a numeric, with character taken as a quantile
+and numeric taken as a value to use as is.}
 
 \item{edge}{Optional weighting for edges. Must be present in the "edges" of net. Default of NULL
 will show equal size edges between all connected nodes.}
