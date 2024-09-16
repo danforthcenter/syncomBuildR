@@ -12,9 +12,10 @@
 #' @param plot Logical, should data be plotted using \link{net.plot}.
 #' @param nodeCol Column of node information to find the node in. Defaults to "asv".
 #' @param keepNames Logical, should other nodes be filled in the plot as their node name (TRUE) or all
-#' as "other" (FALSE)?
-#' Defaults to FALSE.
-#'
+#' as "other" (FALSE)? Defaults to FALSE.
+#' @param order The order of connection to include, defaults to 1. If Node A has an Edge to Node B,
+#' and Node B has an edge to Node C, but Node A does not have an edge to Node C then A to C is a 2nd
+#' order connection, and Node C would only be included if order >= 2.
 #' @return A list with a subset network and optionally a ggplot.
 #'
 #'
@@ -38,26 +39,34 @@
 #' @export
 
 pullNode <- function(net, node, edge = NULL, edgeFilter = NULL,
-                     plot = TRUE, nodeCol = "asv", keepNames = FALSE) {
+                     plot = TRUE, nodeCol = "asv", keepNames = FALSE, order = 1) {
   #* grab network components
   nodes <- net$nodes
   edges <- net$edges
-  #* filter edges for node connection
-  edges_sub <- edges[edges$from %in% node | edges$to %in% node, ]
   #* filter and sort edges by some metric/value
   if (!is.null(edge)) {
-    edges_sub <- edges_sub[order(edges_sub[[edge]], decreasing = TRUE), ]
+    edges <- edges[order(edges[[edge]], decreasing = TRUE), ]
     if (!is.null(edgeFilter)) {
       if (is.character(edgeFilter)) {
-        cutoff <- quantile(edges_sub[[edge]], probs = as.numeric(edgeFilter))
-        edges_sub <- edges_sub[edges_sub[[edge]] >= as.numeric(cutoff), ]
+        cutoff <- quantile(edges[[edge]], probs = as.numeric(edgeFilter))
+        edges <- edges[edges[[edge]] >= as.numeric(cutoff), ]
       } else if (is.numeric(edgeFilter)) {
-        edges_sub <- edges_sub[edges_sub[[edge]] >= edgeFilter, ]
+        edges <- edges[edges[[edge]] >= edgeFilter, ]
       } else {
         stop("edgeFilter must be character or numeric.")
       }
     }
   }
+  #* order logic
+  total_from_names <- node
+  for (i in seq_len(order)) {
+    edges_sub <- edges[edges$from %in% total_from_names, ]
+    if (i > 1) {
+      total_from_names <- unique(c(total_from_names, edges_sub$from, edges_sub$to))
+    }
+  }
+  #* filter edges
+  edges_sub <- edges[edges$from %in% total_from_names | edges$to %in% total_from_names, ]
   #* filter nodes for the desired node
   nodes_sub <- rbind(
     nodes[nodes[[nodeCol]] %in% node, ],
