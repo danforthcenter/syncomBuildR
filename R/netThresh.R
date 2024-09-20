@@ -81,13 +81,15 @@ netThresh <- function(net, asvTab, asvCols = NULL, clusterCol = NULL, cluster = 
   clusterColumns <- colnames(clust_ag)
   clust_ag <- cbind(asvTab[, -which(colnames(asvTab) %in% asvCols)], clust_ag)
   #* `calibrate phenotype by calibratePheno`
-  netThreshOut <- do.call(rbind, lapply(phenoCols, function(phenotype) {
-    clust_ag <- clust_ag[!is.na(clust_ag[[phenotype]]), ]
-    if (!is.null(calibratePheno)) {
+  if (!is.null(calibratePheno)) {
+    for (phenotype in phenoCols) {
       formString <- paste0(phenotype, "~", paste0(calibratePheno, collapse = "+"))
-      clust_ag[[phenotype]] <- residuals(lm(as.formula(formString), data = clust_ag))
+      clust_ag[[phenotype]] <- residuals(lm(as.formula(formString),
+                                            data = clust_ag, na.action = na.exclude))
     }
-    thresh_df <- do.call(rbind, parallel::mclapply(clusterColumns, function(col) {
+  }
+  netThreshOut <- do.call(rbind, parallel::mclapply(clusterColumns, function(col) {
+    thresh_df <- do.call(rbind, lapply(phenoCols, function(phenotype) {
       if (model == "hinge" | model == "M01") {
         model <- "hinge"
         f1 <- as.formula(paste0(phenotype, "~1"))
@@ -125,8 +127,8 @@ netThresh <- function(net, asvTab, asvCols = NULL, clusterCol = NULL, cluster = 
         warning = function(war) {},
         error = function(err) {}
       )
-    }, mc.cores = cores))
+    }))
     return(thresh_df)
-  }))
+  }, mc.cores = cores))
   return(netThreshOut)
 }
