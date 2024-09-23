@@ -31,15 +31,15 @@ thresh <- function(asvTab, phenoCols, asvCols = NULL, model = "hinge",
   if (is.null(asvCols)) {
     asvCols <- colnames(asvTab)[grepl("ASV", colnames(asvTab))]
   }
-  threshOut <- do.call(rbind, lapply(phenoCols, function(phenotype) {
-    message(paste0("Running ", phenotype))
-    if (!is.null(calibratePheno)) {
+  if (!is.null(calibratePheno)) {
+    for (phenotype in phenoCols) {
       formString <- paste0(phenotype, "~", paste0(calibratePheno, collapse = "+"))
-      asvTab[[phenotype]] <- residuals(lm(as.formula(formString), data = asvTab, na.action = na.exclude))
-    } else {
-      asvTab[[phenotype]] <- asvTab[[phenotype]]
+      asvTab[[phenotype]] <- residuals(lm(as.formula(formString),
+                                          data = asvTab, na.action = na.exclude))
     }
-    thresh_df <- do.call(rbind, parallel::mclapply(asvCols, function(asv_col) {
+  }
+  threshOut <- do.call(rbind, parallel::mclapply(asvCols, function(asv_col) {
+    thresh_df <- do.call(rbind, lapply(phenoCols, function(phenotype) {
       if (model == "hinge" | model == "M01") {
         model <- "hinge"
         f1 <- as.formula(paste0(phenotype, "~1"))
@@ -53,7 +53,6 @@ thresh <- function(asvTab, phenoCols, asvCols = NULL, model = "hinge",
         f1 <- as.formula(paste0(phenotype, "~1"))
         f2 <- as.formula(paste0("~", asv_col))
       }
-
       sub <- asvTab[, c(phenotype, asv_col)]
       tryCatch(
         {
@@ -77,8 +76,8 @@ thresh <- function(asvTab, phenoCols, asvCols = NULL, model = "hinge",
         warning = function(war) {},
         error = function(err) {}
       )
-    }, mc.cores = cores))
+    }))
     thresh_df
-  }))
+  }, mc.cores = cores))
   return(threshOut)
 }
