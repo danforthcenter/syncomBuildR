@@ -46,7 +46,10 @@
 asvNet <- function(df, metadata = NULL, edge = NULL, thresh = NULL,
                    metadata_join = "asv", thresh_join = "asv") {
   if (is.data.frame(df)) {
-    g <- igraph::graph_from_data_frame(df, directed = FALSE)
+    i <- unlist(lapply(seq_len(nrow(df)), function(i) {
+      paste0(sort(as.character(df[i, 1:3])), collapse = ".")
+    }))
+    g <- igraph::graph_from_data_frame(df[!duplicated(i), ], directed = FALSE)
   } else if (is.matrix(df)) {
     g <- igraph::graph_from_adjacency_matrix(df, "undirected")
   }
@@ -85,5 +88,7 @@ asvNet <- function(df, metadata = NULL, edge = NULL, thresh = NULL,
   eg$from.y <- nd$V2[match(eg$from, nd[[metadata_join]])]
   eg$to.x <- nd$V1[match(eg$to, nd[[metadata_join]])]
   eg$to.y <- nd$V2[match(eg$to, nd[[metadata_join]])]
+  eg <- eg[!duplicated(eg), ]
+  nd <- nd[!duplicated(nd), ]
   return(list("nodes" = nd, "edges" = eg, "graph" = g))
 }
