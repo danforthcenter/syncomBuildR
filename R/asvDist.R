@@ -95,6 +95,7 @@ asvDist <- function(asvTab, asvCols = NULL, method = "spearman",
     }, mc.cores = parallel))
     ldf <- as.data.frame(data.table::dcast(ldf, ... ~ trait))
     colnames(ldf) <- c("c1", "c2", names(M))
+    ldf$c2 <- as.character(ldf$c2)
   } else if (method %in% scb_correlations) {
     matched_fun <- get(paste0(".scb_", method))
     ldf <- do.call(rbind, parallel::mclapply(asvCols, function(ac1) {
