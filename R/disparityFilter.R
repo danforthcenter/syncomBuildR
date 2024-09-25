@@ -1,55 +1,85 @@
-install.packages("disparityfilter")
-library(igraph)
-library(disparityfilter)
-g <- sample_pa(n = 250, m = 5, directed = FALSE)
-E(g)$weight <- sample(1:25, ecount(g), replace = TRUE)
-backbone(g)
+#' Disparity Filtering for microbial networks
+#'
+#' @param net Object returned from \link{asvNet}.
+#' @param weights Optional weights specification. This defaults to NULL in which case "weight" is used
+#' as calculated by igraph. This can also be a numeric vector of edge weights
+#' (ordered for \code{net$edges}) or a column name from \code{net$edges}.
+#' @param alpha the significance level to filter edges for. Defaults to 0.05 for no serious reason.
+#' @importFrom stats quantile
+#' @return A modified version of net with filtered edges (and nodes if any were now isolated).
+#'
+#' @examples
+#'
+#' taxa <- c(
+#'   "Bacteria", "Proteobacteria", "Betaproteobacteria", "Burkholderiales",
+#'   "Burkholderiaceae", "Paraburkholderia", NA
+#' )
+#' taxa <- matrix(rep(taxa, 10), nrow = 10, byrow = TRUE)
+#' colnames(taxa) <- c("Kingdom", "Phylum", "Class", "Order", "Family", "Genus", "Species")
+#' rownames(taxa) <- paste0("ASV", 1:10)
+#' # taxonomy data if used should have ASV names explicitly as a column
+#' taxa_df <- as.data.frame(taxa)
+#' taxa_df$asv <- rownames(taxa_df)
+#'
+#' sp_dist <- asvDist(asv, method = "spearman", clr_transform = TRUE, edgeFilter = 0.5)
+#' net_data <- asvNet(sp_dist, taxa_df, edge = "spearman")
+#' net_data_disp_filt <- dispFilter(net_data, weights = "spearman", alpha = 0.75)
+#'
+#' @export
+#'
 
-
-
-
-devtools::load_all("~/syncomBuildR")
-taxa <- c(
-  "Bacteria", "Proteobacteria", "Betaproteobacteria", "Burkholderiales",
-  "Burkholderiaceae", "Paraburkholderia", NA
-)
-taxa <- matrix(rep(taxa, 10), nrow = 10, byrow = TRUE)
-colnames(taxa) <- c("Kingdom", "Phylum", "Class", "Order", "Family", "Genus", "Species")
-rownames(taxa) <- paste0("ASV", 1:10)
-# taxonomy data if used should have ASV names explicitly as a column
-taxa_df <- as.data.frame(taxa)
-taxa_df$asv <- rownames(taxa_df)
-sp_dist <- asvDist(asv, method = "spearman", clr_transform = TRUE, edgeFilter = 0.5)
-net_data <- asvNet(sp_dist, taxa_df, edge = "spearman")
-net_data <- netClust(net = net_data, "components")
-asv$biomass_z <- rnorm(nrow(asv))
-
-# syncombuildr disparity filter option
-
-disp_filt <- function() {
-  # params
-  net_data <- net_data
-  weights <- NULL
-  alpha = 0.05
+dispFilter <- function(net, weights = NULL, alpha = 0.05) {
+  # these could be arguments, but I don't see a reason to change them ever
   node_metric <- "degree"
-  
+  node_metric_minimum <- 1
   # calculated values
-  weights <- .check_weights(net_data, weights)
-  use_names <- igraph::is_named(G)
-  net_met <- .check_node_metric(net_data, node_metric)
-  
-  d = degree(net_data$graph, mode = mode)
-  e = cbind(as_data_frame(G)[, 1:2 ], weight = weights, alpha = NA)
-  
-  
+  weights <- .check_weights(net, weights)
+  net_met <- .check_node_metric(net, node_metric)
+  net$edges$disp_filt_weight <- weights
+  # grab edge data for convenience
+  edges <- net$edges
+  edges$p_value <- NA
+  # get ids of nodes to loop over
+  nodes_to_use <- igraph::as_ids(igraph::V(net$graph))[net_met > node_metric_minimum]
+  for (nd in nodes_to_use) {
+    u <- which(edges$from == nd | edges$to == nd)
+    edge_sub <- edges[u, ]
+    w <- sum(edge_sub$disp_filt_weight) # total weight coming into this node
+    k <- net_met[which(nodes_to_use == nd)] # degree for this node
+    for (v in igraph::as_ids(igraph::ego(net$graph, order = 1, nodes = nd)[[1]][-1])) {
+      i <- which(edges$from == nd & edges$to == v)
+      edges$p_value[i] <- (1 - edges$disp_filt_weight[i] / w) ^ (k - 1)
+    }
+  }
+  # invert p-values so that edgeFilter can be used
+  edges$inverted_p <- 1 - edges$p_value
+  edges$inverted_p <- ifelse(is.na(edges$inverted_p), 0, edges$inverted_p)
+  net$edges <- edges
+  # call edgeFilter
+  net <- edgeFilter(net, filter = 1 - alpha, edge = "inverted_p")
+  net$edges <- net$edges[, -which(colnames(net$edges) %in% c("disp_filt_weight", "inverted_p"))]
+  return(net)
 }
 
-.check_node_metric <- function() {
-  
+#' @keywords internal
+#' @noRd
+
+.check_node_metric <- function(net_data, node_metric) {
+  if (is.null(node_metric)) {
+    node_metric <- igraph::degree(net_data$graph)
+  } else if (length(node_metric) == 1 && is.character(node_metric)) {
+    node_metric <- net_data$nodes[[node_metric]]
+  } else if (!is.numeric(node_metric)) {
+    stop("node_metric must be a numeric vector, NULL, or a single column name from the nodes data")
+  }
+  return(node_metric)
 }
 
+#' @keywords internal
+#' @noRd
+#'
 .check_weights <- function(net_data, weights) {
-  if (is.null(weights)) { # put this in a helper function
+  if (is.null(weights)) {
     weights <- igraph::E(net_data$graph)$weight
   } else if (length(weights) == 1 && is.character(weights)) {
     weights <- net_data$edges[[weights]]
@@ -58,50 +88,3 @@ disp_filt <- function() {
   }
   return(weights)
 }
-
-
-G <- net_data$graph
-#G <- g
-weights = E(G)$weight
-directed = igraph::is_directed(G)
-alpha = 0.05
-mode = "all"
-disparity_filter(G, weights, mode, alpha = 0.1)
-
-disparity_filter <- function(G, weights, mode = "all", alpha = 0.05) {
-  
-  d = degree(G, mode = mode)
-  e = cbind(as_data_frame(G)[, 1:2 ], weight = weights, alpha = NA)
-  if (mode == "all") {
-    e = rbind(e, data.frame(from = e[["to"]], to = e[["from"]], e[, c("weight", "alpha")]))
-  }
-  
-  for (u in which(d > 1)) {
-    
-    w = switch(substr(mode, 1, 1),
-               a = which(e[, 1] == u | e[, 2] == u),
-               i = which(e[, 2] == u),
-               o = which(e[, 1] == u)
-    )
-    w = sum(e$weight[ w ]) / (1 + (mode == "all"))
-    
-    k = d[u]
-    
-    for (v in igraph::ego(G, 1, u, mode)[[1]][-1]) {
-      
-      ij = switch(substr(mode, 1, 1),
-                  a = which(e[, 1] == u & e[, 2] == v),
-                  i = which(e[, 1] == v & e[, 2] == u),
-                  o = which(e[, 1] == u & e[, 2] == v)
-      )
-      e$alpha[ ij ] = (1 - e$weight[ ij ] / w) ^ (k - 1)
-      
-    }
-    
-  }
-  
-  return(e[ !is.na(e$alpha) & e$alpha < alpha, 1:4 ])
-  
-}
-
-
