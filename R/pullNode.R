@@ -32,9 +32,10 @@
 #' taxa_df <- as.data.frame(taxa)
 #' taxa_df$asv <- rownames(taxa_df)
 #' sp_dist <- asvDist(asv, method = "spearman", clr_transform = TRUE, edgeFilter = 0.5)
-#' net_data <- asvNet(sp_dist, taxa_df, edge = "spearman")
+#' net_data <- asvNet(sp_dist, taxa_df, edge = "spearman_distance")
 #'
-#' sub_net <- pullNode(net_data, node = "ASV10", edge = "spearman", plot = TRUE, nodeCol = "asv")
+#' sub_net <- pullNode(net_data, node = "ASV10",
+#' edge = "spearman_distance", plot = TRUE, nodeCol = "asv")
 #'
 #' @export
 

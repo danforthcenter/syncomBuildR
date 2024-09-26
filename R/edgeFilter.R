@@ -23,7 +23,7 @@
 #' taxa_df$asv <- rownames(taxa_df)
 #'
 #' sp_dist <- asvDist(asv, method = "spearman", clr_transform = TRUE, edgeFilter = 0.5)
-#' net_data <- asvNet(sp_dist, taxa_df, edge = "spearman")
+#' net_data <- asvNet(sp_dist, taxa_df, edge = "spearman_distance")
 #' dim(net_data$edges)
 #' net_data2 <- edgeFilter(net_data, 0.6)
 #' dim(net_data2$edges)
@@ -31,7 +31,7 @@
 #' @export
 #'
 
-edgeFilter <- function(net, filter, edge = "spearman") {
+edgeFilter <- function(net, filter, edge = "spearman_distance") {
   original_nodes <- net[["nodes"]]
   original_edges <- net[["edges"]]
   if (is.character(filter)) {
