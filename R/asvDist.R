@@ -40,12 +40,15 @@
 #' # note how distance is calculated:
 #' x <- seq(-1, 1, 0.0001) # correlation range
 #' y <- sqrt(2 * (1 - x)) # cosine transformation to euclidean distance
+#' y2 <- 1 / sqrt(2 * (1 - x)) # final transformation to similarity
 #' plot(x, y, type = "l")
+#' plot(x, y2, type = "l")
 #'
 #' @details
 #' If "spearman" or "pearson" methods are used then euclidean distance is also calculated from those
 #' correlations using the cosine theorem. That distance is bounded on [0, 2] corresponding to
-#' correlations of -1 and 1, respectively. See examples.
+#' correlations of -1 and 1, respectively. That distance is then used to calculate similarity for
+#' consistent network edges. See examples.
 #'
 #' @export
 
@@ -97,7 +100,8 @@ asvDist <- function(asvTab, asvCols = NULL, method = "spearman",
   } else if (method %in% correlation_coefficients) {
     M <- Hmisc::rcorr(t(mat), type = method)
     M[[paste0(method, "_distance")]] <- sqrt(2 * (1 - M[["r"]])) # turn correlation into a distance
-    method <- paste0(method, "_distance")
+    M[[paste0(method, "_similarity")]] <- 1 / sqrt(2 * (1 - M[["r"]])) # turn distance into similarity
+    method <- paste0(method, "_similarity")
     ldf <- do.call(rbind, parallel::mclapply(seq_len(length(M)), function(m) {
       x <- as.data.frame(M[[m]])
       x$rowname <- rownames(x)
@@ -170,7 +174,8 @@ asvDist <- function(asvTab, asvCols = NULL, method = "spearman",
   med_y <- stats::median(y, na.rm = TRUE)
   x1 <- sign(x - med_x)
   y1 <- sign(y - med_y)
-  return(cor(x1, y1, method = "pearson"))
+  out <- cor(x1, y1, method = "pearson")
+  return(out)
 }
 
 #' @keywords internal
