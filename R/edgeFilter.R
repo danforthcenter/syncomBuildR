@@ -6,6 +6,8 @@
 #' and numeric taken as a value to use as is.
 #' @param edge Optional weighting for edges. Must be present in the "edges" of net. Default of NULL
 #' will show equal size edges between all connected nodes.
+#' @param direction Direction of filtering, "g" (the default) for greater than filter value, "l" for
+#' less than filter value/quantile.
 #' @importFrom stats quantile
 #' @return A modified version of net with filtered edges (and nodes if any were now isolated).
 #'
@@ -31,16 +33,26 @@
 #' @export
 #'
 
-edgeFilter <- function(net, filter, edge = "spearman_distance") {
+edgeFilter <- function(net, filter, edge = "spearman_distance", direction = "g") {
   original_nodes <- net[["nodes"]]
   original_edges <- net[["edges"]]
   if (is.character(filter)) {
     cutoff <- stats::quantile(original_edges[[edge]], probs = as.numeric(filter))
-    edges <- original_edges[original_edges[[edge]] >= as.numeric(cutoff), ]
-    removed_edges <- original_edges[original_edges[[edge]] < as.numeric(cutoff), ]
+    if (direction == "g") {
+      edges <- original_edges[original_edges[[edge]] >= as.numeric(cutoff), ]
+      removed_edges <- original_edges[original_edges[[edge]] < as.numeric(cutoff), ]
+    } else {
+      edges <- original_edges[original_edges[[edge]] <= as.numeric(cutoff), ]
+      removed_edges <- original_edges[original_edges[[edge]] > as.numeric(cutoff), ]
+    }
   } else if (is.numeric(filter)) {
-    edges <- original_edges[original_edges[[edge]] >= filter, ]
-    removed_edges <- original_edges[original_edges[[edge]] < filter, ]
+    if (direction == "g") {
+      edges <- original_edges[original_edges[[edge]] >= filter, ]
+      removed_edges <- original_edges[original_edges[[edge]] < filter, ]
+    } else {
+      edges <- original_edges[original_edges[[edge]] <= filter, ]
+      removed_edges <- original_edges[original_edges[[edge]] > filter, ]
+    }
   }
   removed_edge_names <- paste(removed_edges$from, removed_edges$to, sep = "|")
   nodes <- original_nodes[original_nodes$asv %in% unique(c(edges$from, edges$to)), ]
