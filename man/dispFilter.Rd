@@ -4,7 +4,7 @@
 \alias{dispFilter}
 \title{Disparity Filtering for microbial networks}
 \usage{
-dispFilter(net, weights = NULL, alpha = 0.05)
+dispFilter(net, weights = NULL, alpha = 0.05, cores = getOption("mc.cores", 1))
 }
 \arguments{
 \item{net}{Object returned from \link{asvNet}.}
@@ -14,6 +14,8 @@ as calculated by igraph. This can also be a numeric vector of edge weights
 (ordered for \code{net$edges}) or a column name from \code{net$edges}.}
 
 \item{alpha}{the significance level to filter edges for. Defaults to 0.05 for no serious reason.}
+
+\item{cores}{Number of cores to run in parallel, defaults to 1 if "mc.cores" option is unset.}
 }
 \value{
 A modified version of net with filtered edges (and nodes if any were now isolated).
@@ -36,6 +38,6 @@ taxa_df$asv <- rownames(taxa_df)
 
 sp_dist <- asvDist(asv, method = "spearman", clr_transform = TRUE, edgeFilter = 0.5)
 net_data <- asvNet(sp_dist, taxa_df, edge = "spearman")
-net_data_disp_filt <- dispFilter(net_data, weights = "spearman", alpha = 0.75)
+net_data_disp_filt <- dispFilter(net_data, weights = "spearman", alpha = 0.4)
 
 }

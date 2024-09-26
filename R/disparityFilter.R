@@ -5,6 +5,7 @@
 #' as calculated by igraph. This can also be a numeric vector of edge weights
 #' (ordered for \code{net$edges}) or a column name from \code{net$edges}.
 #' @param alpha the significance level to filter edges for. Defaults to 0.05 for no serious reason.
+#' @param cores Number of cores to run in parallel, defaults to 1 if "mc.cores" option is unset.
 #' @importFrom stats quantile
 #' @return A modified version of net with filtered edges (and nodes if any were now isolated).
 #'
@@ -22,13 +23,13 @@
 #' taxa_df$asv <- rownames(taxa_df)
 #'
 #' sp_dist <- asvDist(asv, method = "spearman", clr_transform = TRUE, edgeFilter = 0.5)
-#' net_data <- asvNet(sp_dist, taxa_df, edge = "spearman")
-#' net_data_disp_filt <- dispFilter(net_data, weights = "spearman", alpha = 0.75)
+#' net_data <- asvNet(sp_dist, taxa_df, edge = "spearman_distance")
+#' net_data_disp_filt <- dispFilter(net_data, weights = "spearman_distance", alpha = 0.4)
 #'
 #' @export
 #'
 
-dispFilter <- function(net, weights = NULL, alpha = 0.05) {
+dispFilter <- function(net, weights = NULL, alpha = 0.05, cores = getOption("mc.cores", 1)) {
   # these could be arguments, but I don't see a reason to change them ever
   node_metric <- "degree"
   node_metric_minimum <- 1
@@ -40,17 +41,32 @@ dispFilter <- function(net, weights = NULL, alpha = 0.05) {
   edges <- net$edges
   edges$p_value <- NA
   # get ids of nodes to loop over
-  nodes_to_use <- igraph::as_ids(igraph::V(net$graph))[net_met > node_metric_minimum]
-  for (nd in nodes_to_use) {
-    u <- which(edges$from == nd | edges$to == nd)
-    edge_sub <- edges[u, ]
-    w <- sum(edge_sub$disp_filt_weight) # total weight coming into this node
-    k <- net_met[which(nodes_to_use == nd)] # degree for this node
-    for (v in igraph::as_ids(igraph::ego(net$graph, order = 1, nodes = nd)[[1]][-1])) {
-      i <- which(edges$from == nd & edges$to == v)
-      edges$p_value[i] <- (1 - edges$disp_filt_weight[i] / w) ^ (k - 1)
+  all_nodes <- igraph::as_ids(igraph::V(net$graph))
+  use_node <- net_met > node_metric_minimum
+  # apply disparity filtering over nodes
+  edges <- do.call(rbind, parallel::mclapply(seq_along(all_nodes), function(i) {
+    nd <- all_nodes[i]
+    nd <- edges[which(edges$from == nd | edges$to == nd), ]
+    if (!use_node[i]) {
+      return(edges_sub)
     }
-  }
+    w <- sum(edges_sub$disp_filt_weight) # total weight coming into this node
+    k <- net_met[i] # degree for this node
+    edges_sub <- do.call(
+      rbind,
+      lapply(
+        igraph::as_ids(
+          igraph::ego(net$graph, order = 1, nodes = nd)[[1]][-1]
+        ),
+        function(v) {
+          j <- which(edges_sub$from == nd & edges_sub$to == v)
+          edges_sub$p_value[j] <- (1 - edges_sub$disp_filt_weight[j] / w)^(k - 1)
+          return(edges_sub[j, ])
+        }
+      )
+    )
+    return(edges_sub)
+  }, mc.cores = cores))
   # invert p-values so that edgeFilter can be used
   edges$inverted_p <- 1 - edges$p_value
   edges$inverted_p <- ifelse(is.na(edges$inverted_p), 0, edges$inverted_p)
