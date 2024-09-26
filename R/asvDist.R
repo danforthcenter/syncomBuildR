@@ -37,6 +37,16 @@
 #'
 #' sp_dist <- asvDist(asv, method = "spearman", clr_transform = TRUE, edgeFilter = 0.5)
 #'
+#' # note how distance is calculated:
+#' x <- seq(-1, 1, 0.0001) # correlation range
+#' y <- sqrt(2 * (1 - x)) # cosine transformation to euclidean distance
+#' plot(x, y, type = "l")
+#'
+#' @details
+#' If "spearman" or "pearson" methods are used then euclidean distance is also calculated from those
+#' correlations using the cosine theorem. That distance is bounded on [0, 2] corresponding to
+#' correlations of -1 and 1, respectively. See examples.
+#'
 #' @export
 
 asvDist <- function(asvTab, asvCols = NULL, method = "spearman",
@@ -86,7 +96,7 @@ asvDist <- function(asvTab, asvCols = NULL, method = "spearman",
     )
   } else if (method %in% correlation_coefficients) {
     M <- Hmisc::rcorr(t(mat), type = method)
-    M[[method]] <- (1 - M[["r"]]) / 2 # turn correlation into a distance
+    M[[paste0(method, "_distance")]] <- sqrt(2 * (1 - M[["r"]])) # turn correlation into a distance
     ldf <- do.call(rbind, parallel::mclapply(seq_len(length(M)), function(m) {
       x <- as.data.frame(M[[m]])
       x$rowname <- rownames(x)
@@ -94,7 +104,7 @@ asvDist <- function(asvTab, asvCols = NULL, method = "spearman",
       data.table::melt(data.table::as.data.table(x), id.vars = c("rowname", "trait"))
     }, mc.cores = parallel))
     ldf <- as.data.frame(data.table::dcast(ldf, ... ~ trait))
-    colnames(ldf) <- c("c1", "c2", names(M))
+    colnames(ldf)[1:2] <- c("c1", "c2")
     ldf$c2 <- as.character(ldf$c2)
   } else if (method %in% scb_correlations) {
     matched_fun <- get(paste0(".scb_", method))
