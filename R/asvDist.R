@@ -97,6 +97,7 @@ asvDist <- function(asvTab, asvCols = NULL, method = "spearman",
   } else if (method %in% correlation_coefficients) {
     M <- Hmisc::rcorr(t(mat), type = method)
     M[[paste0(method, "_distance")]] <- sqrt(2 * (1 - M[["r"]])) # turn correlation into a distance
+    method <- paste0(method, "_distance")
     ldf <- do.call(rbind, parallel::mclapply(seq_len(length(M)), function(m) {
       x <- as.data.frame(M[[m]])
       x$rowname <- rownames(x)
