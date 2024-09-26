@@ -46,7 +46,7 @@ dispFilter <- function(net, weights = NULL, alpha = 0.05, cores = getOption("mc.
   # apply disparity filtering over nodes
   edges <- do.call(rbind, parallel::mclapply(seq_along(all_nodes), function(i) {
     nd <- all_nodes[i]
-    nd <- edges[which(edges$from == nd | edges$to == nd), ]
+    edges_sub <- edges[which(edges$from == nd | edges$to == nd), ]
     if (!use_node[i]) {
       return(edges_sub)
     }
