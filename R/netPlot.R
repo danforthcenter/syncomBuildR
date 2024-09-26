@@ -37,7 +37,7 @@
 #' taxa_df$asv <- rownames(taxa_df)
 #'
 #' sp_dist <- asvDist(asv, method = "spearman", clr_transform = TRUE, edgeFilter = 0.5)
-#' net_data <- asvNet(sp_dist, taxa_df, edge = "spearman")
+#' net_data <- asvNet(sp_dist, taxa_df, edge = "spearman_distance")
 #'
 #' net.plot(net_data, size = 3, edgeWeight = "spearman_distance", thresh_below = 0.05)
 #'
