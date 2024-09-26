@@ -51,9 +51,19 @@ then a list is returned with the dataframe as the "data" element and the plot as
 \description{
 Function to make distance/dissimilarity data from an ASV table.
 }
+\details{
+If "spearman" or "pearson" methods are used then euclidean distance is also calculated from those
+correlations using the cosine theorem. That distance is bounded on [0, 2] corresponding to
+correlations of -1 and 1, respectively. See examples.
+}
 \examples{
 
 sp_dist <- asvDist(asv, method = "spearman", clr_transform = TRUE, edgeFilter = 0.5)
+
+# note how distance is calculated:
+x <- seq(-1, 1, 0.0001) # correlation range
+y <- sqrt(2 * (1 - x)) # cosine transformation to euclidean distance
+plot(x, y, type = "l")
 
 }
 \keyword{asv}
