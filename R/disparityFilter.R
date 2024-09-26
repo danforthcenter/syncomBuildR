@@ -23,8 +23,8 @@
 #' taxa_df$asv <- rownames(taxa_df)
 #'
 #' sp_dist <- asvDist(asv, method = "spearman", clr_transform = TRUE, edgeFilter = 0.5)
-#' net_data <- asvNet(sp_dist, taxa_df, edge = "spearman_distance")
-#' net_data_disp_filt <- dispFilter(net_data, weights = "spearman_distance", alpha = 0.4)
+#' net_data <- asvNet(sp_dist, taxa_df, edge = "spearman_similarity")
+#' net_data_disp_filt <- dispFilter(net_data, weights = "spearman_similarity", alpha = 0.4)
 #'
 #' @export
 #'
