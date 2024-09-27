@@ -6,6 +6,8 @@
 #' (ordered for \code{net$edges}) or a column name from \code{net$edges}.
 #' @param alpha the significance level to filter edges for. Defaults to 0.05 for no serious reason.
 #' @param cores Number of cores to run in parallel, defaults to 1 if "mc.cores" option is unset.
+#' @param replot Logical, should nodes be rearranged to represent the network better visually?
+#' Defaults to TRUE.
 #' @importFrom stats quantile
 #' @return A modified version of net with filtered edges (and nodes if any were now isolated).
 #'
@@ -29,7 +31,8 @@
 #' @export
 #'
 
-dispFilter <- function(net, weights = NULL, alpha = 0.05, cores = getOption("mc.cores", 1)) {
+dispFilter <- function(net, weights = NULL, alpha = 0.05, cores = getOption("mc.cores", 1),
+                       replot = TRUE) {
   # these could be arguments, but I don't see a reason to change them ever
   node_metric <- "degree"
   node_metric_minimum <- 1
@@ -72,7 +75,7 @@ dispFilter <- function(net, weights = NULL, alpha = 0.05, cores = getOption("mc.
   edges$inverted_p <- ifelse(is.na(edges$inverted_p), 0, edges$inverted_p)
   net$edges <- edges
   # call edgeFilter
-  net <- edgeFilter(net, filter = 1 - alpha, edge = "inverted_p")
+  net <- edgeFilter(net, filter = 1 - alpha, edge = "inverted_p", replot = replot)
   net$edges <- net$edges[, -which(colnames(net$edges) %in% c("disp_filt_weight", "inverted_p"))]
   return(net)
 }
