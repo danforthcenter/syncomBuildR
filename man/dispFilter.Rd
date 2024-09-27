@@ -4,7 +4,13 @@
 \alias{dispFilter}
 \title{Disparity Filtering for microbial networks}
 \usage{
-dispFilter(net, weights = NULL, alpha = 0.05, cores = getOption("mc.cores", 1))
+dispFilter(
+  net,
+  weights = NULL,
+  alpha = 0.05,
+  cores = getOption("mc.cores", 1),
+  replot = TRUE
+)
 }
 \arguments{
 \item{net}{Object returned from \link{asvNet}.}
@@ -16,6 +22,9 @@ as calculated by igraph. This can also be a numeric vector of edge weights
 \item{alpha}{the significance level to filter edges for. Defaults to 0.05 for no serious reason.}
 
 \item{cores}{Number of cores to run in parallel, defaults to 1 if "mc.cores" option is unset.}
+
+\item{replot}{Logical, should nodes be rearranged to represent the network better visually?
+Defaults to TRUE.}
 }
 \value{
 A modified version of net with filtered edges (and nodes if any were now isolated).

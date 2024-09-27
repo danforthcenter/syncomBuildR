@@ -8,6 +8,8 @@
 #' will show equal size edges between all connected nodes.
 #' @param direction Direction of filtering, "g" (the default) for greater than filter value, "l" for
 #' less than filter value/quantile.
+#' @param replot Logical, should nodes be rearranged to represent the network better visually?
+#' Defaults to TRUE.
 #' @importFrom stats quantile
 #' @return A modified version of net with filtered edges (and nodes if any were now isolated).
 #'
@@ -33,7 +35,7 @@
 #' @export
 #'
 
-edgeFilter <- function(net, filter, edge = "spearman_similarity", direction = "g") {
+edgeFilter <- function(net, filter, edge = "spearman_similarity", direction = "g", replot = TRUE) {
   original_nodes <- net[["nodes"]]
   original_edges <- net[["edges"]]
   if (is.character(filter)) {
@@ -61,5 +63,31 @@ edgeFilter <- function(net, filter, edge = "spearman_similarity", direction = "g
   removed_nodes <- setdiff(original_nodes$asv, nodes$asv)
   net[["graph"]] <- igraph::delete_edges(net[["graph"]], removed_edge_names)
   net[["graph"]] <- igraph::delete_vertices(net[["graph"]], removed_nodes)
+  if (replot) {
+    net <- .replotNodes(net_data = net)
+  }
   return(net)
+}
+
+#' @keywords internal
+#' @noRd
+
+.replotNodes <- function(net_data) {
+  g <- net_data$graph
+  nd <- as.data.frame(igraph::layout.auto(g))
+  node_id_name <- colnames(net_data$nodes)[1]
+  nd[[node_id_name]] <- igraph::as_ids(igraph::V(g))
+  nodes <- net_data$nodes
+  nodes <- nodes[sort(nodes[[node_id_name]], index.return = TRUE)$ix, ]
+  nd <- nd[sort(nd[[node_id_name]], index.return = TRUE)$ix, ]
+  nodes$V1 <- nd$V1
+  nodes$V2 <- nd$V2
+  eg <- net_data$edges
+  eg$from.x <- nd$V1[match(eg$from, nd[[node_id_name]])]
+  eg$from.y <- nd$V2[match(eg$from, nd[[node_id_name]])]
+  eg$to.x <- nd$V1[match(eg$to, nd[[node_id_name]])]
+  eg$to.y <- nd$V2[match(eg$to, nd[[node_id_name]])]
+  net_data$edges <- eg
+  net_data$nodes <- nodes
+  return(net_data)
 }
