@@ -91,4 +91,3 @@ edgeFilter <- function(net, filter, edge = "spearman_similarity", direction = "g
   net_data$nodes <- nodes
   return(net_data)
 }
-
