@@ -24,12 +24,7 @@
 #'
 #' @import parallel
 #' @import chngpt
-#' @return A named list (same as net) with three elements:
-#' \itemize{
-#'    \item{"Nodes" is a dataframe of nodes and their metadata}
-#'    \item{"Edges" is a dataframe of edges connecting nodes.}
-#'    \item{"graph" is the igraph object used to generate the dataframes.}
-#' }
+#' @return A data frame of model results, same as \code{thresh}.
 #' @examples
 #'
 #' taxa <- c(
