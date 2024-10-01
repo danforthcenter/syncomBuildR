@@ -45,12 +45,7 @@ just represent confounders that you wish to remove effects from in the changepoi
 \code{lm} is used to get residuals of the phenotype after these effects are regressed out.}
 }
 \value{
-A named list (same as net) with three elements:
-\itemize{
-   \item{"Nodes" is a dataframe of nodes and their metadata}
-   \item{"Edges" is a dataframe of edges connecting nodes.}
-   \item{"graph" is the igraph object used to generate the dataframes.}
-}
+A data frame of model results, same as \code{thresh}.
 }
 \description{
 Function to aggregate clustered networks overall phenotypic impacts.

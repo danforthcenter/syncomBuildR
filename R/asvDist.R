@@ -131,7 +131,7 @@ asvDist <- function(asvTab, asvCols = NULL, method = "spearman",
     p <- ggplot2::ggplot(ldf, ggplot2::aes(
       x = .data[["c1"]],
       y = .data[["c2"]],
-      fill = ldf[[method]]
+      fill = .data[[method]]
     )) +
       ggplot2::geom_tile(color = NA, linewidth = 0) +
       viridis::scale_fill_viridis(na.value = "grey100") +
