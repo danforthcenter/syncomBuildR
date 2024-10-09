@@ -58,7 +58,10 @@ asvDist <- function(asvTab, asvCols = NULL, method = "spearman",
   #* `calculated values`
 
   if (is.null(asvCols)) {
-    asvCols <- colnames(asvTab)[grepl("ASV", colnames(asvTab))]
+    asvCols <- "ASV"
+  }
+  if (length(asvCols) == 1) {
+    asvCols <- colnames(asvTab)[grepl(asvCols, colnames(asvTab))]
   }
   vegan_distances <- c(
     "manhattan", "euclidean", "canberra", "clark", "bray", "kulczynski", "jaccard", "gower",
@@ -75,7 +78,7 @@ asvDist <- function(asvTab, asvCols = NULL, method = "spearman",
     mat <- as.matrix(asvTab[, asvCols])
   }
   old_dim <- dim(mat)
-  mat <- mat[rowSums(mat) > 0, colSums(mat) > 0]
+  mat <- mat[rowSums(mat) != 0, colSums(mat) != 0]
   new_dim <- dim(mat)
   if (any(old_dim != new_dim)) {
     warning("Rows and Columns that summed to 0 have been removed.")
