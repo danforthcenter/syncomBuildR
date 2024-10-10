@@ -57,7 +57,10 @@ netThresh <- function(net, asvTab, asvCols = NULL, clusterCol = NULL, cluster = 
     cluster <- unique(net[["nodes"]][[clusterCol]])
   }
   if (is.null(asvCols)) {
-    asvCols <- colnames(asvTab)[grepl("ASV", colnames(asvTab))]
+    asvCols <- "ASV"
+  }
+  if (length(asvCols) == 1) {
+    asvCols <- colnames(asvTab)[grepl(asvCols, colnames(asvTab))]
   }
   if (is.null(clusterCol)) {
     clusterCol <- colnames(nodes)[grepl("cluster", colnames(nodes))][1]

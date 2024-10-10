@@ -75,7 +75,7 @@ edgeFilter <- function(net, filter, edge = "spearman_similarity", direction = "g
 .replotNodes <- function(net_data) {
   g <- net_data$graph
   nd <- as.data.frame(igraph::layout.auto(g))
-  node_id_name <- colnames(net_data$nodes)[1]
+  node_id_name <- "asv"
   nd[[node_id_name]] <- igraph::as_ids(igraph::V(g))
   nodes <- net_data$nodes
   nodes <- nodes[sort(nodes[[node_id_name]], index.return = TRUE)$ix, ]
