@@ -37,47 +37,11 @@
 #' @return Writes out fq files and summary statistics depending on writeOut and stat arguments.
 #' If both are TRUE then summary stats are returned as a dataframe.
 #'
-#' @examples
-#' # these examples are not run because they require specific fastq files.
-#' \dontrun{
-#' library(ShortRead)
-#' library(Biostrings)
-#' library(parallel)
-#' setwd("~/scripts/SINC/sincUtils/syncomBuilder/nastya96WellEx")
-#'
-#' barcodes <- read.delim("barcode_tab.tsv")
-#' name <- c("Name", "Well")
-#' reads <- ShortRead::readFastq("Plate11_R1_001.fastq.gz")
-#'
-#' demultiplex(reads, barcodes[1:10, ],
-#'   fwd = "FWD", rev = "REV",
-#'   name = name, mode = "dada", cores = 10, writeOut = "tests", stat = FALSE
-#' )
-#'
-#' path <- paste0(
-#'   "/run/user/1000/gvfs/smb-share:server=nas01,share=research/bart_lab/",
-#'   "Previous_people/Mingsheng_Qi/research_dr/SINC/limiting_dilution/20210314/p2p11_rawseq"
-#' )
-#' barcodes <- read.csv(paste0(path, "/barcodetable1.csv"))
-#' barcodes$exp <- "exp"
-#' reads <- ShortRead::readFastq(paste0(path, "/210314S05P10_merge.fq"))
-#'
-#' x <- demultiplex(reads, barcodes,
-#'   fwd = "FWD_primer", rev = "REV_primer", name = c("exp"), mode = "general",
-#'   writeOut = TRUE, stat = TRUE, cores = 10
-#' )
-#' x
-#' # benchmarking against:
-#' # "plate","totalReads","groupedReads","ratio"
-#' # "P10",234509,154507,0.6589
-#' }
-#'
 #' @export
 
-
-demultiplex <- function(fwd_reads, rev_reads, barcodes, fwd = "FWD", rev = "REV", name = c("Name", "Sample_name"),
-                        mode = c("dada", "general"), cores = getOption("mc.cores", 1), writeOut = TRUE,
-                        stat = FALSE) {
+demultiplex <- function(fwd_reads, rev_reads, barcodes, fwd = "FWD", rev = "REV",
+                        name = c("Name", "Sample_name"), mode = c("dada", "general"),
+                        cores = getOption("mc.cores", 1), writeOut = TRUE, stat = FALSE) {
   if (is.character(fwd_reads)) {
     fwd_reads <- ShortRead::readFastq(fwd_reads)
   }
@@ -127,35 +91,7 @@ demultiplex <- function(fwd_reads, rev_reads, barcodes, fwd = "FWD", rev = "REV"
   # format barcodes to uppercase
   barcodes[[fwd]] <- toupper(barcodes[[fwd]])
   barcodes[[rev]] <- toupper(barcodes[[rev]])
-  # get indices of reverse reads that start with forward or reverse barcodes
-  # x <- parallel::mclapply(seq_len(nrow(barcodes)), function(i) {
-  #   rev_bar <- barcodes[i, rev]
-  #   fwd_bar <- barcodes[i, fwd]
-  #   rev_bar_rc <- Biostrings::reverseComplement(Biostrings::DNAString(rev_bar))
-  #   fwd_bar_rc <- Biostrings::reverseComplement(Biostrings::DNAString(fwd_bar))
-  # 
-  #   rev_index <- which(grepl(paste0("^", rev_bar), ShortRead::sread(rev_reads)))
-  #   fwd_index <- which(grepl(paste0("^", fwd_bar), ShortRead::sread(rev_reads)))
-  #   rev_rc_index <- which(grepl(paste0("^", rev_bar_rc), ShortRead::sread(rev_reads)))
-  #   fwd_rc_index <- which(grepl(paste0("^", fwd_bar_rc), ShortRead::sread(rev_reads)))
-  #   return(
-  #     list("fwd" = fwd_index, "rev" = rev_index, "fwd_rc" = fwd_rc_index, "rev_rc" = rev_rc_index)
-  #   )
-  # }, mc.cores = cores)
-  # rev_reads_fwd_barcodes <- sort(unique(unlist(lapply(x, function(i) {
-  #   i$fwd
-  # }))))
-  # rev_reads_rev_barcodes <- sort(unique(unlist(lapply(x, function(i) {
-  #   i$rev
-  # }))))
-  # rev_reads_rev_rc_barcodes <- sort(unique(unlist(lapply(x, function(i) {
-  #   i$rev_rc
-  # }))))
-  # rev_reads_fwd_rc_barcodes <- sort(unique(unlist(lapply(x, function(i) {
-  #   i$fwd_rc
-  # }))))
-  # per barcode write out a fastq.gz and optionally a summary table
-  fwd_reads_char <- as.character(ShortRead::sread(fwd_reads)) # could gsub out "N"s
+  fwd_reads_char <- as.character(ShortRead::sread(fwd_reads))
   rev_reads_char <- as.character(ShortRead::sread(rev_reads))
 
   test <- parallel::mclapply(seq_len(nrow(barcodes)), function(i) {
@@ -164,11 +100,11 @@ demultiplex <- function(fwd_reads, rev_reads, barcodes, fwd = "FWD", rev = "REV"
     # get barcodes
     fwd_bar <- barcodes[i, fwd]
     rev_bar <- barcodes[i, rev]
-    
+
     fwd_reads_w_fwd_bars <- which(grepl(paste0("^", fwd_bar), fwd_reads_char))
     rev_reads_w_rev_bars <- which(grepl(paste0("^", rev_bar), rev_reads_char))
     fwd_index_both <- intersect(fwd_reads_w_fwd_bars, rev_reads_w_rev_bars) # logical AND
-    
+
     fwd_reads_w_rev_bars <- which(grepl(paste0("^", rev_bar), fwd_reads_char))
     rev_reads_w_fwd_bars <- which(grepl(paste0("^", fwd_bar), rev_reads_char))
     rev_index_both <- intersect(fwd_reads_w_rev_bars, rev_reads_w_fwd_bars) # logical AND
@@ -225,9 +161,13 @@ demultiplex <- function(fwd_reads, rev_reads, barcodes, fwd = "FWD", rev = "REV"
 #' @keywords internal
 #' @noRd
 
-.demultiplex_general <- function(reads, barcodes, fwd = "FWD", rev = "REV",
-                                 name = c("Name", "Sample_name"),
-                                 writeOut = TRUE, stat = FALSE, cores = 1) {
+.demultiplex_general <- function(fwd_reads, rev_reads, barcodes, fwd = "FWD", rev = "REV",
+                                 name = c("Name", "Sample_name"), writeOut = TRUE,
+                                 stat = FALSE, cores = 1) {
+  # placeholder until I change how general works
+  return(.demultiplex_for_dada(fwd_reads, rev_reads, barcodes, fwd, rev,
+                               name, writeOut,
+                               stat, cores))
   # format barcodes to uppercase
   barcodes[[fwd]] <- toupper(barcodes[[fwd]])
   barcodes[[rev]] <- toupper(barcodes[[rev]])
@@ -293,4 +233,3 @@ demultiplex <- function(fwd_reads, rev_reads, barcodes, fwd = "FWD", rev = "REV"
     return(stats)
   }
 }
-
