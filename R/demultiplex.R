@@ -11,12 +11,8 @@
 #' @param rev The column name of the barcodes dataframe representing reverse barcodes.
 #' Defaults to "REV".
 #' @param name One or more column names from the barcodes dataframe to be used in naming samples.
-#' @param mode One of "dada" or "general". This controls how files are written out.
-#' If mode is "dada" then a fastq file will be written out for
-#' each row of the barcodes dataframe and the files will be named using the name argument.
-#' If mode is "general" then each input fastq file will yield one
-#' output fastq file with sample names in that file corresponding to the name argument.
-#' Defaults to "dada".
+#' @param mode Currently only "dada" is supported. This exists for tentative plans to have several
+#' output modes.
 #' @param cores Optionally the number of cores to run in parallel. This defaults to 1 if the "mc.cores"
 #' option is not set.
 #' @param writeOut Logical, should fastq/stats files be written out. Defaults to TRUE.
