@@ -175,8 +175,8 @@ demultiplex <- function(fwd_reads, rev_reads, barcodes, fwd = "FWD", rev = "REV"
     fwd_bar <- barcodes[i, fwd]
     rev_bar <- barcodes[i, rev]
     # filter for barcodes at beginning of sequence
-    rowReads <- reads[grepl(paste0("^", fwd_bar), ShortRead::sread(reads))]
-    columnReads <- reads[grepl(paste0("^", rev_bar), ShortRead::sread(reads))]
+    rowReads <- fwd_reads[grepl(paste0("^", fwd_bar), ShortRead::sread(fwd_reads))]
+    columnReads <- fwd_reads[grepl(paste0("^", rev_bar), ShortRead::sread(fwd_reads))]
     # make reverse complements of fwd and reverse barcodes
     fwd_bar_reverse_complement <- as.character(
       Biostrings::reverseComplement(
@@ -221,7 +221,7 @@ demultiplex <- function(fwd_reads, rev_reads, barcodes, fwd = "FWD", rev = "REV"
   if (stat && writeOut) {
     stats <- data.frame(
       name = name,
-      totalReads = length(reads),
+      totalReads = length(fwd_reads),
       groupedReads = ShortRead::countFastq(paste0(name, ".fastq.gz"))[1, 1]
     )
     stats$ratio <- signif(stats$groupedReads / stats$totalReads, digits = 4)
