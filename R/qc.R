@@ -91,7 +91,7 @@ qc <- function(file = NULL, asvTab = NULL, taxa = NULL, asvAbnd = 100, sampleAbn
   metadata <- sample_filtering_output$metadata
   removed <- sample_filtering_output$removed
   #* `ASV Abundance filtering`
-  asv_filtering_output <- .qc_asv_abundance_filter(asvTab, removed, split, separate)
+  asv_filtering_output <- .qc_asv_abundance_filter(asvTab, asvAbnd, removed, split, separate)
   asvTab <- asv_filtering_output$asvTab
   removed <- asv_filtering_output$removed
   #* `Normalization`
