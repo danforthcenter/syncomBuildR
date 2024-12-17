@@ -93,6 +93,8 @@ qc <- function(file = NULL, asvTab = NULL, taxa = NULL, asvAbnd = 100, sampleAbn
   #* `ASV Abundance filtering`
   asv_filtering_output <- .qc_asv_abundance_filter(asvTab, asvAbnd, removed, split, separate)
   asvTab <- asv_filtering_output$asvTab
+  metadata <- metadata[which(rowSums(asvTab, na.rm = TRUE) > 0), ] # in case column filtering changes rows
+  asvTab <- asvTab[which(rowSums(asvTab, na.rm = TRUE) > 0), ] # in case column filtering changes rows
   removed <- asv_filtering_output$removed
   #* `Normalization`
   asvTab <- .qc_normalization(asvTab, normalize)
