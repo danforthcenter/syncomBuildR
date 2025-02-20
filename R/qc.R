@@ -93,11 +93,16 @@ qc <- function(file = NULL, asvTab = NULL, taxa = NULL, asvAbnd = 100, sampleAbn
   #* `ASV Abundance filtering`
   asv_filtering_output <- .qc_asv_abundance_filter(asvTab, asvAbnd, removed, split, separate)
   asvTab <- asv_filtering_output$asvTab
+  removed <- asv_filtering_output$removed
   metadata <- metadata[which(rowSums(asvTab, na.rm = TRUE) > 0), ] # in case column filtering changes rows
   asvTab <- asvTab[which(rowSums(asvTab, na.rm = TRUE) > 0), ] # in case column filtering changes rows
-  removed <- asv_filtering_output$removed
+  asvTab <- asvTab[, which(colSums(asvTab, na.rm = TRUE) > 0)] # in case dropping those rows changed columns
   #* `Normalization`
   asvTab <- .qc_normalization(asvTab, normalize)
+  #* `in case normalization pushes things to 0`
+  metadata <- metadata[which(rowSums(asvTab, na.rm = TRUE) > 0), ] # in case column filtering changes rows
+  asvTab <- asvTab[which(rowSums(asvTab, na.rm = TRUE) > 0), ] # in case column filtering changes rows
+  asvTab <- asvTab[, which(colSums(asvTab, na.rm = TRUE) > 0)] # in case dropping those rows changed columns
   #* `Return ASV table`
   if (!is.null(metadata)) {
     asvTab <- cbind(metadata, asvTab)
