@@ -2,14 +2,15 @@
 #'
 #' @param x ASV table, asv columns thought start with "ASV" prefix.
 #' @param tx Taxonomy table in dada2 format. Rownames should correspond to ASV names in the same
-#' format as x's column names.
+#' format as x's column names. If this is a matrix it will be converted to a data.frame.
 #' @param taxaLevel A level of the taxonomy in `tx` to aggregate data to. Must match a colname of `tx`.
 #'
-#' @keywords taxonomy, dirichlet, conjugate
+#' @keywords taxonomy, dirichlet
 #'
 #' @export
 
 taxaSums <- function(x = NULL, tx = NULL, taxaLevel = "Class") {
+  tx <- as.data.frame(tx)
   asvList <- colnames(x)[grepl("ASV", colnames(x))] # take the asv names from both samples
   tx$asv <- rownames(tx) # put the asv names in the taxa data
   x_sum <- data.frame(asv = asvList, sum = colSums(x[, colnames(x) %in% asvList]))
@@ -24,9 +25,9 @@ taxaSums <- function(x = NULL, tx = NULL, taxaLevel = "Class") {
 
 #' Aggregate an ASV table to some taxonomic level
 #'
-#' @param x ASV table, asv columns thought start with "ASV" prefix.
+#' @param x ASV table, asv columns should start with "ASV" prefix.
 #' @param tx Taxonomy table in dada2 format. Rownames should correspond to ASV names in the same format
-#' as x's column names.
+#' as x's column names. If this is a matrix it will be converted to a data.frame.
 #' @param taxaLevel A level of the taxonomy in `tx` to aggregate data to. Must match a colname of `tx`.
 #'
 #' @return A list of two dataframes. "data" is similar to an ASV table but aggregated to the
@@ -39,7 +40,9 @@ taxaSums <- function(x = NULL, tx = NULL, taxaLevel = "Class") {
 #' @export
 
 taxaAg <- function(x = NULL, tx = NULL, taxaLevel = "Class") {
+  tx <- as.data.frame(tx)
   tx$asv <- rownames(tx) # put the asv names in the taxa data
+  tx <- tx[tx$asv %in% colnames(x), ]
   tx[[taxaLevel]] <- replace(tx[[taxaLevel]], is.na(tx[[taxaLevel]]), "Not_Assigned")
   agList <- lapply(unique(tx[[taxaLevel]]), function(group) {
     subtx <- tx[tx[[taxaLevel]] == group, "asv"]

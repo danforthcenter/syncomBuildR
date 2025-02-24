@@ -85,7 +85,7 @@ pcadf <- function(df = NULL, cols = NULL, color = NULL, returnData = TRUE, ncp =
     p <- p + ggplot2::theme(legend.position = "none")
   }
   if (umap) {
-    pca.umap <- uwot::umap(pca.df[, grepl("pc", colnames(pca.df))])
+    pca.umap <- uwot::umap(pca.df[, grepl("pc", colnames(pca.df))], nn_method = "annoy")
     umap.df <- cbind(pca.df, as.data.frame(pca.umap))
     colnames(umap.df) <- c(colnames(pca.df), "UMAP1", "UMAP2")
     pca.df <- umap.df
