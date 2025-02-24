@@ -31,7 +31,7 @@ umapdf <- function(df = NULL, cols = NULL, color = NULL, returnData = TRUE, ...)
     cols <- which(colnames(df) %in% cols)
   }
 
-  ump <- uwot::umap(df[, cols], ...)
+  ump <- uwot::umap(df[, cols], nn_method = "annoy", ...)
   coords <- as.data.frame(ump)
   colnames(coords) <- c(paste0("umap", seq_len(ncol(coords))))
   umap.df <- cbind(df[, -cols], coords)
