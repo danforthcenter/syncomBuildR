@@ -37,7 +37,8 @@ jobs:
                                            lintr::object_name_linter(styles = c("snake_case", "symbols",
                                                                               "camelCase", "dotted.case",
                                                                               "lowercase", "UPPERCASE")),
-                                           lintr::brace_linter(allow_single_line = TRUE) ) )
+                                           lintr::brace_linter(allow_single_line = TRUE),
+                                           return_linter = NULL) )
         shell: Rscript {0}
         env:
           LINTR_ERROR_ON_LINT: true
