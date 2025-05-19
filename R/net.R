@@ -49,7 +49,7 @@ asvNet <- function(df, metadata = NULL, edge = "spearman_similarity", thresh = N
     g <- igraph::graph_from_adjacency_matrix(df, "undirected")
   }
   nd <- as.data.frame(igraph::layout.auto(g))
-  eg <- igraph::get.data.frame(g)
+  eg <- igraph::as_data_frame(g, "edges")
   #* link metadata to nodes
   nd[[metadata_join]] <- igraph::as_data_frame(g, "vertices")$name
   if (!is.null(metadata)) {
@@ -69,7 +69,7 @@ asvNet <- function(df, metadata = NULL, edge = "spearman_similarity", thresh = N
   #* Calculate network metrics
   nd$betweenness <- igraph::betweenness(g)
   nd$degree <- igraph::degree(g)
-  if (!is.null(edge)) {
+  if (!is.null(edge) && is.numeric(eg[[edge]])) {
     igraph::E(g)$weight <- eg[[edge]] + 0.1
     nd$strength <- igraph::strength(g)
   }
