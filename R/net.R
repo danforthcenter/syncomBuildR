@@ -17,12 +17,7 @@
 #' as_data_frame betweenness degree E strength harmonic_centrality eigen_centrality
 #' authority_score page_rank
 #' @import data.table
-#' @return A named list with three elements:
-#' \itemize{
-#'    \item{"Nodes" is a dataframe of nodes and their metadata}
-#'    \item{"Edges" is a dataframe of edges connecting nodes.}
-#'    \item{"graph" is the igraph object used to generate the dataframes.}
-#' }
+#' @return An \code{scbnet} object.
 #'
 #'
 #' @examples
@@ -90,5 +85,6 @@ asvNet <- function(df, metadata = NULL, edge = "spearman_similarity", thresh = N
   eg$to.y <- nd$V2[match(eg$to, nd[[metadata_join]])]
   eg <- eg[!duplicated(eg), ]
   nd <- nd[!duplicated(nd), ]
-  return(list("nodes" = nd, "edges" = eg, "graph" = g))
+  out <- as.scbnet(list("nodes" = nd, "edges" = eg, "graph" = g))
+  return(out)
 }

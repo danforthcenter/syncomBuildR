@@ -9,14 +9,14 @@
 #' greater than this value are kept.
 #' This can be a character vector or a numeric.
 #' Character vectors are interpreted as quantiles ("0.5" corresponds to the top 50 percent are kept).
-#' @param plot Logical, should data be plotted using \link{net.plot}.
+#' @param plot deprecated, use \code{\link{plot.scbnet}}.
 #' @param nodeCol Column of node information to find the node in. Defaults to "asv".
 #' @param keepNames Logical, should other nodes be filled in the plot as their node name (TRUE) or all
 #' as "other" (FALSE)? Defaults to FALSE.
 #' @param order The order of connection to include, defaults to 1. If Node A has an Edge to Node B,
 #' and Node B has an edge to Node C, but Node A does not have an edge to Node C then A to C is a 2nd
 #' order connection, and Node C would only be included if order >= 2.
-#' @return A list with a subset network and optionally a ggplot.
+#' @return An \code{scbnet} object of the subset network
 #'
 #'
 #' @examples
@@ -35,12 +35,12 @@
 #' net_data <- asvNet(sp_dist, taxa_df, edge = "spearman_similarity")
 #'
 #' sub_net <- pullNode(net_data, node = "ASV10",
-#' edge = "spearman_similarity", plot = TRUE, nodeCol = "asv")
+#' edge = "spearman_similarity", edgeFilter = 0.7, plot = TRUE, nodeCol = "asv")
 #'
 #' @export
 
 pullNode <- function(net, node, edge = NULL, edgeFilter = NULL,
-                     plot = TRUE, nodeCol = "asv", keepNames = FALSE, order = 1) {
+                     plot = FALSE, nodeCol = "asv", keepNames = FALSE, order = 1) {
   #* grab network components
   nodes <- net$nodes
   edges <- net$edges
@@ -74,8 +74,14 @@ pullNode <- function(net, node, edge = NULL, edgeFilter = NULL,
     nodes[nodes[[nodeCol]] %in% c(edges_sub$to, edges_sub$from), ]
   )
   nodes_sub <- nodes_sub[!duplicated(nodes_sub), ]
+  #* subset igraph object
+  g <- net$graph
+  gs <- igraph::induced_subgraph(g, vids = which(names(igraph::V(g)) %in% nodes_sub[[nodeCol]]))
+  gs <- igraph::delete_edges(gs, seq_len(length(igraph::E(gs)))) # or graph - E(graph) works
+  gs <- igraph::add_edges(gs, edges = c(rbind(edges_sub$from, edges_sub$to)))
   #* plotting
   if (plot) {
+    warning("Plot argument is deprecated, use generic plot.scbnet instead.")
     if ("netNumber" %in% colnames(nodes_sub) && length(unique(nodes_sub$netNumber)) > 1) {
       facet <- "netNumber"
     } else {
@@ -88,14 +94,12 @@ pullNode <- function(net, node, edge = NULL, edgeFilter = NULL,
         paste0(node, collapse = ", "), "other"
       )
     }
-    p <- net.plot(list("nodes" = nodes_sub, "edges" = edges_sub),
+    p <- plot.scbnet(list("nodes" = nodes_sub, "edges" = edges_sub),
       fill = "fill", size = 3, edgeWeight = edge,
       edgeFilter = NULL, facet = facet
     )
-    out <- list("net" = list("nodes" = nodes_sub, "edges" = edges_sub), "plot" = p)
-  } else {
-    out <- list("nodes" = nodes_sub, "edges" = edges_sub)
+    print(p)
   }
-  #* return
+  out <- as.scbnet(list("nodes" = nodes_sub, "edges" = edges_sub, "graph" = gs))
   return(out)
 }

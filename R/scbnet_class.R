@@ -46,6 +46,7 @@ print.scbnet <- function(x, ...) {
 #' @param ... further arguments, passed to summary.default
 #'
 #' @method summary scbnet
+#' @importFrom utils head tail
 #' @export
 
 summary.scbnet <- function(object, ...) {

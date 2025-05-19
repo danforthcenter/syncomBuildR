@@ -9,12 +9,7 @@
 #' @keywords network, changepoint
 #' @importFrom igraph components
 #' @importFrom dbscan dbscan
-#' @return A named list (same as net) with three elements, same as \link{asvNet}:
-#' \itemize{
-#'    \item{"Nodes" is a dataframe of nodes and their metadata}
-#'    \item{"Edges" is a dataframe of edges connecting nodes.}
-#'    \item{"graph" is the igraph object used to generate the dataframes.}
-#' }
+#' @return An \code{scbnet} object with cluster data added to the nodes data.frame.
 #'
 #' @details Each method will use a different function to cluster data according to the layout
 #'          in the graph. Note that layouts in the graph are determined by \code{igraph::layout_nicely}.

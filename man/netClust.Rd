@@ -16,12 +16,7 @@ as a cluster.}
 \item{...}{Additional arguments passed to function picked by method.}
 }
 \value{
-A named list (same as net) with three elements, same as \link{asvNet}:
-\itemize{
-   \item{"Nodes" is a dataframe of nodes and their metadata}
-   \item{"Edges" is a dataframe of edges connecting nodes.}
-   \item{"graph" is the igraph object used to generate the dataframes.}
-}
+An \code{scbnet} object with cluster data added to the nodes data.frame.
 }
 \description{
 Function to cluster networks generated from \code{asvNet}.

@@ -1,7 +1,7 @@
 #' Function to translate NetCoMi objects into dataframes usable by other syncombuildr functions.
 #'
 #' The main purpose of this function is to bring NetCoMi's metrics and testing into a format
-#' that allows for more customized visualization such as with \link{net.plot}
+#' that allows for use with the rest of syncomBuildR.
 #'
 #'
 #' @param microNetObj A microNetObj object as returned by \code{NetCoMi::netConstruct}
@@ -16,13 +16,8 @@
 #' make comparable plots later on? Defaults to TRUE.
 #' @keywords network, changepoint
 #' @importFrom igraph graph_from_data_frame layout_nicely as_data_frame
-#' @return If the microNetObj contains one network then a named list with three elements is returned:
-#' \itemize{
-#'    \item{"Nodes" is a dataframe of nodes and their metadata}
-#'    \item{"Edges" is a dataframe of edges connecting nodes.}
-#'    \item{"graph" is the igraph object used to generate the dataframes.}
-#' }
-#' If the microNetObj contains two networks then a list of such lists is returned.
+#' @return If the microNetObj contains one network then an \code{scbnet} object is returned.
+#' If the microNetObj contains two networks then a list of \code{scbnet} objects is returned.
 #'
 #' @examples
 #' if ("NetCoMi" %in% installed.packages()) {
@@ -81,7 +76,7 @@ netcomi2scb <- function(microNetObj, microNetProps = NULL, microNetComp = NULL, 
       nd <- merge(nd, pvals, by = "name")
       nd <- merge(nd, negLog10pvals, by = "name")
     }
-    return(list("nodes" = nd, "edges" = eg, "graph" = g))
+    return(as.scbnet(list("nodes" = nd, "edges" = eg, "graph" = g)))
   })
   if (nNets == 1) {
     res <- res[[1]]
@@ -92,11 +87,7 @@ netcomi2scb <- function(microNetObj, microNetProps = NULL, microNetComp = NULL, 
 }
 
 
-
 #' Helper function to combine multiple netcomi networks into one igraph/dataframe object.
-#'
-#' The main purpose of this function is to bring NetCoMi's metrics and testing into a format
-#' that allows for more customized visualization such as with \link{net.plot}
 #'
 #' @param nets List in the style of netcomi2scb output.
 #' @param metrics Character vector of metrics to combine.
@@ -135,7 +126,7 @@ netcomi2scb <- function(microNetObj, microNetProps = NULL, microNetComp = NULL, 
     net$edges
   }))
 
-  nets[[length(nets) + 1]] <- list("nodes" = allNodes, "edges" = allEdges, "graph" = NULL)
+  nets[[length(nets) + 1]] <- as.scbnet(list("nodes" = allNodes, "edges" = allEdges, "graph" = NULL))
 
   return(nets)
 }
