@@ -11,7 +11,7 @@
 #' @slot nodes Data frame of node information
 #' @slot edges Data frame of edge information
 #' @slot graph igraph object
-#' @slot control Additional information about the network
+#' @slot control Additional (optional) information about the network
 #'
 #' @seealso
 #'   \code{\link{asvNet}}
@@ -77,6 +77,7 @@ summary.scbnet <- function(object, ...) {
   #* `Check for control information`
   #* Not sure if this will always exist or if it's something that I'll only make in response to certain
   #* things. Thinking that this holds stuff like where the graph came from and what has happened upstream?
+  #* If there is control information then this will loop over it and do some quick summary?
   #*
   #* For now this is pending
   return(invisible(object))

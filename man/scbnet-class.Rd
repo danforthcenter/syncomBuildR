@@ -19,7 +19,7 @@ See \code{methods(class = "scbnet")} for an overview of available methods.
 
 \item{\code{graph}}{igraph object}
 
-\item{\code{control}}{Additional information about the network}
+\item{\code{control}}{Additional (optional) information about the network}
 }}
 
 \seealso{
