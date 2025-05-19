@@ -2,7 +2,9 @@
 
 S3method(plot,scbnet)
 S3method(print,scbnet)
+S3method(print,thresh)
 S3method(summary,scbnet)
+S3method(summary,thresh)
 export(asvDist)
 export(asvNet)
 export(b_da)
