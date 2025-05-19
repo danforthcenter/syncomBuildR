@@ -1,5 +1,8 @@
 #' Function to run a PCA, plot and return the data with PC coordinates
 #'
+#' This is broadly useful for quality control, especially when used with \link{taxaAg} in case the
+#' ASV level trend does not seem to make sense.
+#'
 #' @param df Dataframe to ordinate
 #' @param cols columns to reduce dimensions of. Can be specified with names or positions. Defaults to
 #' all column names containing "ASV".

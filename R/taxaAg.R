@@ -7,6 +7,9 @@
 #'
 #' @keywords taxonomy, dirichlet
 #'
+#' @examples
+#' taxaSums(asv, taxa, "Class")
+#'
 #' @export
 
 taxaSums <- function(x = NULL, tx = NULL, taxaLevel = "Class") {
@@ -25,6 +28,10 @@ taxaSums <- function(x = NULL, tx = NULL, taxaLevel = "Class") {
 
 #' Aggregate an ASV table to some taxonomic level
 #'
+#' This is broadly useful for visualizing taxonomic compositions and coarse graining for networks,
+#' ordinations, or other analysis where the ASV level of granularity is either too specific or
+#' confounded by some effect (biological or computational).
+#'
 #' @param x ASV table, asv columns should start with "ASV" prefix.
 #' @param tx Taxonomy table in dada2 format. Rownames should correspond to ASV names in the same format
 #' as x's column names. If this is a matrix it will be converted to a data.frame.
@@ -36,6 +43,9 @@ taxaSums <- function(x = NULL, tx = NULL, taxaLevel = "Class") {
 #' in each family in long format.
 #'
 #' @keywords network dirichlet
+#' @examples
+#' x <- taxaAg(asv, taxa, "Class")
+#' lapply(x, head)
 #'
 #' @export
 

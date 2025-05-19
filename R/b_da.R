@@ -28,10 +28,8 @@
 #'
 #' @return A brmsfit object
 #' @examples
-#' \dontrun{
 #' if ("brms" %in% installed.packages()) {
 #'   ex <- b_da(asv, col = "ASV1", predictors = "tissue", intercept = FALSE, chains = 1, iter = 500)
-#' }
 #' }
 #' @export
 

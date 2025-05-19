@@ -75,7 +75,7 @@ threshPlot <- function(thresh, asv, asvCols = NULL, phenotype = NULL, unit = "as
       if (nrow(chngptData) < 1) {
         return(NULL)
       }
-      postCptCol <- if (chngptData$p.value < 0.05) {
+      postCptCol <- if (tail(chngptData$p.value, 1) < 0.05) {
         viridis::plasma(1, begin = 0.7)
       } else {
         "black"

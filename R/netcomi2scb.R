@@ -25,13 +25,11 @@
 #' If the microNetObj contains two networks then a list of such lists is returned.
 #'
 #' @examples
-#' \dontrun{
 #' if ("NetCoMi" %in% installed.packages()) {
 #'   microNetObj <- NetCoMi::netConstruct(as.matrix(asv[, grepl("ASV", colnames(asv))]),
 #'     measure = "spearman", sparsMethod = "t-test", alpha = 0.7
 #'   )
 #'   net <- netcomi2scb(microNetObj)
-#' }
 #' }
 #' @export
 
@@ -58,7 +56,7 @@ netcomi2scb <- function(microNetObj, microNetProps = NULL, microNetComp = NULL, 
       }
       long <- long[long$value > cutoff_value, ]
     }
-    g <- igraph::graph_from_data_frame(long, "undirected")
+    g <- igraph::graph_from_data_frame(long[, c(2, 3, 1)], directed = FALSE)
 
     nd <- as.data.frame(igraph::layout_nicely(g)) # layout_as_star , layout_nicely ?
     nd$name <- igraph::as_data_frame(g, "vertices")$name
