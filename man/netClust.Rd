@@ -53,6 +53,8 @@ taxa_df$asv <- rownames(taxa_df)
 sp_dist <- asvDist(asv, method = "spearman", clr_transform = TRUE, edgeFilter = 0.5)
 net_data <- asvNet(sp_dist, taxa_df, edge = "spearman_similarity")
 net_data <- netClust(net = net_data, "components")
+net_data <- netClust(net = net_data,  method = pullNode(net_data, node = c("ASV10", "ASV9"),
+                     edge = "spearman_similarity", plot = TRUE, nodeCol = "asv"))
 
 }
 \keyword{changepoint}

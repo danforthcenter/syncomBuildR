@@ -17,5 +17,9 @@ format as x's column names. If this is a matrix it will be converted to a data.f
 \description{
 Make named vector of taxonomy sums
 }
+\examples{
+taxaSums(asv, taxa, "Class")
+
+}
 \keyword{dirichlet}
 \keyword{taxonomy,}

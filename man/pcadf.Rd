@@ -38,7 +38,8 @@ supported by \code{vegan::vegdist} will use \code{ape::pcoa}.}
 a ggplot, optionally a dataframe and FactoMineR::PCA output if returnData is TRUE.
 }
 \description{
-Function to run a PCA, plot and return the data with PC coordinates
+This is broadly useful for quality control, especially when used with \link{taxaAg} in case the
+ASV level trend does not seem to make sense.
 }
 \examples{
 

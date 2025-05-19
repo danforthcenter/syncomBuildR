@@ -8,3 +8,4 @@
 *.csv
 vignettes/*.html
 *.html
+tools/lib/*

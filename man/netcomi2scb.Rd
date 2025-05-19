@@ -42,13 +42,11 @@ The main purpose of this function is to bring NetCoMi's metrics and testing into
 that allows for more customized visualization such as with \link{net.plot}
 }
 \examples{
-\dontrun{
 if ("NetCoMi" \%in\% installed.packages()) {
   microNetObj <- NetCoMi::netConstruct(as.matrix(asv[, grepl("ASV", colnames(asv))]),
     measure = "spearman", sparsMethod = "t-test", alpha = 0.7
   )
   net <- netcomi2scb(microNetObj)
-}
 }
 }
 \keyword{changepoint}

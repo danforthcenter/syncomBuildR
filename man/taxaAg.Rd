@@ -21,7 +21,14 @@ given taxaLevel.
 in each family in long format.
 }
 \description{
-Aggregate an ASV table to some taxonomic level
+This is broadly useful for visualizing taxonomic compositions and coarse graining for networks,
+ordinations, or other analysis where the ASV level of granularity is either too specific or
+confounded by some effect (biological or computational).
+}
+\examples{
+x <- taxaAg(asv, taxa, "Class")
+lapply(x, head)
+
 }
 \keyword{dirichlet}
 \keyword{network}
