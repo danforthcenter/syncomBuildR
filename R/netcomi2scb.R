@@ -56,7 +56,7 @@ netcomi2scb <- function(microNetObj, microNetProps = NULL, microNetComp = NULL, 
       }
       long <- long[long$value > cutoff_value, ]
     }
-    g <- igraph::graph_from_data_frame(long, "undirected")
+    g <- igraph::graph_from_data_frame(long[, c(2, 3, 1)], directed = FALSE)
 
     nd <- as.data.frame(igraph::layout_nicely(g)) # layout_as_star , layout_nicely ?
     nd$name <- igraph::as_data_frame(g, "vertices")$name
