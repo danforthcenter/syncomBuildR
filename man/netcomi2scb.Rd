@@ -39,7 +39,7 @@ that allows for use with the rest of syncomBuildR.
 \examples{
 if ("NetCoMi" \%in\% installed.packages()) {
   microNetObj <- NetCoMi::netConstruct(as.matrix(asv[, grepl("ASV", colnames(asv))]),
-    measure = "spearman", sparsMethod = "t-test", alpha = 0.7
+    measure = "spearman", sparsMethod = "none"
   )
   net <- netcomi2scb(microNetObj)
 }
