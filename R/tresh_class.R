@@ -76,18 +76,47 @@ summary.thresh <- function(object, ...) {
            )
   )
   cat("\n\n")
-  sum_mat <- cbind(
-    sapply(object[c("intercept", "changepoint")],
-           function(x) {
-             summary(unlist(x))
-           }),
-    summary(unlist(lapply(object$slope, function(x) {x$est}))),
-    summary(unlist(lapply(object$slope, function(x) {x$padj})))
-  )
-  colnames(sum_mat)[3:4] <- c("slope", "pval")
-  print(sum_mat)
+  if (length(object$intercept) > 1) {
+    sum_mat <- cbind(
+      sapply(object[c("intercept", "changepoint")],
+             function(x) {
+               summary(unlist(x))
+             }),
+      summary(unlist(lapply(object$slope, function(x) {x$est}))),
+      summary(unlist(lapply(object$slope, function(x) {x$padj})))
+    )
+    colnames(sum_mat)[3:4] <- c("slope", "pval")
+    print(sum_mat)
+  } else {
+    sum_mat <- x
+  }
   return(invisible(sum_mat))
 }
 
+#' Bracket subsetting for thresh objects
+#' @aliases `[.thresh`
+#'
+#' Thresh objects have variable lengths and it's common to want to subset them based on
+#' phenotypes or predictors. Specialized bracket methods are implemented to support that.
+#' @param x thresh object
+#' @param i indexing, logical and numeric vectors are handled specially to subset the thresh object.
+#' Other options are handled per a normal list
+#' @examples
+#' asv$biomass_z <- rnorm(nrow(asv))
+#' tm <- thresh(asv, "biomass_z")
+#' tm["predictor"] # pulls list
+#' tm[1:2] # subsets lists to make a smaller thresh object
+#'
+#' @export
 
-
+`[.thresh` <- function(x, i) {
+  if (!is.logical(i) && !is.numeric(i)) {
+    return(NextMethod())
+  }
+  # apply subsetting to subsettable slots
+  x[x$control$subsettable] <- lapply(x[x$control$subsettable], function(j) {
+    j[i]
+    })
+  # other slots don't change
+  return(x)
+}

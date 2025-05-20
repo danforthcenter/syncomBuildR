@@ -88,7 +88,11 @@ thresh <- function(asvTab, phenoCols, asvCols = NULL, model = "hinge",
   thresh[["type"]] <- "chngptm"
   thresh[["unit"]] <- "individual"
   thresh[["control"]] <- list("call" = match.call(),
-                              "p.adjust.method" = p.adjust.method)
+                              "p.adjust.method" = p.adjust.method,
+                              "subsettable" = c(
+                                "intercept", "changepoint", "slope",
+                                "phenotype", "model", "predictor"
+                              ))
   thresh <- as.thresh(thresh)
   return(thresh)
 }
