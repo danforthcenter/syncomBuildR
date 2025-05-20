@@ -3,9 +3,9 @@
 \docType{class}
 \name{thresh-class}
 \alias{thresh-class}
-\title{Class \code{thresh} for output from the \code{syncomBuildR::asvNet} function.}
+\title{Class \code{thresh} for output from \code{syncomBuildR::thresh} and related functions.}
 \description{
-Class for networks as used in syncomBuildR.
+Class for changepoint models as used in syncomBuildR.
 }
 \details{
 See \code{methods(class = "thresh")} for an overview of available methods.
@@ -13,15 +13,29 @@ See \code{methods(class = "thresh")} for an overview of available methods.
 \section{Slots}{
 
 \describe{
-\item{\code{nodes}}{Data frame of node information}
+\item{\code{intercept}}{The intercept term (y value pre changepoint, per hinge model)}
 
-\item{\code{edges}}{Data frame of edge information}
+\item{\code{changepoint}}{The changepoint term (x value at which slope takes effect)}
 
-\item{\code{graph}}{igraph object}
+\item{\code{slope}}{The slope term}
 
-\item{\code{control}}{Additional (optional) information about the network}
+\item{\code{phenotype}}{The phenotype (outcome) that the model was fit to.}
+
+\item{\code{model}}{the model object}
+
+\item{\code{predictor}}{the ASV/Cluster (predictor) that the model was fit using.}
+
+\item{\code{data}}{The data used to fit the model}
+
+\item{\code{type}}{The backend used to fit the model as well as the type of model. Currently "chngptm" is
+supported.}
+
+\item{\code{unit}}{The unit/scope. Current options are "individual" for single ASVs or "cluster" for groups
+of ASVs.}
+
+\item{\code{control}}{Additional information such as the call.}
 }}
 
 \seealso{
-\code{\link{asvNet}}
+\code{\link{thresh}}
 }

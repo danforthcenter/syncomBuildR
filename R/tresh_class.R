@@ -1,6 +1,6 @@
-#' Class \code{thresh} for output from the \code{syncomBuildR::asvNet} function.
+#' Class \code{thresh} for output from \code{syncomBuildR::thresh} and related functions.
 #'
-#' Class for networks as used in syncomBuildR.
+#' Class for changepoint models as used in syncomBuildR.
 #'
 #' @name thresh-class
 #' @docType class
@@ -8,13 +8,21 @@
 #' @details
 #' See \code{methods(class = "thresh")} for an overview of available methods.
 #'
-#' @slot nodes Data frame of node information
-#' @slot edges Data frame of edge information
-#' @slot graph igraph object
-#' @slot control Additional (optional) information about the network
+#' @slot intercept The intercept term (y value pre changepoint, per hinge model)
+#' @slot changepoint The changepoint term (x value at which slope takes effect)
+#' @slot slope The slope term
+#' @slot phenotype The phenotype (outcome) that the model was fit to.
+#' @slot model the model object
+#' @slot predictor the ASV/Cluster (predictor) that the model was fit using.
+#' @slot data The data used to fit the model
+#' @slot type The backend used to fit the model as well as the type of model. Currently "chngptm" is
+#' supported.
+#' @slot unit The unit/scope. Current options are "individual" for single ASVs or "cluster" for groups
+#' of ASVs.
+#' @slot control Additional information such as the call.
 #'
 #' @seealso
-#'   \code{\link{asvNet}}
+#'   \code{\link{thresh}}
 #'
 NULL
 
@@ -50,8 +58,35 @@ print.thresh <- function(x, ...) {
 #' @export
 
 summary.thresh <- function(object, ...) {
-  #* 
-  return(invisible(object))
+  #* `Main Points`
+  has_adj <- is.null(object$control$p.adjust.method) || object$control$p.adjust.method == "none"
+  N_significant <- sum(
+    unlist(lapply(object$slope, function(s) {s$padj < 0.05}))
+  )
+  N_insignificant <- length(object$slope) - N_significant
+  cat(
+    paste0("Thresh fit with ", object$type, " to ", object$unit, "s\n",
+           "\tIncludes ", length(unique(object$predictor)), " predictors over ",
+           length(unique(object$phenotype)), " phenotypes using ", nrow(object$data), " observations\n",
+           "\t", N_significant, " significant slopes",
+           ifelse(has_adj,
+                  "",
+                  paste0(" (", object$control$p.adjust.method, " adjusted)")
+           )
+           )
+  )
+  cat("\n\n")
+  sum_mat <- cbind(
+    sapply(object[c("intercept", "changepoint")],
+           function(x) {
+             summary(unlist(x))
+           }),
+    summary(unlist(lapply(object$slope, function(x) {x$est}))),
+    summary(unlist(lapply(object$slope, function(x) {x$padj})))
+  )
+  colnames(sum_mat)[3:4] <- c("slope", "pval")
+  print(sum_mat)
+  return(invisible(sum_mat))
 }
 
 
