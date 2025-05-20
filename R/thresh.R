@@ -92,7 +92,9 @@ thresh <- function(asvTab, phenoCols, asvCols = NULL, model = "hinge",
                               "subsettable" = c(
                                 "intercept", "changepoint", "slope",
                                 "phenotype", "model", "predictor"
-                              ))
+                              ),
+                              "calibration" = calibratePheno
+                              )
   thresh <- as.thresh(thresh)
   return(thresh)
 }
