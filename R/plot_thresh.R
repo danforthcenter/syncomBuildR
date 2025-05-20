@@ -13,6 +13,8 @@
 #' @param net The asvNet object if netThresh output is being plotted.
 #' @param ... further arguments, ignored.
 #' @import ggplot2
+#' @import patchwork
+#' @import viridis
 #' @examples
 #'
 #' asv$biomass_z <- rnorm(nrow(asv))
