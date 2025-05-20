@@ -25,6 +25,7 @@
 #'
 #' asv$biomass_z <- rnorm(nrow(asv))
 #' tm <- thresh(asv, "biomass_z")
+#' tm
 #'
 #' @export
 
