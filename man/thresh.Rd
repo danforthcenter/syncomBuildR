@@ -2,13 +2,35 @@
 % Please edit documentation in R/thresh.R
 \name{thresh}
 \alias{thresh}
+\alias{thresh.sbcnet}
+\alias{thresh.data.frame}
 \title{Function to run changepoint models of individual microbes vs phenotypes or
 communities/clusters vs phenotypes.}
 \usage{
 thresh(
-  asvTab,
+  x,
   phenoCols,
-  asvCols = NULL,
+  predCols = NULL,
+  model = "hinge",
+  cores = getOption("mc.cores", 1),
+  calibratePheno = NULL,
+  p.adjust.method = "none"
+)
+
+\method{thresh}{sbcnet}(
+  x,
+  phenoCols,
+  predCols = NULL,
+  model = "hinge",
+  cores = getOption("mc.cores", 1),
+  calibratePheno = NULL,
+  p.adjust.method = "none"
+)
+
+\method{thresh}{data.frame}(
+  x,
+  phenoCols,
+  predCols = NULL,
   model = "hinge",
   cores = getOption("mc.cores", 1),
   calibratePheno = NULL,
@@ -16,11 +38,11 @@ thresh(
 )
 }
 \arguments{
-\item{asvTab}{An asv table or analogous dataframe with a row per observation and columns for traits.}
+\item{x}{An asv table or analogous dataframe with a row per observation and columns for traits.}
 
 \item{phenoCols}{A character vector of column names for phenotypes to be used in changepoint models.}
 
-\item{asvCols}{A character vector of columns representing microbes (predictor variables).
+\item{predCols}{A character vector of columns representing microbes (predictor variables).
 Defaults NULL where all column names containing the string "ASV" will be used.}
 
 \item{model}{Type of changepoint model in chngpt::chngptm labeling convention. Currently hinge,
@@ -49,6 +71,32 @@ communities/clusters vs phenotypes.
 asv$biomass_z <- rnorm(nrow(asv))
 tm <- thresh(asv, "biomass_z")
 tm
+
+taxa <- c(
+  "Bacteria", "Proteobacteria", "Betaproteobacteria", "Burkholderiales",
+  "Burkholderiaceae", "Paraburkholderia", NA
+)
+taxa <- matrix(rep(taxa, 10), nrow = 10, byrow = TRUE)
+colnames(taxa) <- c("Kingdom", "Phylum", "Class", "Order", "Family", "Genus", "Species")
+rownames(taxa) <- paste0("ASV", 1:10)
+# taxonomy data if used should have ASV names explicitly as a column
+taxa_df <- as.data.frame(taxa)
+taxa_df$asv <- rownames(taxa_df)
+sp_dist <- asvDist(asv, method = "spearman", clr_transform = TRUE, edgeFilter = 0.5)
+net_data <- asvNet(sp_dist, taxa_df, edge = "spearman_similarity")
+net_data <- netClust(net = net_data, "components")
+asv$biomass_z <- rnorm(nrow(asv))
+
+
+
+# ARGS
+x <- net_data
+phenoCols = NULL
+predCols = NULL
+model = "hinge"
+cores = getOption("mc.cores", 1)
+calibratePheno = NULL
+p.adjust.method = "none"
 
 }
 \keyword{changepoint,}
