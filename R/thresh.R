@@ -13,6 +13,8 @@
 #' @param calibratePheno An optional vector of column names to calibrate the phenotypes by.
 #' This should generally correspond to those used in `cal` if the ASV table has been calibrated or
 #' just represent confounders that you wish to remove effects from in the changepoint regression.
+#' @param p.adjust.method A method to adjust for multiple testing, defaults to "none". Available options
+#' are shown with \code{stats::p.adjust.methods}.
 #' \code{lm} is used to get residuals of the phenotype after these effects are regressed out.
 #'
 #' @keywords changepoint, threshold, regression, phenotype
@@ -27,7 +29,8 @@
 #' @export
 
 thresh <- function(asvTab, phenoCols, asvCols = NULL, model = "hinge",
-                   cores = getOption("mc.cores", 1), calibratePheno = NULL) {
+                   cores = getOption("mc.cores", 1), calibratePheno = NULL,
+                   p.adjust.method = "none") {
   if (is.null(asvCols)) {
     asvCols <- colnames(asvTab)[grepl("ASV", colnames(asvTab))]
   }
@@ -72,11 +75,19 @@ thresh <- function(asvTab, phenoCols, asvCols = NULL, model = "hinge",
   #* `Parse output into thresh object`
   names(threshOut) <- asvCols
   thresh <- Reduce(.merge_proto_thresh, threshOut)
+  #* p-value adjustment
+  pvals <- unlist(lapply(thresh$slope, function(x) x$pval))
+  adj_pvals <- p.adjust(pvals, method = p.adjust.method)
+  for (i in seq_along(adj_pvals)) {
+    thresh$slope[[i]]$padj <- adj_pvals[i]
+  }
+  #* assign other thresh slots
   thresh[["predictor"]] <- asvCols
   thresh[["data"]] <- asvTab[, c(phenoCols, asvCols)] # also stored in model$best.fit$data
   thresh[["type"]] <- "chngptm"
-  thresh[["units"]] <- "individual"
-  thresh[["control"]] <- list("call" = match.call())
+  thresh[["unit"]] <- "individual"
+  thresh[["control"]] <- list("call" = match.call(),
+                              "p.adjust.method" = p.adjust.method)
   thresh <- as.thresh(thresh)
   return(thresh)
 }

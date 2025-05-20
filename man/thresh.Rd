@@ -11,7 +11,8 @@ thresh(
   asvCols = NULL,
   model = "hinge",
   cores = getOption("mc.cores", 1),
-  calibratePheno = NULL
+  calibratePheno = NULL,
+  p.adjust.method = "none"
 )
 }
 \arguments{
@@ -30,7 +31,10 @@ upperhinge, and segmented are supported. See Figure 2.1 of the chngpt
 
 \item{calibratePheno}{An optional vector of column names to calibrate the phenotypes by.
 This should generally correspond to those used in `cal` if the ASV table has been calibrated or
-just represent confounders that you wish to remove effects from in the changepoint regression.
+just represent confounders that you wish to remove effects from in the changepoint regression.}
+
+\item{p.adjust.method}{A method to adjust for multiple testing, defaults to "none". Available options
+are shown with \code{stats::p.adjust.methods}.
 \code{lm} is used to get residuals of the phenotype after these effects are regressed out.}
 }
 \value{
