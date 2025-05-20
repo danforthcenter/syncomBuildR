@@ -17,7 +17,7 @@
 #'
 #' @keywords changepoint, threshold, regression, phenotype
 #' @import chngpt
-#' @return A dataframe summarizing changepoint models for individual ASVs vs phenotypes.
+#' @return A \code{thresh} object.
 #'
 #' @examples
 #'
@@ -38,8 +38,8 @@ thresh <- function(asvTab, phenoCols, asvCols = NULL, model = "hinge",
                                           data = asvTab, na.action = na.exclude))
     }
   }
-  threshOut <- do.call(rbind, parallel::mclapply(asvCols, function(asv_col) {
-    thresh_df <- do.call(rbind, lapply(phenoCols, function(phenotype) {
+  threshOut <- parallel::mclapply(asvCols, function(asv_col) {
+    thresh_pheno <- lapply(phenoCols, function(phenotype) {
       if (model == "hinge" | model == "M01") {
         model <- "hinge"
         f1 <- as.formula(paste0(phenotype, "~1"))
@@ -60,24 +60,86 @@ thresh <- function(asvTab, phenoCols, asvCols = NULL, model = "hinge",
             formula.1 = f1, formula.2 = f2, data = sub, type = model,
             family = "gaussian", est.method = "fastgrid", var.type = "bootstrap", save.boot = TRUE
           )
-          out <- data.frame(coef(summary(fit)))
-          out$Source <- rownames(out)
-          rownames(out) <- NULL
-          out$changePoint <- as.numeric(fit$chngpt)
-          out$asv <- asv_col
-          out$phenotype <- phenotype
-          out$model <- model
-          out$model_id <- paste(asv_col, phenotype, model, sep = "_")
-          if (!is.null(calibratePheno)) {
-            out$calibratePheno <- formString
-          }
-          out
+          return(fit)
         },
-        warning = function(war) {},
         error = function(err) {}
       )
-    }))
-    thresh_df
-  }, mc.cores = cores))
-  return(threshOut)
+    })
+    unpacked_pheno <- .unpack_chngptm_proto_thresh(thresh_pheno, names = phenoCols)
+    unpacked_pheno$model <- thresh_pheno
+    return(unpacked_pheno)
+  }, mc.cores = cores)
+  #* `Parse output into thresh object`
+  names(threshOut) <- asvCols
+  thresh <- Reduce(.merge_proto_thresh, threshOut)
+  thresh[["predictor"]] <- asvCols
+  thresh[["data"]] <- asvTab[, c(phenoCols, asvCols)] # also stored in model$best.fit$data
+  thresh[["type"]] <- "chngptm"
+  thresh[["units"]] <- "individual"
+  thresh[["control"]] <- list("call" = match.call())
+  thresh <- as.thresh(thresh)
+  return(thresh)
 }
+
+#' Function to unpack list returned by main loop of chngptm model fitting.
+#' 
+#' Should take a list of models and return a list of components of those models.
+#' 
+#' @param proto_thresh a list of chngptm models
+#' @param names a vector of names for the models (the phenotypes they were fit to, `phenoCols`)
+#'
+#' @return a list of components from the models, simplified for downstream use and for standardization
+#' between eventual backends.
+#' @keywords internal
+#' @noRd
+
+.unpack_chngptm_proto_thresh <- function(proto_thresh, names) {
+  intercepts <- lapply(proto_thresh, function(pt) {
+    coef(summary(pt))[1, 1]
+  })
+  changepoints <- lapply(proto_thresh, function(pt) {
+    as.numeric(pt$chngpt)
+  })
+  slopes <- lapply(proto_thresh, function(pt) {
+    coefs <- coef(summary(pt))
+    list("est" = coefs[2, 1],
+         "pval" = coefs[2, 5]
+         )
+  })
+  #* data, predictor, type, etc will be set outside of this function,
+  #* this is just to turn the list from being indexed on phenotypes to being
+  #* indexed on ASV
+  out <- list(
+    intercept = intercepts,
+    changepoint = changepoints,
+    slope = slopes,
+    phenotype = names
+  )
+  return(out)
+}
+
+#' Function to merge lists by name
+#' 
+#' This is used to combine outputs from many ASVs (predictors) over potentially many phenotypes (outcomes)
+#' The output of this function should be a list of lists where the lists have length N_asvs
+#' 
+#' @param x element in the list (note, in practice this is used with Reduce)
+#' @param y element in the list
+#' @return A list of lists where each element in the list has 1 object per predictor (ASV).
+#' @keywords internal
+#' @noRd
+
+.merge_proto_thresh <- function(x, y) {
+  if (is.null(names(x)) | is.null(names(y))) {
+    return(c(x, y)) # if we're at the bottom level of the hierarchy, return the values
+  }
+  keys <- union(names(x), names(y)) # if we are not at the bottom level of the hierarchy then grab
+  # the shared names and apply the x/y objects again with only the shared names. Recurse until at
+  # bottom of hierarchy.
+  out <- sapply(keys, function(k) {
+    .merge_proto_thresh(x[[k]], y[[k]])
+    }, simplify = F)
+  return(out)
+}
+
+

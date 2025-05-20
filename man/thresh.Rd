@@ -34,7 +34,7 @@ just represent confounders that you wish to remove effects from in the changepoi
 \code{lm} is used to get residuals of the phenotype after these effects are regressed out.}
 }
 \value{
-A dataframe summarizing changepoint models for individual ASVs vs phenotypes.
+A \code{thresh} object.
 }
 \description{
 Function to run changepoint models of individual microbes vs phenotypes or
