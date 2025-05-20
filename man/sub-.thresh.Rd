@@ -45,5 +45,4 @@ asv$biomass_z <- rnorm(nrow(asv))
 tm <- thresh(asv, "biomass_z")
 tm["predictor"] # pulls list
 tm[1:2] # subsets lists to make a smaller thresh object
-
 }

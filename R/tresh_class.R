@@ -106,10 +106,10 @@ summary.thresh <- function(object, ...) {
 #' tm <- thresh(asv, "biomass_z")
 #' tm["predictor"] # pulls list
 #' tm[1:2] # subsets lists to make a smaller thresh object
-#'
+#' @method [ thresh
 #' @export
 
-`[.thresh` <- function(x, i) {
+"[.thresh" <- function(x, i) {
   if (!is.logical(i) && !is.numeric(i)) {
     return(NextMethod())
   }
