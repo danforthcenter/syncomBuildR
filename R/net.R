@@ -41,6 +41,7 @@
 asvNet <- function(df, metadata = NULL, edge = "spearman_similarity", thresh = NULL,
                    metadata_join = "asv", thresh_join = "asv") {
   if (is.data.frame(df)) {
+    # Revisit? The goal here is to drop some duplicated metadata that had different counts I guess?
     i <- unlist(lapply(seq_len(nrow(df)), function(i) {
       paste0(sort(as.character(df[i, 1:3])), collapse = ".")
     }))
