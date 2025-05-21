@@ -2,8 +2,7 @@
 % Please edit documentation in R/thresh.R
 \name{thresh}
 \alias{thresh}
-\alias{thresh.sbcnet}
-\alias{thresh.data.frame}
+\alias{thresh.scbnet}
 \title{Function to run changepoint models of individual microbes vs phenotypes or
 communities/clusters vs phenotypes.}
 \usage{
@@ -14,27 +13,19 @@ thresh(
   model = "hinge",
   cores = getOption("mc.cores", 1),
   calibratePheno = NULL,
-  p.adjust.method = "none"
+  p.adjust.method = "none",
+  ...
 )
 
-\method{thresh}{sbcnet}(
+\method{thresh}{scbnet}(
   x,
   phenoCols,
   predCols = NULL,
   model = "hinge",
   cores = getOption("mc.cores", 1),
   calibratePheno = NULL,
-  p.adjust.method = "none"
-)
-
-\method{thresh}{data.frame}(
-  x,
-  phenoCols,
-  predCols = NULL,
-  model = "hinge",
-  cores = getOption("mc.cores", 1),
-  calibratePheno = NULL,
-  p.adjust.method = "none"
+  p.adjust.method = "none",
+  asvTab = NULL
 )
 }
 \arguments{
@@ -53,11 +44,15 @@ upperhinge, and segmented are supported. See Figure 2.1 of the chngpt
 
 \item{calibratePheno}{An optional vector of column names to calibrate the phenotypes by.
 This should generally correspond to those used in `cal` if the ASV table has been calibrated or
-just represent confounders that you wish to remove effects from in the changepoint regression.}
+just represent confounders that you wish to remove effects from in the changepoint regression.
+\code{lm} is used to get residuals of the phenotype after these effects are regressed out.}
 
 \item{p.adjust.method}{A method to adjust for multiple testing, defaults to "none". Available options
-are shown with \code{stats::p.adjust.methods}.
-\code{lm} is used to get residuals of the phenotype after these effects are regressed out.}
+are shown with \code{stats::p.adjust.methods}.}
+
+\item{...}{Additional arguments passed to methods.}
+
+\item{asvTab}{An ASV table used in making the \code{scbnet} object.}
 }
 \value{
 A \code{thresh} object.
@@ -85,19 +80,23 @@ taxa_df$asv <- rownames(taxa_df)
 sp_dist <- asvDist(asv, method = "spearman", clr_transform = TRUE, edgeFilter = 0.5)
 net_data <- asvNet(sp_dist, taxa_df, edge = "spearman_similarity")
 net_data <- netClust(net = net_data, "components")
+net_data <- netClust(net = net_data, pullNode(net_data, node = "ASV10",
+edge = "spearman_similarity", edgeFilter = 0.7, nodeCol = "asv"))
+net_data <- netClust(net = net_data, pullNode(net_data, node = "ASV1",
+edge = "spearman_similarity", edgeFilter = 0.7, nodeCol = "asv"))
 asv$biomass_z <- rnorm(nrow(asv))
-
+tn <- thresh(net_data, phenoCols = "biomass_z", asvTab = asv)
 
 
 # ARGS
 x <- net_data
-phenoCols = NULL
+phenoCols = "biomass_z"
 predCols = NULL
 model = "hinge"
 cores = getOption("mc.cores", 1)
 calibratePheno = NULL
 p.adjust.method = "none"
-
+asvTab = asv
 }
 \keyword{changepoint,}
 \keyword{phenotype}

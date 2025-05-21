@@ -13,9 +13,10 @@
 #' @param calibratePheno An optional vector of column names to calibrate the phenotypes by.
 #' This should generally correspond to those used in `cal` if the ASV table has been calibrated or
 #' just represent confounders that you wish to remove effects from in the changepoint regression.
+#' \code{lm} is used to get residuals of the phenotype after these effects are regressed out.
 #' @param p.adjust.method A method to adjust for multiple testing, defaults to "none". Available options
 #' are shown with \code{stats::p.adjust.methods}.
-#' \code{lm} is used to get residuals of the phenotype after these effects are regressed out.
+#' @param ... Additional arguments passed to methods.
 #'
 #' @keywords changepoint, threshold, regression, phenotype
 #' @import chngpt
@@ -31,11 +32,12 @@
 
 thresh <- function(x, phenoCols, predCols = NULL, model = "hinge",
                    cores = getOption("mc.cores", 1), calibratePheno = NULL,
-                   p.adjust.method = "none") {
+                   p.adjust.method = "none", ...) {
   UseMethod("thresh")
 }
 
 #' @rdname thresh
+#' @param asvTab An ASV table used in making the \code{scbnet} object.
 #' @examples
 #' taxa <- c(
 #'   "Bacteria", "Proteobacteria", "Betaproteobacteria", "Burkholderiales",
@@ -50,61 +52,58 @@ thresh <- function(x, phenoCols, predCols = NULL, model = "hinge",
 #' sp_dist <- asvDist(asv, method = "spearman", clr_transform = TRUE, edgeFilter = 0.5)
 #' net_data <- asvNet(sp_dist, taxa_df, edge = "spearman_similarity")
 #' net_data <- netClust(net = net_data, "components")
+#' net_data <- netClust(net = net_data, pullNode(net_data, node = "ASV10",
+#' edge = "spearman_similarity", edgeFilter = 0.7, nodeCol = "asv"))
+#' net_data <- netClust(net = net_data, pullNode(net_data, node = "ASV1",
+#' edge = "spearman_similarity", edgeFilter = 0.7, nodeCol = "asv"))
 #' asv$biomass_z <- rnorm(nrow(asv))
-#' 
+#' tn <- thresh(net_data, phenoCols = "biomass_z", asvTab = asv)
 #' 
 #' 
 #' # ARGS
 #' x <- net_data
-#' phenoCols = NULL
+#' phenoCols = "biomass_z"
 #' predCols = NULL
 #' model = "hinge"
 #' cores = getOption("mc.cores", 1)
 #' calibratePheno = NULL
 #' p.adjust.method = "none"
-#' 
+#' asvTab = asv
+#' @method thresh scbnet
 #' @export
-thresh.sbcnet <- function(x, phenoCols, predCols = NULL, model = "hinge",
+thresh.scbnet <- function(x, phenoCols, predCols = NULL, model = "hinge",
                           cores = getOption("mc.cores", 1), calibratePheno = NULL,
-                          p.adjust.method = "none") {
-  #* here predCols needs to do something to find a default if it isn't given
-  #* I am thinking that the default is the thresh on all columns of x$nodes that
-  #* contains the string "cluster"?
-  #* 
-  #* What all needs to happen:
-  #* Need to find the cluster columns that I want to group then use
-  #* Need to find the members of each cluster, group those in the ASV data, and sum them per sample
-  #* Need to run thresh model on that summed data
-  #* Need to return thresh object.
+                          p.adjust.method = "none", asvTab = NULL) {
   nodes <- x[["nodes"]]
   if (is.null(predCols)) {
     predCols <- colnames(nodes)[grepl("cluster", colnames(nodes), ignore.case = TRUE)]
   }
-  if (is.null(cluster)) {
-    cluster <- unique(nodes[[clusterCol]])
-  }
-  if (is.null(asvCols)) {
-    asvCols <- "ASV"
-  }
-  if (length(asvCols) == 1) {
-    asvCols <- colnames(asvTab)[grepl(asvCols, colnames(asvTab))]
-  }
-  if (is.null(clusterCol)) {
-    clusterCol <- colnames(nodes)[grepl("cluster", colnames(nodes))][1]
-  }
-  #* `take nodes in a given cluster and aggregate a count in the asv table`
-  clust_ag <- do.call(cbind, lapply(cluster, function(clust) {
-    asvs_in_cluster <- nodes[nodes[[clusterCol]] == clust, "asv"]
-    setNames(
-      data.frame(
-        rowSums(
-          as.data.frame(asvTab[, c(asvs_in_cluster)])
-        )
-      ), c(paste0("cluster_", clust))
-    )
-  }))
-  clusterColumns <- colnames(clust_ag)
-  clust_ag <- cbind(asvTab[, -which(colnames(asvTab) %in% asvCols)], clust_ag)
+  #* Need to find the members of each cluster, group those in the ASV data, and sum them per sample
+  #* `Make aggregated count table`
+  # for every pred_col in predCols (cluster columns)
+  clust_ag_list <- lapply(predCols, function(pred_col) {
+    # get all the levels of it, and for each cluster (level)
+    col_df <- do.call(cbind, lapply(unique(nodes[[pred_col]]), function(clust) {
+      # find the ASVs in that cluster
+      asvs_in_cluster <- nodes[nodes[[pred_col]] == clust, "asv"]
+      # make a column of those ASVs summed across samples, name it, and return it to be cbound
+      setNames(
+        data.frame(
+          rowSums(
+            as.data.frame(asvTab[, c(asvs_in_cluster)])
+          )
+        ), c(paste0(pred_col, "_", clust))
+      )
+    }))
+    return(col_df)
+  })
+  # bind all into data.frame
+  clust_ag <- do.call(cbind, clust_ag_list)
+  # store names for use later
+  clusterColumns <- lapply(clust_ag_list, colnames)
+  names(clusterColumns) <- predCols
+  # add metadata/phenotype data from asvTab
+  clust_ag <- cbind(asvTab[, !grepl("ASV", colnames(asvTab))], clust_ag)
   #* `calibrate phenotype by calibratePheno`
   if (!is.null(calibratePheno)) {
     for (phenotype in phenoCols) {
@@ -113,52 +112,69 @@ thresh.sbcnet <- function(x, phenoCols, predCols = NULL, model = "hinge",
                                             data = clust_ag, na.action = na.exclude))
     }
   }
-  netThreshOut <- do.call(rbind, parallel::mclapply(clusterColumns, function(col) {
-    thresh_df <- do.call(rbind, lapply(phenoCols, function(phenotype) {
-      if (model == "hinge" | model == "M01") {
-        model <- "hinge"
-        f1 <- as.formula(paste0(phenotype, "~1"))
-        f2 <- as.formula(paste0("~", col))
-      } else if (model == "upperhinge" | model == "M10") {
-        model <- "upperhinge"
-        f1 <- as.formula(paste0(phenotype, "~", col))
-        f2 <- as.formula(paste0("~1"))
-      } else if (model == "segmented" | model == "M11") {
-        model <- "segmented"
-        f1 <- as.formula(paste0(phenotype, "~1"))
-        f2 <- as.formula(paste0("~", col))
-      }
-      sub <- clust_ag[, c(phenotype, col)]
-      tryCatch(
-        {
-          fit <- chngpt::chngptm(
-            formula.1 = f1, formula.2 = f2, data = sub, type = model,
-            family = "gaussian", est.method = "fastgrid", var.type = "bootstrap", save.boot = TRUE
-          )
-          out <- data.frame(coef(summary(fit)))
-          out$Source <- rownames(out)
-          rownames(out) <- NULL
-          out$changePoint <- as.numeric(fit$chngpt)
-          out$cluster <- col
-          out$phenotype <- phenotype
-          out$model <- model
-          out$clusterType <- clusterCol
-          out$model_id <- paste(clusterCol, col, phenotype, model, sep = "_")
-          if (!is.null(calibratePheno)) {
-            out$calibratePheno <- formString
-          }
-          out
-        },
-        warning = function(war) {},
-        error = function(err) {}
-      )
-    }))
-    return(thresh_df)
-  }, mc.cores = cores))
-  return(netThreshOut)
+  #* Need to run thresh model on that summed data
+  proto_thresh <- parallel::mclapply(names(clusterColumns), function(pred_col) {
+    thresh_pred_col <- lapply(clusterColumns[[pred_col]], function(clust) {
+      thresh_pheno <- lapply(phenoCols, function(phenotype) {
+        if (model == "hinge" | model == "M01") {
+          model <- "hinge"
+          f1 <- as.formula(paste0(phenotype, "~1"))
+          f2 <- as.formula(paste0("~", clust))
+        } else if (model == "upperhinge" | model == "M10") {
+          model <- "upperhinge"
+          f1 <- as.formula(paste0(phenotype, "~", clust))
+          f2 <- as.formula(paste0("~1"))
+        } else if (model == "segmented" | model == "M11") {
+          model <- "segmented"
+          f1 <- as.formula(paste0(phenotype, "~1"))
+          f2 <- as.formula(paste0("~", clust))
+        }
+        sub <- clust_ag[, c(phenotype, clust)]
+        tryCatch(
+          {
+            fit <- chngpt::chngptm(
+              formula.1 = f1, formula.2 = f2, data = sub, type = model,
+              family = "gaussian", est.method = "fastgrid", var.type = "bootstrap", save.boot = TRUE
+            )
+            return(fit)
+          },
+          error = function(err) {}
+        )
+      })
+      # unpack models of each phenotype per a cluster within a clustering scheme
+      unpacked_pheno <- .unpack_chngptm_proto_thresh(thresh_pheno, names = phenoCols)
+      unpacked_pheno$model <- thresh_pheno
+      return(unpacked_pheno)
+    })
+    thresh_pred_col
+    names(thresh_pred_col) <- clusterColumns[[pred_col]]
+    reduced_thresh_pc <- Reduce(.merge_proto_thresh, thresh_pred_col)
+  }, mc.cores = min(length(clusterColumns), cores))
+  full_proto_thresh <- Reduce(.merge_proto_thresh, proto_thresh)
+  #* p-value adjustment
+  pvals <- unlist(lapply(full_proto_thresh$slope, function(x) x$pval))
+  adj_pvals <- p.adjust(pvals, method = p.adjust.method)
+  for (i in seq_along(adj_pvals)) {
+    full_proto_thresh$slope[[i]]$padj <- adj_pvals[i]
+  }
+  #* add other slots
+  full_proto_thresh[["predictor"]] <- unname(unlist(clusterColumns))
+  full_proto_thresh[["data"]] <- clust_ag[, c(phenoCols, unname(unlist(clusterColumns)))]
+  full_proto_thresh[["type"]] <- "chngptm"
+  full_proto_thresh[["unit"]] <- "cluster"
+  full_proto_thresh[["control"]] <- list("call" = match.call(),
+                              "p.adjust.method" = p.adjust.method,
+                              "subsettable" = c(
+                                "intercept", "changepoint", "slope",
+                                "phenotype", "model", "predictor"
+                              ),
+                              "calibration" = calibratePheno
+  )
+  thresh <- as.thresh(full_proto_thresh)
+  return(thresh)
 }
 
-#' @rdname thresh
+#' @method thresh data.frame
 #' @export
 thresh.data.frame <- function(x, phenoCols, predCols = NULL, model = "hinge",
                               cores = getOption("mc.cores", 1), calibratePheno = NULL,
