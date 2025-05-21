@@ -60,9 +60,6 @@ netClust <- function(net, method = "components", ...) {
       )
     }
   } else { # pull node option
-    if (any(unlist(lapply(method, function(l) any(ggplot2::is.ggplot(l)))))) {
-      method <- method$net
-    }
     pulled_nodes <- method$nodes
     net_nodes <- net[["nodes"]]
     fills <- unique(pulled_nodes$fill)
