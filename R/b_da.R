@@ -28,7 +28,7 @@
 #'
 #' @return A brmsfit object
 #' @examples
-#' if ("brms" %in% installed.packages()) {
+#' if (all(c("brms", "BH", "cmdstanr") %in% installed.packages())) {
 #'   ex <- b_da(asv, col = "ASV1", predictors = "tissue", intercept = FALSE, chains = 1, iter = 500)
 #' }
 #' @export
