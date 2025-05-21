@@ -2,37 +2,29 @@
 % Please edit documentation in R/rankSamples.R
 \name{rankSamples}
 \alias{rankSamples}
+\alias{rankSamples.thresh}
+\alias{rankSamples.data.frame}
 \title{Function to pick samples for limited dilution/other bench science following changepoint
 regression of an ASV table or network.}
 \usage{
-rankSamples(
-  asvTab,
-  thresh,
-  network = NULL,
-  id = "sample",
-  groups = NULL,
-  phenotypes = NULL,
-  p.cutoff = 0.05
-)
+rankSamples(x, ...)
+
+\method{rankSamples}{thresh}(x, cutoff = 0.05, asvTab = NULL, ...)
+
+\method{rankSamples}{data.frame}(x, cols = NULL, ...)
 }
 \arguments{
-\item{asvTab}{An asv table as returned by \code{\link{qc}} or \code{\link{cal}}.}
+\item{x}{ASV table as a data.frame or a \code{thresh} object. For a data.frame the cols argument
+must be specified. For a \code{thresh} object all ASVs that were significantly related to a
+phenotype are used (significance determined by the cutoff argument).}
 
-\item{thresh}{Output from \code{\link{thresh}} or \code{\link{netThresh}}.}
+\item{...}{Additional arguments passed to methods.}
 
-\item{network}{Optionally a network object as returned from \code{\link{asvNet}} and clustered
-with \code{\link{netClust}}. Defaults to NULL in which case the asv table is used and thresh
-is assumed to be changepoint regressions at the asv level.}
+\item{cutoff}{P value cutoff for a thresh model being significant}
 
-\item{id}{The name of the column containing sample names, defaults to "sample".}
+\item{asvTab}{Optional asv table. If missing then the data slot of the thresh object is used.}
 
-\item{groups}{Optionally specify which ASVs/Clusters should be used. If NULL, the default,
-then significant models (p value below p.cutoff) are used to find groups.}
-
-\item{phenotypes}{Optionally specify which phenotypes should be used. If NULL, the default,
-then all in thresh are used.}
-
-\item{p.cutoff}{P value cutoff for statistical significance if groups is NULL. Defaults to 0.05.}
+\item{cols}{Columns to use in scoring. These should be some subset of ASV columns.}
 }
 \value{
 A data frame of samples ranked by the impact of their nodes (ASVs) or clusters
@@ -45,7 +37,7 @@ regression of an ASV table or network.
 
 set.seed(123)
 asv$biomass_z <- rnorm(nrow(asv))
-tm <- thresh(asv, "biomass_z")
-x <- rankSamples(asv, tm, id = "sample", p.cutoff = 0.5)
+x <- thresh(asv, "biomass_z")
+rankSamples(x, cutoff = 0.5)
 
 }

@@ -1,17 +1,10 @@
 #' Function to pick samples for limited dilution/other bench science following changepoint
 #' regression of an ASV table or network.
 #'
-#' @param asvTab An asv table as returned by \code{\link{qc}} or \code{\link{cal}}.
-#' @param thresh Output from \code{\link{thresh}} or \code{\link{netThresh}}.
-#' @param network Optionally a network object as returned from \code{\link{asvNet}} and clustered
-#' with \code{\link{netClust}}. Defaults to NULL in which case the asv table is used and thresh
-#' is assumed to be changepoint regressions at the asv level.
-#' @param id The name of the column containing sample names, defaults to "sample".
-#' @param groups Optionally specify which ASVs/Clusters should be used. If NULL, the default,
-#' then significant models (p value below p.cutoff) are used to find groups.
-#' @param phenotypes Optionally specify which phenotypes should be used. If NULL, the default,
-#' then all in thresh are used.
-#' @param p.cutoff P value cutoff for statistical significance if groups is NULL. Defaults to 0.05.
+#' @param x ASV table as a data.frame or a \code{thresh} object. For a data.frame the cols argument
+#' must be specified. For a \code{thresh} object all ASVs that were significantly related to a
+#' phenotype are used (significance determined by the cutoff argument).
+#' @param ... Additional arguments passed to methods.
 #'
 #' @return A data frame of samples ranked by the impact of their nodes (ASVs) or clusters
 #'
@@ -19,83 +12,82 @@
 #'
 #' set.seed(123)
 #' asv$biomass_z <- rnorm(nrow(asv))
-#' tm <- thresh(asv, "biomass_z")
-#' x <- rankSamples(asv, tm, id = "sample", p.cutoff = 0.5)
+#' x <- thresh(asv, "biomass_z")
+#' rankSamples(x, cutoff = 0.5)
 #'
 #' @export
 
-rankSamples <- function(asvTab, thresh, network = NULL, id = "sample", groups = NULL,
-                        phenotypes = NULL, p.cutoff = 0.05) {
-  if (!is.null(network)) {
-    network_mode <- TRUE
-  } else {
-    network_mode <- FALSE
-  }
-  if (network_mode) {
-    thresh_group <- "cluster"
-  } else {
-    thresh_group <- "asv"
-  }
+rankSamples <- function(x, ...) {
+  UseMethod("rankSamples")
+}
 
-  starting_ncol <- ncol(asvTab) + 1
+#' @rdname rankSamples
+#' @param cutoff P value cutoff for a thresh model being significant
+#' @param asvTab Optional asv table. If missing then the data slot of the thresh object is used.
+#' @method rankSamples thresh
+#' @export
+
+rankSamples.thresh <- function(x, cutoff = 0.05, asvTab = NULL, ...) {
+  if (is.null(asvTab)) {
+    asvTab <- x$data
+  }
   if (is.null(phenotypes)) {
-    phenotypes <- unique(thresh$phenotype)
+    phenotypes <- unique(x$phenotype)
   }
-
-  if ("calibratePheno" %in% colnames(thresh)) {
-    cal <- unlist(lapply(unique(thresh$calibratePheno), function(s) {
-      as.character(as.formula(s))[3]
-    }))
-  } else {
-    cal <- NULL
+  #* find significant pvalues from thresh
+  sig_pvals <- which(unlist(lapply(x$slope, function(x) x$padj)) < cutoff)
+  if (length(sig_pvals) < 1) {
+    stop("No models had p-values below p.cutoff")
   }
-
-  if (!is.null(cal)) {
-    asvTab[, phenotypes] <- lapply(phenotypes, function(pheno) {
-      residuals(lm(as.formula(thresh[thresh$phenotype == pheno, "calibratePheno"][1]), data = asvTab))
-    })
-  }
-  if (is.null(groups)) {
-    groups <- thresh[
-      thresh$phenotype %in% phenotypes &
-        thresh$Source != "(Intercept)" &
-        thresh$p.value < p.cutoff,
-      thresh_group
-    ]
-    if (length(groups) < 1) {
-      message("No models had p-values below p.cutoff")
-      return(NULL)
-    }
-  }
-  if (network_mode) {
-    clusterCol <- thresh$clusterType[1]
-    nodes <- network$nodes
-    asvTab[, paste0(groups, "_sum")] <- lapply(unique(sub("cluster_", "", groups)), function(clust) {
-      asvs_in_clust <- nodes[nodes[[clusterCol]] == clust, "asv"]
-      rowSums(as.matrix(asvTab[, asvs_in_clust]))
-    })
-    asvTab[, paste0(groups, "_rank")] <- lapply(unique(paste0(groups, "_sum")), function(clust) {
-      -1 * (rank(asvTab[[clust]]) - nrow(asvTab) - 1)
-    })
-  }
-  asvTab[, paste0(phenotypes, "_rank")] <- lapply(phenotypes, function(pheno) {
-    -1 * (rank(asvTab[[pheno]]) - nrow(asvTab) - 1)
+  #* pull which ASVs those are from
+  sig_asvs <- x$predictor[sig_pvals]
+  #* see how many times each ASV appears (make weights)
+  tab <- as.data.frame(table(sig_asvs))
+  colnames(tab)[1] <- "asv"
+  #* sum weighted counts per each row of ASV data
+  scored <- do.call(rbind, lapply(seq_len(nrow(asvTab)), function(i) {
+    .rank_samples_summing(asvTab[i, ], tab_df = tab)
   })
+  )
+  #* arrange by score
+  ranked <- scored[order(scored$score, decreasing = TRUE), ]
+  ranked$rank <- seq_len(nrow(ranked))
+  return(ranked)
+}
 
-  asvTab$mean_pheno_rank <- rowMeans(as.matrix(asvTab[, paste0(phenotypes, "_rank")]))
-  if (network_mode) {
-    out <- cbind(setNames(data.frame(asvTab[[id]]), id), asvTab[, starting_ncol:ncol(asvTab)])
-    out$mean_rank <- rowMeans(out[, c(paste0(groups, "_rank"), "mean_pheno_rank")])
-  } else {
-    out <- cbind(
-      setNames(data.frame(asvTab[[id]], asvTab[, groups]), c(id, groups)),
-      asvTab[, starting_ncol:ncol(asvTab)]
-    )
-    out$mean_rank <- rowMeans(
-      as.data.frame(out[, c(groups, "mean_pheno_rank")])
-    )
-  }
-  out <- out[sort(out$mean_rank, decreasing = FALSE, index.return = TRUE)$ix, ]
-  out$overall_rank <- seq_len(nrow(out))
+#' @rdname rankSamples
+#' @param cols Columns to use in scoring. These should be some subset of ASV columns.
+#' @method rankSamples data.frame
+#' @export
+
+rankSamples.data.frame <- function(x, cols = NULL, ...) {
+  tab <- as.data.frame(table(cols))
+  colnames(tab)[1] <- "asv"
+  #* sum weighted counts per each row of ASV data
+  scored <- do.call(rbind, lapply(seq_len(nrow(x)), function(i) {
+    .rank_samples_summing(x[i, ], tab_df = tab)
+  })
+  )
+  #* arrange by score
+  ranked <- scored[order(scored$score, decreasing = TRUE), ]
+  ranked$rank <- seq_len(nrow(ranked))
+  return(ranked)
+}
+
+#' Helper function for scoring samples
+#' @param r a row of an asv table
+#' @param tab_df a data.frame made from a table of ASV labels with columns "asv" and "Freq"
+#' @noRd
+#' @keywords internal
+.rank_samples_summing <- function(r, tab_df) {
+  r2 <- r[, grepl("ASV", colnames(r))]
+  rt <- as.data.frame(t(r2))
+  colnames(rt) <- "count"
+  rt$asv <- rownames(rt)
+  j <- plyr::join(tab_df, rt, by = "asv")
+  j$score <- j$Freq * j$count
+  score <- sum(j$score)
+  r$score <- score
+  out <- r[, !grepl("ASV", colnames(r))]
   return(out)
 }
