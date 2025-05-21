@@ -6,11 +6,8 @@
 #' @param asv The asv table used in making \code{thresh} object.
 #' @param predictors A vector of ASV column names. Defaults to NULL in which case all columns containing
 #' "ASV" are used and a list of ggplots is returned.
-#' @param phenotype A vector of phenotype names in \code{thresh}. Defaults to NULL where all phenotypes
+#' @param outcomes A vector of phenotype names in \code{thresh}. Defaults to NULL where all phenotypes
 #' are used and a list of plots is returned per ASV.
-#' @param unit The unit or scale of the changepoint models. This defaults to "asv" for use with thresh
-#' and "cluster" should be used with netThresh output.
-#' @param net The asvNet object if netThresh output is being plotted.
 #' @param ... further arguments, ignored.
 #' @import ggplot2
 #' @import patchwork
@@ -24,34 +21,11 @@
 #' @method plot thresh
 #' @export
 
-plot.thresh <- function(x,
-                        # asv,
-                        predictors = NULL, outcomes = NULL,
-                        # unit = "asv",
-                        net = NULL) {
-  
+plot.thresh <- function(x, predictors = NULL, outcomes = NULL, ...) {
   if (is.null(predictors)) {
-    predictors <- unique(tm$predictor)
+    predictors <- unique(x$predictor)
   }
   x <- x[x$predictor %in% predictors]
-
-  if (!is.null(net)) { #* not making any effort to adapt the network side yet, thinking that will
-    #* be split into another helper? Maybe it'll still just depend on if net is NULL, maybe adapting
-    #* netThresh will make it more obvious.
-    
-    # calculate a summarized ASV table by clusters
-    nodes <- net[["nodes"]]
-    clusterCol <- x$clusterType[1]
-    clusters <- unique(nodes[[clusterCol]])
-    clust_ag <- do.call(cbind, lapply(clusters, function(clust) {
-      asvs_in_cluster <- nodes[nodes[[clusterCol]] == clust, "asv"]
-      setNames(
-        data.frame(rowSums(as.data.frame(asv[, c(asvs_in_cluster)]))),
-        c(paste0("cluster_", clust))
-      )
-    }))
-    asv <- cbind(asv[, -which(grepl("ASV", colnames(asv)))], clust_ag)
-  }
   outcomes_iter <- outcomes
   d <- x$data
   outList <- lapply(predictors, function(microbe) {
