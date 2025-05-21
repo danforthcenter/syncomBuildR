@@ -77,28 +77,34 @@ summary.thresh <- function(object, ...) {
       )
     )
   )
-  cat("\n\n")
-  if (length(object$intercept) > 1) {
-    sum_mat <- cbind(
-      sapply(
-        object[c("intercept", "changepoint")],
-        function(x) {
-          summary(unlist(x))
-        }
-      ),
-      summary(unlist(lapply(object$slope, function(x) {
-        x$est
-      }))),
-      summary(unlist(lapply(object$slope, function(x) {
-        x$padj
-      })))
-    )
-    colnames(sum_mat)[3:4] <- c("slope", "pval")
-    print(sum_mat)
-  } else {
-    sum_mat <- object
+  n_phenos <- length(unique(object$phenotype))
+  phenos <- utils::head(unique(object$phenotype), 2)
+  for (p in phenos) {
+    cat(paste0("\n\n", p, "\n"))
+    sub <- object[object$phenotype == p]
+    if (length(sub$intercept) > 1) {
+      sum_mat <- cbind(
+        sapply(
+          sub[c("intercept", "changepoint")],
+          function(x) {
+            summary(unlist(x))
+          }
+        ),
+        summary(unlist(lapply(sub$slope, function(x) {
+          x$est
+        }))),
+        summary(unlist(lapply(sub$slope, function(x) {
+          x$padj
+        })))
+      )
+      colnames(sum_mat)[3:4] <- c("slope", "pval")
+      print(sum_mat)
+    }
   }
-  return(invisible(sum_mat))
+  if (n_phenos > 2) {
+    cat("\n...")
+  }
+  return(invisible(object))
 }
 
 #' Bracket subsetting for thresh objects
