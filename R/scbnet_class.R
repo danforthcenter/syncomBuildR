@@ -57,11 +57,11 @@ summary.scbnet <- function(object, ...) {
     )
   )
   #* `Get information from nodes`
-  node_names <- sort(as.numeric(gsub("[a-zA-Z]*", "", object$nodes$name)), index.return = TRUE)
+  node_names <- sort(as.numeric(gsub("[a-zA-Z]*", "", object$nodes$asv)), index.return = TRUE)
   if (any(nchar(node_names$x) < 1) || any(duplicated(node_names$x))) {
     node_names <- sort(object$nodes$name)
   } else {
-    node_names <- object$nodes$name[node_names$ix]
+    node_names <- object$nodes$asv[node_names$ix]
   }
   cat(
     paste0(
