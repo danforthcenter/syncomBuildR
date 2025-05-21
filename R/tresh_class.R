@@ -60,35 +60,43 @@ print.thresh <- function(x, ...) {
 summary.thresh <- function(object, ...) {
   #* `Main Points`
   has_adj <- is.null(object$control$p.adjust.method) || object$control$p.adjust.method == "none"
-  N_significant <- sum(
-    unlist(lapply(object$slope, function(s) {s$padj < 0.05}))
+  n_significant <- sum(
+    unlist(lapply(object$slope, function(s) {
+      s$padj < 0.05
+    }))
   )
-  N_insignificant <- length(object$slope) - N_significant
   cat(
-    paste0("Thresh fit with ", object$type, " to ", object$unit, "s\n",
-           "\tIncludes ", length(unique(object$predictor)), " predictors over ",
-           length(unique(object$phenotype)), " phenotypes using ", nrow(object$data), " observations\n",
-           "\t", N_significant, " significant slopes",
-           ifelse(has_adj,
-                  "",
-                  paste0(" (", object$control$p.adjust.method, " adjusted)")
-           )
-           )
+    paste0(
+      "Thresh fit with ", object$type, " to ", object$unit, "s\n",
+      "\tIncludes ", length(unique(object$predictor)), " predictors over ",
+      length(unique(object$phenotype)), " phenotypes using ", nrow(object$data), " observations\n",
+      "\t", n_significant, " significant slopes",
+      ifelse(has_adj,
+        "",
+        paste0(" (", object$control$p.adjust.method, " adjusted)")
+      )
+    )
   )
   cat("\n\n")
   if (length(object$intercept) > 1) {
     sum_mat <- cbind(
-      sapply(object[c("intercept", "changepoint")],
-             function(x) {
-               summary(unlist(x))
-             }),
-      summary(unlist(lapply(object$slope, function(x) {x$est}))),
-      summary(unlist(lapply(object$slope, function(x) {x$padj})))
+      sapply(
+        object[c("intercept", "changepoint")],
+        function(x) {
+          summary(unlist(x))
+        }
+      ),
+      summary(unlist(lapply(object$slope, function(x) {
+        x$est
+      }))),
+      summary(unlist(lapply(object$slope, function(x) {
+        x$padj
+      })))
     )
     colnames(sum_mat)[3:4] <- c("slope", "pval")
     print(sum_mat)
   } else {
-    sum_mat <- x
+    sum_mat <- object
   }
   return(invisible(sum_mat))
 }
@@ -116,7 +124,7 @@ summary.thresh <- function(object, ...) {
   # apply subsetting to subsettable slots
   x[x$control$subsettable] <- lapply(x[x$control$subsettable], function(j) {
     j[i]
-    })
+  })
   # other slots don't change
   return(x)
 }
