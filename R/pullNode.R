@@ -35,7 +35,7 @@
 #' net_data <- asvNet(sp_dist, taxa_df, edge = "spearman_similarity")
 #'
 #' sub_net <- pullNode(net_data, node = "ASV10",
-#' edge = "spearman_similarity", edgeFilter = 0.7, plot = TRUE, nodeCol = "asv")
+#' edge = "spearman_similarity", edgeFilter = 0.7, nodeCol = "asv")
 #'
 #' @export
 
@@ -74,6 +74,13 @@ pullNode <- function(net, node, edge = NULL, edgeFilter = NULL,
     nodes[nodes[[nodeCol]] %in% c(edges_sub$to, edges_sub$from), ]
   )
   nodes_sub <- nodes_sub[!duplicated(nodes_sub), ]
+  if (keepNames) {
+    nodes_sub$fill <- nodes_sub[[nodeCol]]
+  } else {
+    nodes_sub$fill <- ifelse(nodes_sub[[nodeCol]] %in% node,
+                             paste0(node, collapse = ", "), "other"
+    )
+  }
   #* subset igraph object
   g <- net$graph
   gs <- igraph::induced_subgraph(g, vids = which(names(igraph::V(g)) %in% nodes_sub[[nodeCol]]))
@@ -86,13 +93,6 @@ pullNode <- function(net, node, edge = NULL, edgeFilter = NULL,
       facet <- "netNumber"
     } else {
       facet <- NULL
-    }
-    if (keepNames) {
-      nodes_sub$fill <- nodes_sub[[nodeCol]]
-    } else {
-      nodes_sub$fill <- ifelse(nodes_sub[[nodeCol]] %in% node,
-        paste0(node, collapse = ", "), "other"
-      )
     }
     p <- plot.scbnet(list("nodes" = nodes_sub, "edges" = edges_sub),
       fill = "fill", size = 3, edgeWeight = edge,
