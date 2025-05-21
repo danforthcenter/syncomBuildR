@@ -25,7 +25,8 @@ thresh(
   cores = getOption("mc.cores", 1),
   calibratePheno = NULL,
   p.adjust.method = "none",
-  asvTab = NULL
+  asvTab = NULL,
+  ...
 )
 }
 \arguments{
@@ -80,10 +81,14 @@ taxa_df$asv <- rownames(taxa_df)
 sp_dist <- asvDist(asv, method = "spearman", clr_transform = TRUE, edgeFilter = 0.5)
 net_data <- asvNet(sp_dist, taxa_df, edge = "spearman_similarity")
 net_data <- netClust(net = net_data, "components")
-net_data <- netClust(net = net_data, pullNode(net_data, node = "ASV10",
-edge = "spearman_similarity", edgeFilter = 0.7, nodeCol = "asv"))
-net_data <- netClust(net = net_data, pullNode(net_data, node = "ASV1",
-edge = "spearman_similarity", edgeFilter = 0.7, nodeCol = "asv"))
+net_data <- netClust(net = net_data, pullNode(net_data,
+  node = "ASV10",
+  edge = "spearman_similarity", edgeFilter = 0.7, nodeCol = "asv"
+))
+net_data <- netClust(net = net_data, pullNode(net_data,
+  node = "ASV1",
+  edge = "spearman_similarity", edgeFilter = 0.7, nodeCol = "asv"
+))
 asv$biomass_z <- rnorm(nrow(asv))
 tn <- thresh(net_data, phenoCols = "biomass_z", asvTab = asv)
 

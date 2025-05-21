@@ -70,18 +70,15 @@ summary.scbnet <- function(object, ...) {
   )
   #* `Get information from edges`
   cat("Edges:\n")
-  summary(object$edges[ , -which(
+  summary(object$edges[, -which(
     colnames(object$edges) %in% c("from", "to", "to.x", "to.y", "from.x", "from.y")
-    )]
-    )
+  )])
   #* `Check for control information`
   #* Not sure if this will always exist or if it's something that I'll only make in response to certain
-  #* things. Thinking that this holds stuff like where the graph came from and what has happened upstream?
+  #* things.
+  #* Thinking that this holds stuff like where the graph came from and what has happened upstream?
   #* If there is control information then this will loop over it and do some quick summary?
   #*
   #* For now this is pending
   return(invisible(object))
 }
-
-
-

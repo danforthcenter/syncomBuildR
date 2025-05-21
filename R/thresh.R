@@ -52,14 +52,18 @@ thresh <- function(x, phenoCols, predCols = NULL, model = "hinge",
 #' sp_dist <- asvDist(asv, method = "spearman", clr_transform = TRUE, edgeFilter = 0.5)
 #' net_data <- asvNet(sp_dist, taxa_df, edge = "spearman_similarity")
 #' net_data <- netClust(net = net_data, "components")
-#' net_data <- netClust(net = net_data, pullNode(net_data, node = "ASV10",
-#' edge = "spearman_similarity", edgeFilter = 0.7, nodeCol = "asv"))
-#' net_data <- netClust(net = net_data, pullNode(net_data, node = "ASV1",
-#' edge = "spearman_similarity", edgeFilter = 0.7, nodeCol = "asv"))
+#' net_data <- netClust(net = net_data, pullNode(net_data,
+#'   node = "ASV10",
+#'   edge = "spearman_similarity", edgeFilter = 0.7, nodeCol = "asv"
+#' ))
+#' net_data <- netClust(net = net_data, pullNode(net_data,
+#'   node = "ASV1",
+#'   edge = "spearman_similarity", edgeFilter = 0.7, nodeCol = "asv"
+#' ))
 #' asv$biomass_z <- rnorm(nrow(asv))
 #' tn <- thresh(net_data, phenoCols = "biomass_z", asvTab = asv)
-#' 
-#' 
+#'
+#'
 #' # ARGS
 #' x <- net_data
 #' phenoCols = "biomass_z"
@@ -73,7 +77,7 @@ thresh <- function(x, phenoCols, predCols = NULL, model = "hinge",
 #' @export
 thresh.scbnet <- function(x, phenoCols, predCols = NULL, model = "hinge",
                           cores = getOption("mc.cores", 1), calibratePheno = NULL,
-                          p.adjust.method = "none", asvTab = NULL) {
+                          p.adjust.method = "none", asvTab = NULL, ...) {
   nodes <- x[["nodes"]]
   if (is.null(predCols)) {
     predCols <- colnames(nodes)[grepl("cluster", colnames(nodes), ignore.case = TRUE)]
@@ -109,7 +113,8 @@ thresh.scbnet <- function(x, phenoCols, predCols = NULL, model = "hinge",
     for (phenotype in phenoCols) {
       formString <- paste0(phenotype, "~", paste0(calibratePheno, collapse = "+"))
       clust_ag[[phenotype]] <- residuals(lm(as.formula(formString),
-                                            data = clust_ag, na.action = na.exclude))
+        data = clust_ag, na.action = na.exclude
+      ))
     }
   }
   #* Need to run thresh model on that summed data
@@ -149,6 +154,7 @@ thresh.scbnet <- function(x, phenoCols, predCols = NULL, model = "hinge",
     thresh_pred_col
     names(thresh_pred_col) <- clusterColumns[[pred_col]]
     reduced_thresh_pc <- Reduce(.merge_proto_thresh, thresh_pred_col)
+    return(reduced_thresh_pc)
   }, mc.cores = min(length(clusterColumns), cores))
   full_proto_thresh <- Reduce(.merge_proto_thresh, proto_thresh)
   #* p-value adjustment
@@ -162,13 +168,14 @@ thresh.scbnet <- function(x, phenoCols, predCols = NULL, model = "hinge",
   full_proto_thresh[["data"]] <- clust_ag[, c(phenoCols, unname(unlist(clusterColumns)))]
   full_proto_thresh[["type"]] <- "chngptm"
   full_proto_thresh[["unit"]] <- "cluster"
-  full_proto_thresh[["control"]] <- list("call" = match.call(),
-                              "p.adjust.method" = p.adjust.method,
-                              "subsettable" = c(
-                                "intercept", "changepoint", "slope",
-                                "phenotype", "model", "predictor"
-                              ),
-                              "calibration" = calibratePheno
+  full_proto_thresh[["control"]] <- list(
+    "call" = match.call(),
+    "p.adjust.method" = p.adjust.method,
+    "subsettable" = c(
+      "intercept", "changepoint", "slope",
+      "phenotype", "model", "predictor"
+    ),
+    "calibration" = calibratePheno
   )
   thresh <- as.thresh(full_proto_thresh)
   return(thresh)
@@ -178,7 +185,7 @@ thresh.scbnet <- function(x, phenoCols, predCols = NULL, model = "hinge",
 #' @export
 thresh.data.frame <- function(x, phenoCols, predCols = NULL, model = "hinge",
                               cores = getOption("mc.cores", 1), calibratePheno = NULL,
-                              p.adjust.method = "none") {
+                              p.adjust.method = "none", ...) {
   if (is.null(predCols)) {
     predCols <- colnames(x)[grepl("ASV", colnames(x))]
   }
@@ -186,7 +193,8 @@ thresh.data.frame <- function(x, phenoCols, predCols = NULL, model = "hinge",
     for (phenotype in phenoCols) {
       formString <- paste0(phenotype, "~", paste0(calibratePheno, collapse = "+"))
       x[[phenotype]] <- residuals(lm(as.formula(formString),
-                                          data = x, na.action = na.exclude))
+        data = x, na.action = na.exclude
+      ))
     }
   }
   threshOut <- parallel::mclapply(predCols, function(pred_col) {
@@ -234,22 +242,23 @@ thresh.data.frame <- function(x, phenoCols, predCols = NULL, model = "hinge",
   thresh[["data"]] <- x[, c(phenoCols, predCols)] # also stored in model$best.fit$data
   thresh[["type"]] <- "chngptm"
   thresh[["unit"]] <- "individual"
-  thresh[["control"]] <- list("call" = match.call(),
-                              "p.adjust.method" = p.adjust.method,
-                              "subsettable" = c(
-                                "intercept", "changepoint", "slope",
-                                "phenotype", "model", "predictor"
-                              ),
-                              "calibration" = calibratePheno
+  thresh[["control"]] <- list(
+    "call" = match.call(),
+    "p.adjust.method" = p.adjust.method,
+    "subsettable" = c(
+      "intercept", "changepoint", "slope",
+      "phenotype", "model", "predictor"
+    ),
+    "calibration" = calibratePheno
   )
   thresh <- as.thresh(thresh)
   return(thresh)
 }
 
 #' Function to unpack list returned by main loop of chngptm model fitting.
-#' 
+#'
 #' Should take a list of models and return a list of components of those models.
-#' 
+#'
 #' @param proto_thresh a list of chngptm models
 #' @param names a vector of names for the models (the phenotypes they were fit to, `phenoCols`)
 #'
@@ -267,9 +276,10 @@ thresh.data.frame <- function(x, phenoCols, predCols = NULL, model = "hinge",
   })
   slopes <- lapply(proto_thresh, function(pt) {
     coefs <- coef(summary(pt))
-    list("est" = coefs[2, 1],
-         "pval" = coefs[2, 5]
-         )
+    list(
+      "est" = coefs[2, 1],
+      "pval" = coefs[2, 5]
+    )
   })
   out <- list(
     intercept = intercepts,
@@ -281,10 +291,11 @@ thresh.data.frame <- function(x, phenoCols, predCols = NULL, model = "hinge",
 }
 
 #' Function to merge lists by name
-#' 
-#' This is used to combine outputs from many ASVs (predictors) over potentially many phenotypes (outcomes)
-#' The output of this function should be a list of lists where the lists have length N_asvs
-#' 
+#'
+#' This is used to combine outputs from many ASVs (predictors) over potentially many
+#' phenotypes (outcomes). The output of this function should be a list of lists where the lists
+#' have length N_asvs
+#'
 #' @param x element in the list (note, in practice this is used with Reduce)
 #' @param y element in the list
 #' @return A list of lists where each element in the list has 1 object per predictor (ASV).
@@ -292,7 +303,7 @@ thresh.data.frame <- function(x, phenoCols, predCols = NULL, model = "hinge",
 #' @noRd
 
 .merge_proto_thresh <- function(x, y) {
-  if (is.null(names(x)) | is.null(names(y))) {
+  if (is.null(names(x)) || is.null(names(y))) {
     return(c(x, y)) # if we're at the bottom level of the hierarchy, return the values
   }
   keys <- union(names(x), names(y)) # if we are not at the bottom level of the hierarchy then grab
@@ -300,8 +311,6 @@ thresh.data.frame <- function(x, phenoCols, predCols = NULL, model = "hinge",
   # bottom of hierarchy.
   out <- sapply(keys, function(k) {
     .merge_proto_thresh(x[[k]], y[[k]])
-    }, simplify = F)
+  }, simplify = FALSE)
   return(out)
 }
-
-

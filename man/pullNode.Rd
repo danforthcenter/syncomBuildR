@@ -60,7 +60,9 @@ taxa_df$asv <- rownames(taxa_df)
 sp_dist <- asvDist(asv, method = "spearman", clr_transform = TRUE, edgeFilter = 0.5)
 net_data <- asvNet(sp_dist, taxa_df, edge = "spearman_similarity")
 
-sub_net <- pullNode(net_data, node = "ASV10",
-edge = "spearman_similarity", edgeFilter = 0.7, nodeCol = "asv")
+sub_net <- pullNode(net_data,
+  node = "ASV10",
+  edge = "spearman_similarity", edgeFilter = 0.7, nodeCol = "asv"
+)
 
 }

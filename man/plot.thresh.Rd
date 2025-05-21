@@ -16,8 +16,6 @@
 are used and a list of plots is returned per ASV.}
 
 \item{...}{further arguments, ignored.}
-
-\item{asv}{The asv table used in making \code{thresh} object.}
 }
 \description{
 Plot a \code{thresh} object.

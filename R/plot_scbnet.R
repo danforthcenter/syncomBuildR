@@ -43,8 +43,8 @@
 #' @export
 
 plot.scbnet <- function(x, fill = NULL, shape = NULL, size = 3, edgeWeight = NULL,
-                     edgeFilter = NULL, thresh_below = 0.05, facet = NULL, method = "ggplot",
-                     ...) {
+                        edgeFilter = NULL, thresh_below = 0.05, facet = NULL, method = "ggplot",
+                        ...) {
   nodes <- x[["nodes"]]
   edges <- x[["edges"]]
   multi_thresh_fill <- FALSE
