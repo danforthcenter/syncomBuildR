@@ -33,6 +33,19 @@
 #' @return Writes out fq files and summary statistics depending on writeOut and stat arguments.
 #' If both are TRUE then summary stats are returned as a dataframe.
 #'
+#' @examples
+#' \dontrun{
+#' r1 <- demultiplex(
+#'   fwd_reads = "Plate11_R1_001.fastq.gz",
+#'   rev_reads = "Plate11_R2_001.fastq.gz",
+#'   barcodes = b1_formatted,
+#'   name = c("well"),
+#'   mode = "dada",
+#'   cores = 10,
+#'   writeOut = "test/",
+#'   stat = TRUE
+#' )
+#' }
 #' @export
 
 demultiplex <- function(fwd_reads, rev_reads, barcodes, fwd = "FWD", rev = "REV",

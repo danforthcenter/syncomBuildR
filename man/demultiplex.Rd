@@ -54,5 +54,19 @@ If both are TRUE then summary stats are returned as a dataframe.
 \description{
 Function to demultiplex sequences either to single files or to multiple files for use with dada2.
 }
+\examples{
+\dontrun{
+r1 <- demultiplex(
+  fwd_reads = "Plate11_R1_001.fastq.gz",
+  rev_reads = "Plate11_R2_001.fastq.gz",
+  barcodes = b1_formatted,
+  name = c("well"),
+  mode = "dada",
+  cores = 10,
+  writeOut = "test/",
+  stat = TRUE
+)
+}
+}
 \keyword{dada2}
 \keyword{demultiplex,}
