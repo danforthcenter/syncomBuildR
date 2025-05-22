@@ -202,144 +202,226 @@ Using those plots we can set the truncLength values for our dada2 script. You sh
 
 Apart from the truncation lengths you may also want to point to different taxonomic databases (pathToRDP, pathToSILVA, etc) than those shown here, but for SINC projects these are what we have been using.
 
-Those changes would all be made in the first section of the script, the rest should work as is for your data.
-
-The R script in this case is somewhat modified from the normal dada2 run, but not in any particularly
-dramatic ways. Basically there are just a few things added to make troubleshooting across the AWS setting
-easier and some extra steps to combine the fastq files from two experiments. See comments in script below.
+Those changes would all be made in the first section of the script, the rest should work as is for your data. See comments in the script for details.
 
 ```{r, eval = FALSE}
 ### Load packages
+library(parallel)
 library(dada2)
+library(ShortRead)
 library(stringr)
 library(seqinr)
 print(paste0("Loaded Libraries at ", Sys.time()))
-### Specify file paths to sequences
-path_to_seq_21 <- paste0(
-  "/scratch/mounted_bartlab_data/sinc/field/microbiome_2021/",
-  "Bart2_Project_008_Merged/sequences/"
-)
-path_to_seq_22 <- paste0(
-  "/scratch/mounted_bartlab_data/sinc/field/microbiome_2022/",
-  "Bart2_Project_009/field2022_samples_fastqs/"
-)
-### Specify file paths to taxonomy databases
-pathToRDP <- "/scratch/rdp_train_set_18.fa.gz"
-# for ease I am copying these to scratch instead of reading from S3
-# this is only to try to prevent problems if S3 unmounts after credentials expire and it happens to
-# hit the assignTaxonomy step before you
-# reauthenticate.
-pathToRDPSpec <- "/scratch/rdp_species_assignment_18_withBart.fa.gz"
+### Specify file paths
+#* Note that if you are working on SOCA then you'll need to read
+#* data from a mounted S3 bucket. Here the paths correspond to my local
+#* so you'd need to change them to match whatever you're doing.
+pathToSeq <- "~/scripts/SINC/DARPA/syncom1_rerun/fastqs/"
+pathToIntermediateFastq <- "~/scripts/SINC/DARPA/syncom1_rerun/intermediate_fastq"
+pathToFilteredFastq <- "~/scripts/SINC/DARPA/syncom1_rerun/filtered"
+pathToIndexFile <- "~/scripts/SINC/DARPA/syncom1/"
+results_outpath <- "~/scripts/SINC/DARPA/syncom1_rerun/results"
+pathToRDP <- "~/scripts/SINC/DARPA/rdp/rdp_train_set_18.fa.gz"
+pathToRDPSpec <- "~/scripts/SINC/DARPA/rdp/rdp_species_assignment_18.fa.gz"
 ### Specify dada2 parameters
-truncLength <- c(250, 175) # length after which to truncate forward and reverse reads, respectively
-trimLeft <- 0
-trimRight <- 0
-cores <- 48 # corresponding to m5.24xlarge instance cores, you'd change this per your machine.
-print(paste0("Defined Paths/Args at ", Sys.time()))
-
-#* `Start dada2 process`
-
-### Find samples for 2021
-samps_21 <- unique(sub("_R\\d_.*", "", basename(list.files(path_to_seq_21, pattern = "*.fastq*"))))
-samps_21 <- samps_21[!grepl("^MM|Bart2_Project_008_Merged-fastqs.zip", samps_21)] # remove other samples
-# there are 144 mesocosm samples and a zip file that shouldn't be included here.
-print(paste0("Detected ", length(samps_21), " samples for processing"))
-
-### Find samples for 2022
-samps_22 <- unique(sub("_R\\d_.*", "", basename(list.files(path_to_seq_22, pattern = "*.fastq*"))))
-print(paste0("Detected ", length(samps_22), " samples for processing"))
-
-### Combine 2021 and 2022 samples into one object
-
-fn_fs_21 <- sort(list.files(path_to_seq_21, pattern = "_R1_001.fastq", full.names = TRUE))
-fn_rs_21 <- sort(list.files(path_to_seq_21, pattern = "_R2_001.fastq", full.names = TRUE))
-# remove mesocosm samples
-field_sample_index_fs <- unlist(lapply(fn_fs_21, function(path) {
-  segments <- strsplit(path, "[/]")[[1]]
-  nm <- segments[length(segments)]
-  !grepl("^MM", nm)
-}))
-field_sample_index_rs <- unlist(lapply(fn_rs_21, function(path) {
-  segments <- strsplit(path, "[/]")[[1]]
-  nm <- segments[length(segments)]
-  !grepl("^MM", nm)
-}))
-fn_fs_21 <- fn_fs_21[field_sample_index_fs]
-fn_rs_21 <- fn_rs_21[field_sample_index_rs]
-
-filt_fs_21 <- file.path("/scratch/filtered", paste0(samps_21, "_F_filt.fastq.gz"))
-filt_rs_21 <- file.path("/scratch/filtered", paste0(samps_21, "_R_filt.fastq.gz"))
-names(filt_fs_21) <- samps_21
-names(filt_rs_21) <- samps_21
-
-fn_fs_22 <- sort(list.files(path_to_seq_22, pattern = "_R1_001.fastq", full.names = TRUE))
-fn_rs_22 <- sort(list.files(path_to_seq_22, pattern = "_R2_001.fastq", full.names = TRUE))
-filt_fs_22 <- file.path("/scratch/filtered", paste0(samps_22, "_F_filt.fastq.gz"))
-filt_rs_22 <- file.path("/scratch/filtered", paste0(samps_22, "_R_filt.fastq.gz"))
-names(filt_fs_22) <- samps_22
-names(filt_rs_22) <- samps_22
-
-fnFs <- c(fn_fs_21, fn_fs_22)
-fnRs <- c(fn_rs_21, fn_rs_22)
-filtFs <- c(filt_fs_21, filt_fs_22)
-filtRs <- c(filt_rs_21, filt_rs_22)
-
-### Filter and Trim
-
-print(paste0("Filtering and trimming at ", Sys.time()))
-out <- c(NA, NA)
-out <- tryCatch(
-  {
-    filterAndTrim(fnFs, filtFs, fnRs, filtRs,
-      truncLen = truncLength, trimLeft = trimLeft,
-      trimRight = trimRight, maxN = 0, maxEE = c(2, 2), truncQ = 2, rm.phix = TRUE,
-      compress = TRUE, multithread = cores
-    )
-  },
-  error = function(err) {
-    message("Error caught during filterAndTrim, it is likely that you ran out of storage: ")
-    message(conditionMessage(err))
-    c(length(fnFs), NA)
+truncLength <- c(250, 230)
+primer_length <- 20
+barcode_length <- 8
+rm_len <- primer_length + barcode_length
+cores <- 8
+save_quality_metrics <- TRUE
+temp <- basename(tempdir(check = FALSE))
+dir.create(file.path(results_outpath, temp))
+### Check some random quality profiles
+if (save_quality_metrics) {
+  library(ggplot2)
+  library(patchwork)
+  fastqs <- dir(pathToSeq, pattern = ".fastq.gz", full.names = TRUE)
+  index <- sample(seq(1,length(fastqs), 2), 4)
+  plot_fastqs <- fastqs[as.vector(rbind(index, index + 1))]
+  p1 <- plotQualityProfile(plot_fastqs) +
+    facet_wrap(~gsub("L001_|_001.*", "", file))
+  p2 <- plotQualityProfile(plot_fastqs, aggregate = TRUE)
+  plot <- p1 + p2 + patchwork::plot_layout(axes = "collect") +
+    patchwork::plot_annotation(title = pathToSeq) &
+    theme(plot.title = element_text(hjust = 0.5))
+  ggsave(file.path(results_outpath, temp, "quality_profile.png"),
+         plot, device = "png", width = 12, height = 5, dpi = 300)
+  # Attempt to do some fastqc quality control stuff.
+  library(fastqcr)
+  # install fastqc in case it isn't here already
+  if (!file.exists("~/bin/FastQC")) {
+    tryCatch({fastqc_install()}, error = function(err) {})
   }
-)
+  # if the install was successful then use fastqc and make a quality report
+  if (file.exists("~/bin/FastQC")) {
+    # make plact to put fastqc results
+    dir.create(file.path(results_outpath, "fastqc"))
+    # run fastqc
+    fastqc(fq.dir = pathToSeq,
+           qc.dir = file.path(results_outpath, "fastqc"),
+           threads = cores)
+    # summarize the directory of fastqc results into a data.frame
+    qc <- suppressMessages(qc_aggregate(file.path(results_outpath, "fastqc"), progressbar = FALSE))
+    qc <- as.data.frame(qc)
+    # write the qc data.frame as a csv file
+    write.csv(qc, file = file.path(results_outpath, temp, "fastqc_results.csv"), row.names = FALSE)
+    # make plot of fastqc stuff
+    fqc_plot <- ggplot(qc, aes(fill = status, y = module)) +
+      geom_bar() +
+      scale_fill_manual(values = c("firebrick4", "gold", "forestgreen"),
+                        limits = c("FAIL", "WARN", "PASS")) +
+      labs(x = "Count", y = "Module", title = pathToSeq) +
+      theme_bw()
+    # save plot
+    ggsave(file.path(results_outpath, temp, "fasqc_results.png"),
+           fqc_plot, device = "png", width = 12, height = 5, dpi = 300)
+    # delete the directory
+    unlink(file.path(results_outpath, "fastqc"), recursive = TRUE)
+  }
+}
+# read in index hopping control file
+InternalIndexes <- readxl::read_excel(file.path(pathToIndexFile, "DARPA_SynCom_barcodes.xlsx"))
+colnames(InternalIndexes) <- gsub(" ", "_", colnames(InternalIndexes))
+if (!"Internal_Rev_index_RC" %in% colnames(InternalIndexes)) {
+  InternalIndexes$Internal_Rev_index_RC <- unlist(lapply(InternalIndexes$Internal_Rev_index, \(x) {
+    as.character(ShortRead::reverseComplement(Biostrings::DNAString(x)))
+  }))
+}
+#* Note:
+#* it is important that your index hopping file (should come from the sequencer if applicable)
+#* has sample names in the same format as the fastq files are named. If that is not the case then
+#* you should add some regex here and fix them.
 
-print(paste0("Finding successful filtered sequences at ", Sys.time()))
-filt_fs_attempted <- filtFs
-filt_rs_attempted <- filtRs
+#* get complete list of samples
+
+samps <- unique(sub("_R\\d_.*", "",basename(list.files(pathToSeq, pattern="*.fastq*"))))
+print(paste0("Detected ", length(samps), " samples for processing"))
+
+fnFs <- sort(list.files(pathToSeq, pattern="_R1_001.fastq", full.names = TRUE))
+fnRs <- sort(list.files(pathToSeq, pattern="_R2_001.fastq", full.names = TRUE))
+
+#* make names for filtered intermediate fastq files
+filtFs <- file.path(pathToFilteredFastq, paste0(samps, "_F_filt.fastq.gz"))
+filtRs <- file.path(pathToFilteredFastq, paste0(samps, "_R_filt.fastq.gz"))
+names(filtFs) <- samps
+names(filtRs) <- samps
+
+#* separate sequences with an entry in `InternalIndexes$Sample_ID`
+
+formatted_samps_names <- gsub("_S.*", "", samps) # format samps_22 to match Sample_ID
+
+fnFs_with_barcodes <- fnFs[which(formatted_samps_names %in% InternalIndexes$Sample_ID)]
+fnRs_with_barcodes <- fnRs[which(formatted_samps_names %in% InternalIndexes$Sample_ID)]
+filtFs_with_barcodes <- filtFs[which(formatted_samps_names %in% InternalIndexes$Sample_ID)]
+filtRs_with_barcodes <- filtRs[which(formatted_samps_names %in% InternalIndexes$Sample_ID)]
+fnFs_skipping_index_hopping <- fnFs[which(!formatted_samps_names %in% InternalIndexes$Sample_ID)]
+fnRs_skipping_index_hopping <- fnRs[which(!formatted_samps_names %in% InternalIndexes$Sample_ID)]
+
+if (length(fnFs_skipping_index_hopping) > 0 ){
+  warning("Some sequences not covered by Internal Index File, compare samps vs fnFs")
+}
+
+#* ***** `Index Hopping/Primer Trimming`
+
+intermediate_fastqs <- mclapply(seq_along(fnFs_with_barcodes), function(i) {
+  fwd_file <- fnFs_with_barcodes[i]
+  rev_file <- fnRs_with_barcodes[i]
+  internal <- InternalIndexes[InternalIndexes$Sample_ID == gsub("_S.*", "", basename(fwd_file)), ]
+  fwd <- ShortRead::readFastq(fwd_file)
+  fwd_df <- data.frame(seqs = as.character(fwd@sread))
+  fwd_df$quality <- as.character(fwd@quality@quality)
+  fwd_df$ids <- as.character(fwd@id)
+  fwd_df$index <- seq_len(nrow(fwd_df))
+  fwd_df$fwd_barcode <- substr(fwd_df$seqs, 1, barcode_length)
+  fwd_df$rev_barcode <- substr(fwd_df$seqs, nchar(fwd_df$seqs) - barcode_length - 1, nchar(fwd_df$seqs))
+  fwd_df$seqs <- substr(fwd_df$seqs, (rm_len) + 1, nchar(fwd_df$seqs))
+  fwd_df$quality <- substr(fwd_df$quality, (rm_len) + 1, nchar(fwd_df$quality))
+  fwd_indices <- fwd_df[fwd_df$fwd_barcode == internal$Internal_Fwd_index, "index"]
+  rev <- ShortRead::readFastq(rev_file)
+  rev_df <- data.frame(seqs = as.character(rev@sread))
+  rev_df$quality <- as.character(rev@quality@quality)
+  rev_df$ids <- as.character(rev@id)
+  rev_df$index <- seq_len(nrow(rev_df))
+  rev_df$fwd_barcode <- substr(rev_df$seqs, 1, barcode_length)
+  rev_df$rev_barcode <- substr(rev_df$seqs, nchar(rev_df$seqs) - barcode_length - 1, nchar(rev_df$seqs))
+  rev_df$seqs <- substr(rev_df$seqs, (rm_len) + 1, nchar(rev_df$seqs))
+  rev_df$quality <- substr(rev_df$quality, (rm_len) + 1, nchar(rev_df$quality))
+  rev_indices <- rev_df[rev_df$fwd_barcode == internal$Internal_Rev_index_RC, "index"]
+  both_barcodes_present <- intersect(fwd_indices, rev_indices)
+  fwd_out <- ShortRead::ShortReadQ(sread = Biostrings::DNAStringSet(fwd_df[both_barcodes_present, "seqs"]),
+                                   id = Biostrings::BStringSet(fwd_df[both_barcodes_present, "ids"]),
+                                   quality = Biostrings::BStringSet(fwd_df[both_barcodes_present, "quality"]))
+  rev_out <- ShortRead::ShortReadQ(sread = Biostrings::DNAStringSet(rev_df[both_barcodes_present, "seqs"]),
+                                   id = Biostrings::BStringSet(rev_df[both_barcodes_present, "ids"]),
+                                   quality = Biostrings::BStringSet(rev_df[both_barcodes_present, "quality"]))
+  fwd_out_path <- file.path(pathToIntermediateFastq, basename(fwd_file))
+  rev_out_path <- file.path(pathToIntermediateFastq, basename(rev_file))
+  ShortRead::writeFastq(fwd_out, file = fwd_out_path)
+  ShortRead::writeFastq(rev_out, file = rev_out_path)
+  message(
+    paste0(
+      "Read Sample ", basename(fwd_file), " containing ", nrow(fwd_df), " (", nrow(rev_df), ")",
+      " reads and writing with ", length(both_barcodes_present), " reads having removed index hopping"
+    )
+  )
+  return(list("fwd" = fwd_out_path, "rev" = rev_out_path,
+              "n_fwd" = nrow(fwd_df), "n_rev" = nrow(rev_df),
+              "fwd_matches" = length(fwd_indices),
+              "rev_matches" = length(rev_indices),
+              "kept" = length(both_barcodes_present))
+  ) # write out metadata about removal amount
+}, mc.cores = cores)
+index_hopping_df <- do.call(rbind, lapply(intermediate_fastqs, as.data.frame))
+
+fnFs_barcode_rm <- unlist(lapply(intermediate_fastqs, function(x) x$fwd))
+fnRs_barcode_rm <- unlist(lapply(intermediate_fastqs, function(x) x$rev))
+names(fnFs_barcode_rm) <- names(filtFs_with_barcodes)
+names(fnRs_barcode_rm) <- names(filtRs_with_barcodes)
+
+print(paste0("Filtering and trimming barcoded reads at ", Sys.time()))
+
+out <- matrix(c(NA, NA), nrow = 1)
+out <- tryCatch({ # filter and Trim removed all reads here. Maybe use plotQualityProfile on filtered?
+  filterAndTrim(fnFs_barcode_rm, filtFs_with_barcodes, fnRs_barcode_rm, filtRs_with_barcodes,
+                truncLen=truncLength, trimLeft=0, trimRight=0, maxN=0, maxEE=c(2,2),
+                truncQ=2, rm.phix=TRUE,
+                compress=TRUE, multithread = cores, n = 1000)
+}, error = function(err){
+  message("Error caught during filterAndTrim, it is likely that you ran out of storage or have archived data: ")
+  message(conditionMessage(err))
+  matrix(c(NA, NA), nrow = 1)
+})
+
+print(paste0("Checking successfully filtered sequences at ", Sys.time()))
+filtFs_attempted <- filtFs
+filtRs_attempted <- filtRs
 filtFs <- filtFs[file.exists(filtFs)]
 filtRs <- filtRs[file.exists(filtRs)]
-if (length(filtFs) != length(filt_fs_attempted)) {
-  print(paste0(
-    "NOT ALL FORWARD SEQUENCES SUCCEEDED IN FILTERING STEP, EXPECTED ",
-    length(filt_fs_attempted), " BUT ONLY HAVE ", length(filtFs)
-  ))
+if(length(filtFs) != length(filtFs_attempted)) {
+  warning(paste0("NOT ALL FORWARD SEQUENCES SUCCEEDED IN FILTERING STEP, EXPECTED ", 
+                 length(filtFs_attempted), " BUT ONLY HAVE ", length(filtFs)))
 }
-if (length(filtRs) != length(filt_rs_attempted)) {
-  print(paste0(
-    "NOT ALL REVERSE SEQUENCES SUCCEEDED IN FILTERING STEP, EXPECTED ",
-    length(filt_rs_attempted), " BUT ONLY HAVE ", length(filtRs)
-  ))
+if(length(filtRs) != length(filtRs_attempted)) {
+  warning(paste0("NOT ALL REVERSE SEQUENCES SUCCEEDED IN FILTERING STEP, EXPECTED ", 
+                 length(filtRs_attempted), " BUT ONLY HAVE ", length(filtRs)))
 }
 
 ### Learning error rates
-loess_err_fun_mod <- function(trans) {
+loessErrfun_mod <- function (trans) {
   qq <- as.numeric(colnames(trans))
   est <- matrix(0, nrow = 0, ncol = length(qq))
   for (nti in c("A", "C", "G", "T")) {
     for (ntj in c("A", "C", "G", "T")) {
       if (nti != ntj) {
         errs <- trans[paste0(nti, "2", ntj), ]
-        tot <- colSums(trans[paste0(nti, "2", c(
-          "A",
-          "C", "G", "T"
-        )), ])
-        rlogp <- log10((errs + 1) / tot)
+        tot <- colSums(trans[paste0(nti, "2", c("A",
+                                                "C", "G", "T")), ])
+        rlogp <- log10((errs + 1)/tot)
         rlogp[is.infinite(rlogp)] <- NA
-        df <- data.frame(
-          q = qq, errs = errs, tot = tot,
-          rlogp = rlogp
-        )
-        mod.lo <- loess(rlogp ~ q, df, weights = log10(tot), span = 2)
+        df <- data.frame(q = qq, errs = errs, tot = tot,
+                         rlogp = rlogp)
+        mod.lo <- loess(rlogp ~ q, df, weights = log10(tot),span = 2)
         pred <- predict(mod.lo, qq)
         maxrli <- max(which(!is.na(pred)))
         minrli <- min(which(!is.na(pred)))
@@ -349,43 +431,41 @@ loess_err_fun_mod <- function(trans) {
       }
     }
   }
-  max_error_rate <- 0.25
-  min_error_rate <- 1e-07
-  est[est > max_error_rate] <- max_error_rate
-  est[est < min_error_rate] <- min_error_rate
-  err <- rbind(1 - colSums(est[1:3, ]),
-               est[1:3, ],
-               est[4, ],
-               1 - colSums(est[4:6, ]),
-               est[5:6, ],
-               est[7:8, ],
-               1 - colSums(est[7:9, ]),
-               est[9, ],
-               est[10:12, ],
-               1 - colSums(est[10:12, ]))
-  rownames(err) <- paste0(
-    rep(c("A", "C", "G", "T"), each = 4),
-    "2", c("A", "C", "G", "T")
-  )
+  MAX_ERROR_RATE <- 0.25
+  MIN_ERROR_RATE <- 1e-07
+  est[est > MAX_ERROR_RATE] <- MAX_ERROR_RATE
+  est[est < MIN_ERROR_RATE] <- MIN_ERROR_RATE
+  err <- rbind(1 - colSums(est[1:3, ]), est[1:3, ], est[4,
+  ], 1 - colSums(est[4:6, ]), est[5:6, ], est[7:8, ], 1 -
+    colSums(est[7:9, ]), est[9, ], est[10:12, ], 1 - colSums(est[10:12,
+    ]))
+  rownames(err) <- paste0(rep(c("A", "C", "G", "T"), each = 4),
+                          "2", c("A", "C", "G", "T"))
   colnames(err) <- colnames(trans)
   return(err)
 }
 
 print(paste0("Learning error rates at ", Sys.time()))
-errF <- learnErrors(filtFs, multithread = cores, errorEstimationFunction = loess_err_fun_mod)
-errR <- learnErrors(filtRs, multithread = cores, errorEstimationFunction = loess_err_fun_mod)
+errF = learnErrors(filtFs_with_barcodes, multithread = cores, errorEstimationFunction = loessErrfun_mod)
+errR = learnErrors(filtRs_with_barcodes, multithread = cores, errorEstimationFunction = loessErrfun_mod)
+
+### Dereplication
 
 print(paste0("Dereplicating Fastq files ", Sys.time()))
-derepFs <- derepFastq(filtFs, verbose = FALSE)
-derepRs <- derepFastq(filtRs, verbose = FALSE)
+derepFs <- derepFastq(filtFs_with_barcodes, verbose = FALSE)
+derepRs <- derepFastq(filtRs_with_barcodes, verbose = FALSE)
+
+### Denoising to Amplicon Sequence Variants
 
 print(paste0("Denoising to unique sequences at ", Sys.time()))
-dadaFs <- dada(derepFs, err = errF, multithread = cores, verbose = FALSE)
-dadaRs <- dada(derepRs, err = errR, multithread = cores, verbose = FALSE)
+dadaFs <- dada(derepFs, err=errF, multithread=cores)
+dadaRs <- dada(derepRs, err=errR, multithread=cores)
 
 ### Merging reads
+
 print(paste0("Merging reads at ", Sys.time()))
-mergers <- mergePairs(dadaFs, filtFs, dadaRs, filtRs, verbose = cores)
+mergers <- mergePairs(dadaFs, filtFs_with_barcodes,
+                      dadaRs, filtRs_with_barcodes)
 
 ### Generate ASV table
 print(paste0("Generating ASV table at ", Sys.time()))
@@ -393,56 +473,73 @@ seqtab <- makeSequenceTable(mergers)
 
 ### Removing Chimeras
 print(paste0("Removing Chimeras at ", Sys.time()))
-seqtab.nochim <- removeBimeraDenovo(seqtab, method = "consensus", multithread = cores)
+seqtab.nochim <- removeBimeraDenovo(seqtab, method="consensus", multithread=cores)
 seqtab.print <- seqtab.nochim
-colnames(seqtab.print) <- paste0("ASV", seq_len(length(colnames(seqtab.print))))
+colnames(seqtab.print) <- paste0("ASV",1:length(colnames(seqtab.print)))
 
 ### Track sequences
 print(paste0("Tracking sequences at ", Sys.time()))
 getN <- function(x) sum(dada2::getUniques(x))
-tryCatch(
-  {
-    track <- cbind(
-      out, sapply(dadaFs, getN), sapply(dadaRs, getN),
-      sapply(mergers, getN), rowSums(seqtab.nochim)
-    )
-    colnames(track) <- c("input", "filtered", "denoisedF", "denoisedR", "merged", "nonchim")
-    rownames(track) <- c(filtFs, filtRs) # normally would be samps, but with how I am combining
-    # things that is not a great option.
-  },
-  error = function(err) {
-    message("Had an error making tracking object")
-    message(conditionMessage(err))
-  }
-)
+track <- cbind(sapply(dadaFs, getN), sapply(dadaRs, getN),
+               sapply(mergers, getN), rowSums(seqtab.nochim))
+colnames(track) <- c("denoisedF", "denoisedR", "merged","nonchim")
+tryCatch({
+  rownames(out) <- gsub("_R._001.fastq.gz", "", rownames(out))
+  out <- out[names(dadaFs), ]
+  track <- cbind(out, sapply(dadaFs, getN), sapply(dadaRs, getN),
+                 sapply(mergers, getN), rowSums(seqtab.nochim))
+  colnames(track) <- c("input", "filtered", "denoisedF", "denoisedR", "merged","nonchim")
+}, error = function(err){
+  message("Had an error making tracking object")
+  message(conditionMessage(err))
+})
 
 ### Generate fasta file
 print(paste0("Generating fasta file at ", Sys.time()))
 asvseq <- colnames(seqtab.nochim)
-# write.fasta(sequences = lapply(asvseq,identity),names=paste0("ASV",1:length(asvseq)),
-# file.out = "field2022_dada2_run_asv.fasta")
+write.fasta(sequences = lapply(asvseq,identity),names=paste0("ASV",1:length(asvseq)),
+            file.out = file.path(results_outpath, temp, "dada2.fasta"))
+
+### Save intermediate rdata file
+asvseq_to_number <- data.frame(
+  seq = colnames(seqtab.nochim),
+  number = colnames(seqtab.print)
+)
+write.csv(asvseq_to_number, file = file.path(results_outpath, temp, "seq_to_number.csv"))
+write.csv(seqtab.print, file = file.path(results_outpath, temp, "seqtab_print.csv"))
+write.csv(track, file = file.path(results_outpath, temp, "tracking.csv"))
+write.csv(index_hopping_df, file = file.path(results_outpath, temp, "index_hopping.csv"))
 
 ### Assign taxonomy
 print(paste0("Assigning taxonomy at ", Sys.time()))
-taxa_rdp <- assignTaxonomy(seqtab.nochim, pathToRDP, multithread = cores)
-print(paste0("Adding species at ", Sys.time()))
-taxa_rdp <- addSpecies(taxa_rdp, pathToRDPSpec)
-rownames(taxa_rdp) <- paste0("ASV", seq_len(length(asvseq)))
+taxa_rdp <- assignTaxonomy(seqtab.nochim, pathToRDP, multithread=cores)
+rownames(taxa_rdp) <- paste0("ASV",1:length(asvseq))
 
-### Save everything in RData
-print(paste0("Creating RData Object at ", Sys.time()))
-save(fnFs, fnRs, filtFs, filtRs, out, errF, errR, dadaFs, dadaRs, mergers,
-  seqtab, seqtab.nochim, track, seqtab.print, asvseq, taxa_rdp,
-  filt_fs_attempted, filt_rs_attempted,
-  file = "/scratch/run_dada2_results.rdata"
-)
-print(paste0("Done at", Sys.time()))
+write.csv(taxa_rdp, file = file.path(results_outpath, temp, "taxa_rdp.csv"))
+
+print(paste0("Adding Species Level taxonomy at ", Sys.time()))
+rownames(taxa_rdp) <- colnames(seqtab.nochim)
+taxa_rdp <- addSpecies(taxa_rdp, pathToRDPSpec)
+rownames(taxa_rdp) <- paste0("ASV",1:length(asvseq))
+
+write.csv(taxa_rdp, file = file.path(results_outpath, temp, "taxa_rdp.csv"))
+
+print(paste0("Zipping Output at", Sys.time()))
+# zip everything up
+system(paste0("zip -j ", file.path(results_outpath, "dada2_output.zip"), " ",
+              file.path(results_outpath, temp, "*")))
+# if the zip file exists then delete the temp directory
+if (file.exists(file.path(results_outpath, "dada2_output.zip"))) {
+  unlink(file.path(results_outpath, temp), recursive = TRUE)
+}
+
+print(paste0("Done at ", Sys.time()))
 ```
 
 #### Saving data
 
 If you are confident in your ability to keep the credentials up to date then this is very easy and you
-will just copy the data from `/scratch/yourdata.rdata` to
+will just copy the data from `/scratch/yourdata` to
 `/scratch/mountpoint/wherever/it/goes/next`.
 
 For an extra layer of protection we can wrap that part of our job in an if/else statement in case something
@@ -467,7 +564,7 @@ if [ -d /scratch/mounted_datasci/shares/datascience/users/jsumner/SINC/ ]; then
       /scratch/mounted_datasci/shares/datascience/users/jsumner/SINC/dada2_soca/
 else  # if the mount is not there then
    # write to EBS storage
-   cp /scratch/run_dada2_results.rdata /shares/datascience/users/jsumner/dada2_prep/temp_storage/.
+   cp /scratch/dada2_output.zip /shares/datascience/users/jsumner/dada2_prep/temp_storage/.
 fi
 ```
 
@@ -518,11 +615,11 @@ if [ -d /scratch/mounted_datasci/shares/datascience/users/jsumner/SINC/ ]; then
    # write to S3
    cp /scratch/run_dada2_results.rdata /scratch/mounted_datasci/shares/datascience/users/jsumner/SINC/
    mkdir  /scratch/mounted_datasci/shares/datascience/users/jsumner/SINC/dada2_soca/
-   cp /scratch/run_dada2_results.rdata
+   cp /scratch/dada2_output.zip
       /scratch/mounted_datasci/shares/datascience/users/jsumner/SINC/dada2_soca/
 else  # if the mount is not there then
    # write to EBS storage
-   cp /scratch/run_dada2_results.rdata /shares/datascience/users/jsumner/dada2_prep/temp_storage/.
+   cp /scratch/dada2_output.zip /shares/datascience/users/jsumner/dada2_prep/temp_storage/.
 fi
 
 fusermount -u /scratch/mounted_bartlab_data
