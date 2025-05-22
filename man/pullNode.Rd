@@ -9,7 +9,7 @@ pullNode(
   node,
   edge = NULL,
   edgeFilter = NULL,
-  plot = TRUE,
+  plot = FALSE,
   nodeCol = "asv",
   keepNames = FALSE,
   order = 1
@@ -28,7 +28,7 @@ greater than this value are kept.
 This can be a character vector or a numeric.
 Character vectors are interpreted as quantiles ("0.5" corresponds to the top 50 percent are kept).}
 
-\item{plot}{Logical, should data be plotted using \link{net.plot}.}
+\item{plot}{deprecated, use \code{\link{plot.scbnet}}.}
 
 \item{nodeCol}{Column of node information to find the node in. Defaults to "asv".}
 
@@ -40,7 +40,7 @@ and Node B has an edge to Node C, but Node A does not have an edge to Node C the
 order connection, and Node C would only be included if order >= 2.}
 }
 \value{
-A list with a subset network and optionally a ggplot.
+An \code{scbnet} object of the subset network
 }
 \description{
 Function to highlight subsets of networks generated from \code{asvNet} or \link{netcomi2scb}.
@@ -60,7 +60,9 @@ taxa_df$asv <- rownames(taxa_df)
 sp_dist <- asvDist(asv, method = "spearman", clr_transform = TRUE, edgeFilter = 0.5)
 net_data <- asvNet(sp_dist, taxa_df, edge = "spearman_similarity")
 
-sub_net <- pullNode(net_data, node = "ASV10",
-edge = "spearman_similarity", plot = TRUE, nodeCol = "asv")
+sub_net <- pullNode(net_data,
+  node = "ASV10",
+  edge = "spearman_similarity", edgeFilter = 0.7, nodeCol = "asv"
+)
 
 }

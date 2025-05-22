@@ -47,6 +47,7 @@ taxa_df$asv <- rownames(taxa_df)
 
 sp_dist <- asvDist(asv, method = "spearman", clr_transform = TRUE, edgeFilter = 0.5)
 net_data <- asvNet(sp_dist, taxa_df, edge = "spearman_similarity")
-net_data_disp_filt <- dispFilter(net_data, weights = "spearman_similarity", alpha = 0.4)
+# we could use spearman_similarity, but not specifying will use the graph's default weights
+net_data_disp_filt <- dispFilter(net_data, alpha = 0.4)
 
 }

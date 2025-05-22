@@ -1,7 +1,8 @@
-#' Function to plot networks generated from \code{asvNet} with various emphases.
+#' Plot a \code{scbnet} object.
 #'
+#' @aliases plot.scbnet
 #'
-#' @param net Object returned from \link{asvNet}.
+#' @param x An object of class \code{scbnet}.
 #' @param fill Optional column name to fill points by. Accepts single column names, vectors of p-value
 #' columns, or "thresh" which will match all p-value columns if the network was fit with threshold model
 #' data from \link{thresh}.
@@ -19,12 +20,9 @@
 #' multiple networks created from \link{netcomi2scb}
 #' in which case "netNumber" should be used.
 #' @param method Method for visualization, defaults to "ggplot" but also accepts "plotly".
+#' @param ... further arguments, ignored.
 #' @import ggplot2
-#' @return A plot of the kind determined by the method argument.
-#'
-#'
 #' @examples
-#'
 #' taxa <- c(
 #'   "Bacteria", "Proteobacteria", "Betaproteobacteria", "Burkholderiales",
 #'   "Burkholderiaceae", "Paraburkholderia", NA
@@ -39,15 +37,16 @@
 #' sp_dist <- asvDist(asv, method = "spearman", clr_transform = TRUE, edgeFilter = 0.5)
 #' net_data <- asvNet(sp_dist, taxa_df, edge = "spearman_similarity")
 #'
-#' net.plot(net_data, size = 3, edgeWeight = "spearman_similarity", thresh_below = 0.05)
+#' plot(net_data, size = 3, edgeWeight = "spearman_similarity", thresh_below = 0.05)
 #'
+#' @method plot scbnet
 #' @export
-#'
 
-net.plot <- function(net, fill = NULL, shape = NULL, size = 3, edgeWeight = NULL,
-                     edgeFilter = NULL, thresh_below = 0.05, facet = NULL, method = "ggplot") {
-  nodes <- net[["nodes"]]
-  edges <- net[["edges"]]
+plot.scbnet <- function(x, fill = NULL, shape = NULL, size = 3, edgeWeight = NULL,
+                        edgeFilter = NULL, thresh_below = 0.05, facet = NULL, method = "ggplot",
+                        ...) {
+  nodes <- x[["nodes"]]
+  edges <- x[["edges"]]
   multi_thresh_fill <- FALSE
   single_thresh_fill <- FALSE
   multi_thresh_shape <- FALSE

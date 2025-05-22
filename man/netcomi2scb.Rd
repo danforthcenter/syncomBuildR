@@ -29,22 +29,17 @@ Defaults to "0.9" .}
 make comparable plots later on? Defaults to TRUE.}
 }
 \value{
-If the microNetObj contains one network then a named list with three elements is returned:
-\itemize{
-   \item{"Nodes" is a dataframe of nodes and their metadata}
-   \item{"Edges" is a dataframe of edges connecting nodes.}
-   \item{"graph" is the igraph object used to generate the dataframes.}
-}
-If the microNetObj contains two networks then a list of such lists is returned.
+If the microNetObj contains one network then an \code{scbnet} object is returned.
+If the microNetObj contains two networks then a list of \code{scbnet} objects is returned.
 }
 \description{
 The main purpose of this function is to bring NetCoMi's metrics and testing into a format
-that allows for more customized visualization such as with \link{net.plot}
+that allows for use with the rest of syncomBuildR.
 }
 \examples{
 if ("NetCoMi" \%in\% installed.packages()) {
   microNetObj <- NetCoMi::netConstruct(as.matrix(asv[, grepl("ASV", colnames(asv))]),
-    measure = "spearman", sparsMethod = "t-test", alpha = 0.7
+    measure = "spearman", sparsMethod = "none"
   )
   net <- netcomi2scb(microNetObj)
 }

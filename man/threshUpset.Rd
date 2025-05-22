@@ -4,28 +4,12 @@
 \alias{threshUpset}
 \title{Function to plot results of a changepoint models as upset plots}
 \usage{
-threshUpset(
-  thresh,
-  mode = "phenotype",
-  pvalcol = "p.value.",
-  cutoff = 0.05,
-  cores = getOption("mc.cores", 1)
-)
+threshUpset(thresh, cutoff = 0.05)
 }
 \arguments{
 \item{thresh}{Output from \code{\link{thresh}}}
 
-\item{mode}{Either "phenotype" (the default) or "pvalue". "phenotype" will show an upset plot
-of significant changepoint models against the phenotypes present in thresh, "pvalue" will show
-the results of various p-value adjustment methods.}
-
-\item{pvalcol}{The column in thresh that has p-value data, defaults to "p.value." which reflects
-standard output from \code{thresh}.}
-
 \item{cutoff}{Alpha, the significance threshold. Defaults to 0.05.}
-
-\item{cores}{Number of cores to use in parallel. This should not make much of a difference generally
-but can be useful with very large tables. Defaults to 1 if the "mc.cores" option is not set.}
 }
 \value{
 A ggplot or list of ggplots showing changepoint models against some set of phenotypes.
@@ -37,8 +21,9 @@ Function to plot results of a changepoint models as upset plots
 
 set.seed(123)
 asv$biomass_z <- rnorm(nrow(asv))
-tm <- thresh(asv, "biomass_z")
-tm[11:20, "phenotype"] <- "not_biomass_z"
+asv$height_z <- rnorm(nrow(asv))
+tm <- thresh(asv, c("biomass_z", "height_z"))
+
 threshUpset(tm, cutoff = 0.5)
 
 }

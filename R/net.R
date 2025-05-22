@@ -17,12 +17,7 @@
 #' as_data_frame betweenness degree E strength harmonic_centrality eigen_centrality
 #' authority_score page_rank
 #' @import data.table
-#' @return A named list with three elements:
-#' \itemize{
-#'    \item{"Nodes" is a dataframe of nodes and their metadata}
-#'    \item{"Edges" is a dataframe of edges connecting nodes.}
-#'    \item{"graph" is the igraph object used to generate the dataframes.}
-#' }
+#' @return An \code{scbnet} object.
 #'
 #'
 #' @examples
@@ -46,6 +41,7 @@
 asvNet <- function(df, metadata = NULL, edge = "spearman_similarity", thresh = NULL,
                    metadata_join = "asv", thresh_join = "asv") {
   if (is.data.frame(df)) {
+    # Revisit? The goal here is to drop some duplicated metadata that had different counts I guess?
     i <- unlist(lapply(seq_len(nrow(df)), function(i) {
       paste0(sort(as.character(df[i, 1:3])), collapse = ".")
     }))
@@ -54,7 +50,7 @@ asvNet <- function(df, metadata = NULL, edge = "spearman_similarity", thresh = N
     g <- igraph::graph_from_adjacency_matrix(df, "undirected")
   }
   nd <- as.data.frame(igraph::layout.auto(g))
-  eg <- igraph::get.data.frame(g)
+  eg <- igraph::as_data_frame(g, "edges")
   #* link metadata to nodes
   nd[[metadata_join]] <- igraph::as_data_frame(g, "vertices")$name
   if (!is.null(metadata)) {
@@ -74,7 +70,7 @@ asvNet <- function(df, metadata = NULL, edge = "spearman_similarity", thresh = N
   #* Calculate network metrics
   nd$betweenness <- igraph::betweenness(g)
   nd$degree <- igraph::degree(g)
-  if (!is.null(edge)) {
+  if (!is.null(edge) && is.numeric(eg[[edge]])) {
     igraph::E(g)$weight <- eg[[edge]] + 0.1
     nd$strength <- igraph::strength(g)
   }
@@ -90,5 +86,6 @@ asvNet <- function(df, metadata = NULL, edge = "spearman_similarity", thresh = N
   eg$to.y <- nd$V2[match(eg$to, nd[[metadata_join]])]
   eg <- eg[!duplicated(eg), ]
   nd <- nd[!duplicated(nd), ]
-  return(list("nodes" = nd, "edges" = eg, "graph" = g))
+  out <- as.scbnet(list("nodes" = nd, "edges" = eg, "graph" = g))
+  return(out)
 }

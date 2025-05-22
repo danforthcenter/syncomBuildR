@@ -32,12 +32,7 @@ will be added as node metadata.}
 cases currently where we expect it to be a good idea to change this.}
 }
 \value{
-A named list with three elements:
-\itemize{
-   \item{"Nodes" is a dataframe of nodes and their metadata}
-   \item{"Edges" is a dataframe of edges connecting nodes.}
-   \item{"graph" is the igraph object used to generate the dataframes.}
-}
+An \code{scbnet} object.
 }
 \description{
 Function to perform network analysis on a distance/dissimilarity matrix of a microbial community.
