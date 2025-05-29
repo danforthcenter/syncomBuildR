@@ -82,7 +82,7 @@ plot.thresh <- function(x, predictors = NULL, outcomes = NULL, ...) {
       return(p)
     })
     if (length(outcomes_iter) > 1) {
-      phenoPlots <- Reduce(phenoPlots, `+`) +
+      phenoPlots <- Reduce(`+`, phenoPlots) +
         patchwork::plot_layout(
           guides = "collect",
           axes = "collect",
