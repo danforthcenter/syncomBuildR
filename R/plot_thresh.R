@@ -33,6 +33,7 @@ plot.thresh <- function(x, predictors = NULL, outcomes = NULL, ...) {
       outcomes_iter <- unique(x_iter$phenotype)
     }
     phenoPlots <- lapply(outcomes_iter, function(pheno) {
+      x_iter <- x_iter[x_iter$phenotype == pheno]
       postCptCol <- if (x_iter$slope[[1]]$padj < 0.05) {
         viridis::plasma(1, begin = 0.7)
       } else {
