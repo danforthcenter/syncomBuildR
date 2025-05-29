@@ -21,7 +21,7 @@ See \code{methods(class = "thresh")} for an overview of available methods.
 
 \item{\code{phenotype}}{The phenotype (outcome) that the model was fit to.}
 
-\item{\code{model}}{the model object}
+\item{\code{model}}{the model object (optionally)}
 
 \item{\code{predictor}}{the ASV/Cluster (predictor) that the model was fit using.}
 

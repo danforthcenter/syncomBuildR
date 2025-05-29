@@ -12,7 +12,7 @@
 #' @slot changepoint The changepoint term (x value at which slope takes effect)
 #' @slot slope The slope term
 #' @slot phenotype The phenotype (outcome) that the model was fit to.
-#' @slot model the model object
+#' @slot model the model object (optionally)
 #' @slot predictor the ASV/Cluster (predictor) that the model was fit using.
 #' @slot data The data used to fit the model
 #' @slot type The backend used to fit the model as well as the type of model. Currently "chngptm" is
