@@ -11,6 +11,7 @@ x <- lintr::lint_package(path = "~/syncomBuildR/",
                                                     return_linter = NULL
                     ))
 length(x)
+names(x)
 x
 #* dry run styling
 style_pkg("~/syncomBuildR", dry = "off", scope = "line_breaks")
@@ -21,7 +22,7 @@ style_pkg("~/syncomBuildR", dry = "off", scope = "tokens")
 if(FALSE){
   c("R/plot_scbnet.R", "R/plot_thresh.R", "R/pullNode.R", "R/scbnet_class.R", 
     "R/thresh.R", "R/tresh_class.R")
-  file = "R/threshUpset.R"
+  file = "vignettes/dada2.Rmd"
   styler::style_file(file, scope = "line_breaks")
   lintr::lint(file, linters = lintr::linters_with_defaults(lintr::line_length_linter(length = 105L),
                                                            lintr::object_name_linter(styles = c("snake_case", "symbols",

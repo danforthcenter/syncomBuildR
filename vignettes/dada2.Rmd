@@ -475,7 +475,7 @@ seqtab <- makeSequenceTable(mergers)
 print(paste0("Removing Chimeras at ", Sys.time()))
 seqtab.nochim <- removeBimeraDenovo(seqtab, method="consensus", multithread=cores)
 seqtab.print <- seqtab.nochim
-colnames(seqtab.print) <- paste0("ASV",1:length(colnames(seqtab.print)))
+colnames(seqtab.print) <- paste0("ASV",seq_len(length(colnames(seqtab.print))))
 
 ### Track sequences
 print(paste0("Tracking sequences at ", Sys.time()))
@@ -497,7 +497,7 @@ tryCatch({
 ### Generate fasta file
 print(paste0("Generating fasta file at ", Sys.time()))
 asvseq <- colnames(seqtab.nochim)
-write.fasta(sequences = lapply(asvseq,identity),names=paste0("ASV",1:length(asvseq)),
+write.fasta(sequences = lapply(asvseq,identity),names=paste0("ASV",seq_len(length(asvseq))),
             file.out = file.path(results_outpath, temp, "dada2.fasta"))
 
 ### Save intermediate rdata file
@@ -513,14 +513,14 @@ write.csv(index_hopping_df, file = file.path(results_outpath, temp, "index_hoppi
 ### Assign taxonomy
 print(paste0("Assigning taxonomy at ", Sys.time()))
 taxa_rdp <- assignTaxonomy(seqtab.nochim, pathToRDP, multithread=cores)
-rownames(taxa_rdp) <- paste0("ASV",1:length(asvseq))
+rownames(taxa_rdp) <- paste0("ASV",seq_len(length(asvseq)))
 
 write.csv(taxa_rdp, file = file.path(results_outpath, temp, "taxa_rdp.csv"))
 
 print(paste0("Adding Species Level taxonomy at ", Sys.time()))
 rownames(taxa_rdp) <- colnames(seqtab.nochim)
 taxa_rdp <- addSpecies(taxa_rdp, pathToRDPSpec)
-rownames(taxa_rdp) <- paste0("ASV",1:length(asvseq))
+rownames(taxa_rdp) <- paste0("ASV", seq_len(length(asvseq)))
 
 write.csv(taxa_rdp, file = file.path(results_outpath, temp, "taxa_rdp.csv"))
 
