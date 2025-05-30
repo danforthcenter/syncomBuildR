@@ -26,8 +26,8 @@ thresh(
   cores = getOption("mc.cores", 1),
   calibratePheno = NULL,
   p.adjust.method = "none",
-  asvTab = NULL,
   keep_models = FALSE,
+  asvTab = NULL,
   ...
 )
 }
@@ -99,15 +99,6 @@ asv$biomass_z <- rnorm(nrow(asv))
 tn <- thresh(net_data, phenoCols = "biomass_z", asvTab = asv)
 
 
-# ARGS
-x <- net_data
-phenoCols = "biomass_z"
-predCols = NULL
-model = "hinge"
-cores = getOption("mc.cores", 1)
-calibratePheno = NULL
-p.adjust.method = "none"
-asvTab = asv
 }
 \keyword{changepoint,}
 \keyword{phenotype}

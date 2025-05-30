@@ -67,20 +67,11 @@ thresh <- function(x, phenoCols, predCols = NULL, model = "hinge",
 #' tn <- thresh(net_data, phenoCols = "biomass_z", asvTab = asv)
 #'
 #'
-#' # ARGS
-#' x <- net_data
-#' phenoCols = "biomass_z"
-#' predCols = NULL
-#' model = "hinge"
-#' cores = getOption("mc.cores", 1)
-#' calibratePheno = NULL
-#' p.adjust.method = "none"
-#' asvTab = asv
 #' @method thresh scbnet
 #' @export
 thresh.scbnet <- function(x, phenoCols, predCols = NULL, model = "hinge",
                           cores = getOption("mc.cores", 1), calibratePheno = NULL,
-                          p.adjust.method = "none", asvTab = NULL, keep_models = FALSE, ...) {
+                          p.adjust.method = "none", keep_models = FALSE, asvTab = NULL, ...) {
   nodes <- x[["nodes"]]
   if (is.null(predCols)) {
     predCols <- colnames(nodes)[grepl("cluster", colnames(nodes), ignore.case = TRUE)]
