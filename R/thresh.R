@@ -3,6 +3,7 @@
 #'
 #'
 #' @param x An asv table or analogous dataframe with a row per observation and columns for traits.
+#' Alternatively an \code{scbnet} object.
 #' @param phenoCols A character vector of column names for phenotypes to be used in changepoint models.
 #' @param predCols A character vector of columns representing microbes (predictor variables).
 #' Defaults NULL where all column names containing the string "ASV" will be used.
@@ -16,6 +17,8 @@
 #' \code{lm} is used to get residuals of the phenotype after these effects are regressed out.
 #' @param p.adjust.method A method to adjust for multiple testing, defaults to "none". Available options
 #' are shown with \code{stats::p.adjust.methods}.
+#' @param keep_models Should full model objects be kept? This can make thresh objects much larger.
+#' Defaults to FALSE.
 #' @param ... Additional arguments passed to methods.
 #'
 #' @keywords changepoint, threshold, regression, phenotype
@@ -32,7 +35,7 @@
 
 thresh <- function(x, phenoCols, predCols = NULL, model = "hinge",
                    cores = getOption("mc.cores", 1), calibratePheno = NULL,
-                   p.adjust.method = "none", ...) {
+                   p.adjust.method = "none", keep_models = FALSE,  ...) {
   UseMethod("thresh")
 }
 
@@ -64,20 +67,11 @@ thresh <- function(x, phenoCols, predCols = NULL, model = "hinge",
 #' tn <- thresh(net_data, phenoCols = "biomass_z", asvTab = asv)
 #'
 #'
-#' # ARGS
-#' x <- net_data
-#' phenoCols = "biomass_z"
-#' predCols = NULL
-#' model = "hinge"
-#' cores = getOption("mc.cores", 1)
-#' calibratePheno = NULL
-#' p.adjust.method = "none"
-#' asvTab = asv
 #' @method thresh scbnet
 #' @export
 thresh.scbnet <- function(x, phenoCols, predCols = NULL, model = "hinge",
                           cores = getOption("mc.cores", 1), calibratePheno = NULL,
-                          p.adjust.method = "none", asvTab = NULL, ...) {
+                          p.adjust.method = "none", keep_models = FALSE, asvTab = NULL, ...) {
   nodes <- x[["nodes"]]
   if (is.null(predCols)) {
     predCols <- colnames(nodes)[grepl("cluster", colnames(nodes), ignore.case = TRUE)]
@@ -147,8 +141,12 @@ thresh.scbnet <- function(x, phenoCols, predCols = NULL, model = "hinge",
         )
       })
       # unpack models of each phenotype per a cluster within a clustering scheme
-      unpacked_pheno <- .unpack_chngptm_proto_thresh(thresh_pheno, names = phenoCols)
-      unpacked_pheno$model <- thresh_pheno
+      names_thresh_pheno <- phenoCols[which(!unlist(lapply(thresh_pheno, is.null)))]
+      thresh_pheno <- thresh_pheno[which(!unlist(lapply(thresh_pheno, is.null)))]
+      unpacked_pheno <- .unpack_chngptm_proto_thresh(thresh_pheno, names = names_thresh_pheno)
+      if (keep_models) {
+        unpacked_pheno$model <- thresh_pheno
+      }
       return(unpacked_pheno)
     })
     thresh_pred_col
@@ -185,7 +183,7 @@ thresh.scbnet <- function(x, phenoCols, predCols = NULL, model = "hinge",
 #' @export
 thresh.data.frame <- function(x, phenoCols, predCols = NULL, model = "hinge",
                               cores = getOption("mc.cores", 1), calibratePheno = NULL,
-                              p.adjust.method = "none", ...) {
+                              p.adjust.method = "none", keep_models = FALSE, ...) {
   if (is.null(predCols)) {
     predCols <- colnames(x)[grepl("ASV", colnames(x))]
   }
@@ -224,8 +222,12 @@ thresh.data.frame <- function(x, phenoCols, predCols = NULL, model = "hinge",
         error = function(err) {}
       )
     })
-    unpacked_pheno <- .unpack_chngptm_proto_thresh(thresh_pheno, names = phenoCols)
-    unpacked_pheno$model <- thresh_pheno
+    names_thresh_pheno <- phenoCols[which(!unlist(lapply(thresh_pheno, is.null)))]
+    thresh_pheno <- thresh_pheno[which(!unlist(lapply(thresh_pheno, is.null)))]
+    unpacked_pheno <- .unpack_chngptm_proto_thresh(thresh_pheno, names = names_thresh_pheno)
+    if (keep_models) {
+      unpacked_pheno$model <- thresh_pheno
+    }
     return(unpacked_pheno)
   }, mc.cores = cores)
   #* `Parse output into thresh object`

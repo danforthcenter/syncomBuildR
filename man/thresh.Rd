@@ -14,6 +14,7 @@ thresh(
   cores = getOption("mc.cores", 1),
   calibratePheno = NULL,
   p.adjust.method = "none",
+  keep_models = FALSE,
   ...
 )
 
@@ -25,12 +26,14 @@ thresh(
   cores = getOption("mc.cores", 1),
   calibratePheno = NULL,
   p.adjust.method = "none",
+  keep_models = FALSE,
   asvTab = NULL,
   ...
 )
 }
 \arguments{
-\item{x}{An asv table or analogous dataframe with a row per observation and columns for traits.}
+\item{x}{An asv table or analogous dataframe with a row per observation and columns for traits.
+Alternatively an \code{scbnet} object.}
 
 \item{phenoCols}{A character vector of column names for phenotypes to be used in changepoint models.}
 
@@ -50,6 +53,9 @@ just represent confounders that you wish to remove effects from in the changepoi
 
 \item{p.adjust.method}{A method to adjust for multiple testing, defaults to "none". Available options
 are shown with \code{stats::p.adjust.methods}.}
+
+\item{keep_models}{Should full model objects be kept? This can make thresh objects much larger.
+Defaults to FALSE.}
 
 \item{...}{Additional arguments passed to methods.}
 
@@ -93,15 +99,6 @@ asv$biomass_z <- rnorm(nrow(asv))
 tn <- thresh(net_data, phenoCols = "biomass_z", asvTab = asv)
 
 
-# ARGS
-x <- net_data
-phenoCols = "biomass_z"
-predCols = NULL
-model = "hinge"
-cores = getOption("mc.cores", 1)
-calibratePheno = NULL
-p.adjust.method = "none"
-asvTab = asv
 }
 \keyword{changepoint,}
 \keyword{phenotype}

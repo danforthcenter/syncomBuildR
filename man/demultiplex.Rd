@@ -62,7 +62,7 @@ r1 <- demultiplex(
   barcodes = b1_formatted,
   name = c("well"),
   mode = "dada",
-  cores = 10,
+  cores = 1,
   writeOut = "test/",
   stat = TRUE
 )

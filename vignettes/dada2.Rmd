@@ -237,30 +237,39 @@ if (save_quality_metrics) {
   library(ggplot2)
   library(patchwork)
   fastqs <- dir(pathToSeq, pattern = ".fastq.gz", full.names = TRUE)
-  index <- sample(seq(1,length(fastqs), 2), 4)
+  index <- sample(seq(1, length(fastqs), 2), 4)
   plot_fastqs <- fastqs[as.vector(rbind(index, index + 1))]
   p1 <- plotQualityProfile(plot_fastqs) +
-    facet_wrap(~gsub("L001_|_001.*", "", file))
+    facet_wrap(~ gsub("L001_|_001.*", "", file))
   p2 <- plotQualityProfile(plot_fastqs, aggregate = TRUE)
   plot <- p1 + p2 + patchwork::plot_layout(axes = "collect") +
     patchwork::plot_annotation(title = pathToSeq) &
     theme(plot.title = element_text(hjust = 0.5))
   ggsave(file.path(results_outpath, temp, "quality_profile.png"),
-         plot, device = "png", width = 12, height = 5, dpi = 300)
+    plot,
+    device = "png", width = 12, height = 5, dpi = 300
+  )
   # Attempt to do some fastqc quality control stuff.
   library(fastqcr)
   # install fastqc in case it isn't here already
   if (!file.exists("~/bin/FastQC")) {
-    tryCatch({fastqc_install()}, error = function(err) {})
+    tryCatch(
+      {
+        fastqc_install()
+      },
+      error = function(err) {}
+    )
   }
   # if the install was successful then use fastqc and make a quality report
   if (file.exists("~/bin/FastQC")) {
     # make plact to put fastqc results
     dir.create(file.path(results_outpath, "fastqc"))
     # run fastqc
-    fastqc(fq.dir = pathToSeq,
-           qc.dir = file.path(results_outpath, "fastqc"),
-           threads = cores)
+    fastqc(
+      fq.dir = pathToSeq,
+      qc.dir = file.path(results_outpath, "fastqc"),
+      threads = cores
+    )
     # summarize the directory of fastqc results into a data.frame
     qc <- suppressMessages(qc_aggregate(file.path(results_outpath, "fastqc"), progressbar = FALSE))
     qc <- as.data.frame(qc)
@@ -269,22 +278,26 @@ if (save_quality_metrics) {
     # make plot of fastqc stuff
     fqc_plot <- ggplot(qc, aes(fill = status, y = module)) +
       geom_bar() +
-      scale_fill_manual(values = c("firebrick4", "gold", "forestgreen"),
-                        limits = c("FAIL", "WARN", "PASS")) +
+      scale_fill_manual(
+        values = c("firebrick4", "gold", "forestgreen"),
+        limits = c("FAIL", "WARN", "PASS")
+      ) +
       labs(x = "Count", y = "Module", title = pathToSeq) +
       theme_bw()
     # save plot
     ggsave(file.path(results_outpath, temp, "fasqc_results.png"),
-           fqc_plot, device = "png", width = 12, height = 5, dpi = 300)
+      fqc_plot,
+      device = "png", width = 12, height = 5, dpi = 300
+    )
     # delete the directory
     unlink(file.path(results_outpath, "fastqc"), recursive = TRUE)
   }
 }
 # read in index hopping control file
-InternalIndexes <- readxl::read_excel(file.path(pathToIndexFile, "DARPA_SynCom_barcodes.xlsx"))
-colnames(InternalIndexes) <- gsub(" ", "_", colnames(InternalIndexes))
-if (!"Internal_Rev_index_RC" %in% colnames(InternalIndexes)) {
-  InternalIndexes$Internal_Rev_index_RC <- unlist(lapply(InternalIndexes$Internal_Rev_index, \(x) {
+internalIndexes <- readxl::read_excel(file.path(pathToIndexFile, "DARPA_SynCom_barcodes.xlsx"))
+colnames(internalIndexes) <- gsub(" ", "_", colnames(internalIndexes))
+if (!"Internal_Rev_index_RC" %in% colnames(internalIndexes)) {
+  internalIndexes$Internal_Rev_index_RC <- unlist(lapply(InternalIndexes$Internal_Rev_index, \(x) {
     as.character(ShortRead::reverseComplement(Biostrings::DNAString(x)))
   }))
 }
@@ -295,38 +308,38 @@ if (!"Internal_Rev_index_RC" %in% colnames(InternalIndexes)) {
 
 #* get complete list of samples
 
-samps <- unique(sub("_R\\d_.*", "",basename(list.files(pathToSeq, pattern="*.fastq*"))))
+samps <- unique(sub("_R\\d_.*", "", basename(list.files(pathToSeq, pattern = "*.fastq*"))))
 print(paste0("Detected ", length(samps), " samples for processing"))
 
-fnFs <- sort(list.files(pathToSeq, pattern="_R1_001.fastq", full.names = TRUE))
-fnRs <- sort(list.files(pathToSeq, pattern="_R2_001.fastq", full.names = TRUE))
+fnfs <- sort(list.files(pathToSeq, pattern = "_R1_001.fastq", full.names = TRUE))
+fnrs <- sort(list.files(pathToSeq, pattern = "_R2_001.fastq", full.names = TRUE))
 
 #* make names for filtered intermediate fastq files
-filtFs <- file.path(pathToFilteredFastq, paste0(samps, "_F_filt.fastq.gz"))
-filtRs <- file.path(pathToFilteredFastq, paste0(samps, "_R_filt.fastq.gz"))
-names(filtFs) <- samps
-names(filtRs) <- samps
+filtfs <- file.path(pathToFilteredFastq, paste0(samps, "_F_filt.fastq.gz"))
+filtrs <- file.path(pathToFilteredFastq, paste0(samps, "_R_filt.fastq.gz"))
+names(filtfs) <- samps
+names(filtrs) <- samps
 
 #* separate sequences with an entry in `InternalIndexes$Sample_ID`
 
 formatted_samps_names <- gsub("_S.*", "", samps) # format samps_22 to match Sample_ID
 
-fnFs_with_barcodes <- fnFs[which(formatted_samps_names %in% InternalIndexes$Sample_ID)]
-fnRs_with_barcodes <- fnRs[which(formatted_samps_names %in% InternalIndexes$Sample_ID)]
-filtFs_with_barcodes <- filtFs[which(formatted_samps_names %in% InternalIndexes$Sample_ID)]
-filtRs_with_barcodes <- filtRs[which(formatted_samps_names %in% InternalIndexes$Sample_ID)]
-fnFs_skipping_index_hopping <- fnFs[which(!formatted_samps_names %in% InternalIndexes$Sample_ID)]
-fnRs_skipping_index_hopping <- fnRs[which(!formatted_samps_names %in% InternalIndexes$Sample_ID)]
+fnfs_with_barcodes <- fnfs[which(formatted_samps_names %in% InternalIndexes$Sample_ID)]
+fnrs_with_barcodes <- fnrs[which(formatted_samps_names %in% InternalIndexes$Sample_ID)]
+filtfs_with_barcodes <- filtfs[which(formatted_samps_names %in% InternalIndexes$Sample_ID)]
+filtrs_with_barcodes <- filtrs[which(formatted_samps_names %in% InternalIndexes$Sample_ID)]
+fnfs_skipping_index_hopping <- fnfs[which(!formatted_samps_names %in% InternalIndexes$Sample_ID)]
+fnrs_skipping_index_hopping <- fnrs[which(!formatted_samps_names %in% InternalIndexes$Sample_ID)]
 
-if (length(fnFs_skipping_index_hopping) > 0 ){
-  warning("Some sequences not covered by Internal Index File, compare samps vs fnFs")
+if (length(fnfs_skipping_index_hopping) > 0) {
+  warning("Some sequences not covered by Internal Index File, compare samps vs fnfs")
 }
 
 #* ***** `Index Hopping/Primer Trimming`
 
-intermediate_fastqs <- mclapply(seq_along(fnFs_with_barcodes), function(i) {
-  fwd_file <- fnFs_with_barcodes[i]
-  rev_file <- fnRs_with_barcodes[i]
+intermediate_fastqs <- mclapply(seq_along(fnfs_with_barcodes), function(i) {
+  fwd_file <- fnfs_with_barcodes[i]
+  rev_file <- fnrs_with_barcodes[i]
   internal <- InternalIndexes[InternalIndexes$Sample_ID == gsub("_S.*", "", basename(fwd_file)), ]
   fwd <- ShortRead::readFastq(fwd_file)
   fwd_df <- data.frame(seqs = as.character(fwd@sread))
@@ -349,12 +362,16 @@ intermediate_fastqs <- mclapply(seq_along(fnFs_with_barcodes), function(i) {
   rev_df$quality <- substr(rev_df$quality, (rm_len) + 1, nchar(rev_df$quality))
   rev_indices <- rev_df[rev_df$fwd_barcode == internal$Internal_Rev_index_RC, "index"]
   both_barcodes_present <- intersect(fwd_indices, rev_indices)
-  fwd_out <- ShortRead::ShortReadQ(sread = Biostrings::DNAStringSet(fwd_df[both_barcodes_present, "seqs"]),
-                                   id = Biostrings::BStringSet(fwd_df[both_barcodes_present, "ids"]),
-                                   quality = Biostrings::BStringSet(fwd_df[both_barcodes_present, "quality"]))
-  rev_out <- ShortRead::ShortReadQ(sread = Biostrings::DNAStringSet(rev_df[both_barcodes_present, "seqs"]),
-                                   id = Biostrings::BStringSet(rev_df[both_barcodes_present, "ids"]),
-                                   quality = Biostrings::BStringSet(rev_df[both_barcodes_present, "quality"]))
+  fwd_out <- ShortRead::ShortReadQ(
+    sread = Biostrings::DNAStringSet(fwd_df[both_barcodes_present, "seqs"]),
+    id = Biostrings::BStringSet(fwd_df[both_barcodes_present, "ids"]),
+    quality = Biostrings::BStringSet(fwd_df[both_barcodes_present, "quality"])
+  )
+  rev_out <- ShortRead::ShortReadQ(
+    sread = Biostrings::DNAStringSet(rev_df[both_barcodes_present, "seqs"]),
+    id = Biostrings::BStringSet(rev_df[both_barcodes_present, "ids"]),
+    quality = Biostrings::BStringSet(rev_df[both_barcodes_present, "quality"])
+  )
   fwd_out_path <- file.path(pathToIntermediateFastq, basename(fwd_file))
   rev_out_path <- file.path(pathToIntermediateFastq, basename(rev_file))
   ShortRead::writeFastq(fwd_out, file = fwd_out_path)
@@ -365,63 +382,77 @@ intermediate_fastqs <- mclapply(seq_along(fnFs_with_barcodes), function(i) {
       " reads and writing with ", length(both_barcodes_present), " reads having removed index hopping"
     )
   )
-  return(list("fwd" = fwd_out_path, "rev" = rev_out_path,
-              "n_fwd" = nrow(fwd_df), "n_rev" = nrow(rev_df),
-              "fwd_matches" = length(fwd_indices),
-              "rev_matches" = length(rev_indices),
-              "kept" = length(both_barcodes_present))
-  ) # write out metadata about removal amount
+  return(list(
+    "fwd" = fwd_out_path, "rev" = rev_out_path,
+    "n_fwd" = nrow(fwd_df), "n_rev" = nrow(rev_df),
+    "fwd_matches" = length(fwd_indices),
+    "rev_matches" = length(rev_indices),
+    "kept" = length(both_barcodes_present)
+  )) # write out metadata about removal amount
 }, mc.cores = cores)
 index_hopping_df <- do.call(rbind, lapply(intermediate_fastqs, as.data.frame))
 
-fnFs_barcode_rm <- unlist(lapply(intermediate_fastqs, function(x) x$fwd))
-fnRs_barcode_rm <- unlist(lapply(intermediate_fastqs, function(x) x$rev))
-names(fnFs_barcode_rm) <- names(filtFs_with_barcodes)
-names(fnRs_barcode_rm) <- names(filtRs_with_barcodes)
+fnfs_barcode_rm <- unlist(lapply(intermediate_fastqs, function(x) x$fwd))
+fnrs_barcode_rm <- unlist(lapply(intermediate_fastqs, function(x) x$rev))
+names(fnfs_barcode_rm) <- names(filtfs_with_barcodes)
+names(fnrs_barcode_rm) <- names(filtrs_with_barcodes)
 
 print(paste0("Filtering and trimming barcoded reads at ", Sys.time()))
 
 out <- matrix(c(NA, NA), nrow = 1)
-out <- tryCatch({ # filter and Trim removed all reads here. Maybe use plotQualityProfile on filtered?
-  filterAndTrim(fnFs_barcode_rm, filtFs_with_barcodes, fnRs_barcode_rm, filtRs_with_barcodes,
-                truncLen=truncLength, trimLeft=0, trimRight=0, maxN=0, maxEE=c(2,2),
-                truncQ=2, rm.phix=TRUE,
-                compress=TRUE, multithread = cores, n = 1000)
-}, error = function(err){
-  message("Error caught during filterAndTrim, it is likely that you ran out of storage or have archived data: ")
-  message(conditionMessage(err))
-  matrix(c(NA, NA), nrow = 1)
-})
+out <- tryCatch(
+  { # filter and Trim removed all reads here. Maybe use plotQualityProfile on filtered?
+    filterAndTrim(fnfs_barcode_rm, filtfs_with_barcodes, fnrs_barcode_rm, filtrs_with_barcodes,
+      truncLen = truncLength, trimLeft = 0, trimRight = 0, maxN = 0, maxEE = c(2, 2),
+      truncQ = 2, rm.phix = TRUE,
+      compress = TRUE, multithread = cores, n = 1000
+    )
+  },
+  error = function(err) {
+    message(paste0("Error caught during filterAndTrim, ",
+                   "it is likely that you ran out of storage or have archived data: "))
+    message(conditionMessage(err))
+    matrix(c(NA, NA), nrow = 1)
+  }
+)
 
 print(paste0("Checking successfully filtered sequences at ", Sys.time()))
-filtFs_attempted <- filtFs
-filtRs_attempted <- filtRs
-filtFs <- filtFs[file.exists(filtFs)]
-filtRs <- filtRs[file.exists(filtRs)]
-if(length(filtFs) != length(filtFs_attempted)) {
-  warning(paste0("NOT ALL FORWARD SEQUENCES SUCCEEDED IN FILTERING STEP, EXPECTED ", 
-                 length(filtFs_attempted), " BUT ONLY HAVE ", length(filtFs)))
+filtfs_attempted <- filtfs
+filtrs_attempted <- filtrs
+filtfs <- filtfs[file.exists(filtfs)]
+filtrs <- filtrs[file.exists(filtrs)]
+if (length(filtfs) != length(filtfs_attempted)) {
+  warning(paste0(
+    "NOT ALL FORWARD SEQUENCES SUCCEEDED IN FILTERING STEP, EXPECTED ",
+    length(filtfs_attempted), " BUT ONLY HAVE ", length(filtfs)
+  ))
 }
-if(length(filtRs) != length(filtRs_attempted)) {
-  warning(paste0("NOT ALL REVERSE SEQUENCES SUCCEEDED IN FILTERING STEP, EXPECTED ", 
-                 length(filtRs_attempted), " BUT ONLY HAVE ", length(filtRs)))
+if (length(filtrs) != length(filtrs_attempted)) {
+  warning(paste0(
+    "NOT ALL REVERSE SEQUENCES SUCCEEDED IN FILTERING STEP, EXPECTED ",
+    length(filtrs_attempted), " BUT ONLY HAVE ", length(filtrs)
+  ))
 }
 
 ### Learning error rates
-loessErrfun_mod <- function (trans) {
+loess_errfun_mod <- function(trans) {
   qq <- as.numeric(colnames(trans))
   est <- matrix(0, nrow = 0, ncol = length(qq))
   for (nti in c("A", "C", "G", "T")) {
     for (ntj in c("A", "C", "G", "T")) {
       if (nti != ntj) {
         errs <- trans[paste0(nti, "2", ntj), ]
-        tot <- colSums(trans[paste0(nti, "2", c("A",
-                                                "C", "G", "T")), ])
-        rlogp <- log10((errs + 1)/tot)
+        tot <- colSums(trans[paste0(nti, "2", c(
+          "A",
+          "C", "G", "T"
+        )), ])
+        rlogp <- log10((errs + 1) / tot)
         rlogp[is.infinite(rlogp)] <- NA
-        df <- data.frame(q = qq, errs = errs, tot = tot,
-                         rlogp = rlogp)
-        mod.lo <- loess(rlogp ~ q, df, weights = log10(tot),span = 2)
+        df <- data.frame(
+          q = qq, errs = errs, tot = tot,
+          rlogp = rlogp
+        )
+        mod.lo <- loess(rlogp ~ q, df, weights = log10(tot), span = 2)
         pred <- predict(mod.lo, qq)
         maxrli <- max(which(!is.na(pred)))
         minrli <- min(which(!is.na(pred)))
@@ -431,41 +462,47 @@ loessErrfun_mod <- function (trans) {
       }
     }
   }
-  MAX_ERROR_RATE <- 0.25
-  MIN_ERROR_RATE <- 1e-07
-  est[est > MAX_ERROR_RATE] <- MAX_ERROR_RATE
-  est[est < MIN_ERROR_RATE] <- MIN_ERROR_RATE
-  err <- rbind(1 - colSums(est[1:3, ]), est[1:3, ], est[4,
-  ], 1 - colSums(est[4:6, ]), est[5:6, ], est[7:8, ], 1 -
-    colSums(est[7:9, ]), est[9, ], est[10:12, ], 1 - colSums(est[10:12,
-    ]))
-  rownames(err) <- paste0(rep(c("A", "C", "G", "T"), each = 4),
-                          "2", c("A", "C", "G", "T"))
+  max_error_rate <- 0.25
+  min_error_rate <- 1e-07
+  est[est > max_error_rate] <- max_error_rate
+  est[est < min_error_rate] <- min_error_rate
+  err <- rbind(1 - colSums(est[1:3, ]), est[1:3, ], est[4, ],
+               1 - colSums(est[4:6, ]), est[5:6, ], est[7:8, ],
+               1 - colSums(est[7:9, ]), est[9, ], est[10:12, ],
+               1 - colSums(est[10:12, ]))
+  rownames(err) <- paste0(
+    rep(c("A", "C", "G", "T"), each = 4),
+    "2", c("A", "C", "G", "T")
+  )
   colnames(err) <- colnames(trans)
   return(err)
 }
 
 print(paste0("Learning error rates at ", Sys.time()))
-errF = learnErrors(filtFs_with_barcodes, multithread = cores, errorEstimationFunction = loessErrfun_mod)
-errR = learnErrors(filtRs_with_barcodes, multithread = cores, errorEstimationFunction = loessErrfun_mod)
+errF <- learnErrors(filtfs_with_barcodes, multithread = cores,
+                    errorEstimationFunction = loess_errfun_mod)
+errR <- learnErrors(filtrs_with_barcodes, multithread = cores,
+                    errorEstimationFunction = loess_errfun_mod)
 
 ### Dereplication
 
 print(paste0("Dereplicating Fastq files ", Sys.time()))
-derepFs <- derepFastq(filtFs_with_barcodes, verbose = FALSE)
-derepRs <- derepFastq(filtRs_with_barcodes, verbose = FALSE)
+derepFs <- derepFastq(filtfs_with_barcodes, verbose = FALSE)
+derepRs <- derepFastq(filtrs_with_barcodes, verbose = FALSE)
 
 ### Denoising to Amplicon Sequence Variants
 
 print(paste0("Denoising to unique sequences at ", Sys.time()))
-dadaFs <- dada(derepFs, err=errF, multithread=cores)
-dadaRs <- dada(derepRs, err=errR, multithread=cores)
+dadaFs <- dada(derepFs, err = errF, multithread = cores)
+dadaRs <- dada(derepRs, err = errR, multithread = cores)
 
 ### Merging reads
 
 print(paste0("Merging reads at ", Sys.time()))
-mergers <- mergePairs(dadaFs, filtFs_with_barcodes,
-                      dadaRs, filtRs_with_barcodes)
+mergers <- mergePairs(
+  dadaFs, filtfs_with_barcodes,
+  dadaRs, filtrs_with_barcodes
+)
 
 ### Generate ASV table
 print(paste0("Generating ASV table at ", Sys.time()))
@@ -473,32 +510,41 @@ seqtab <- makeSequenceTable(mergers)
 
 ### Removing Chimeras
 print(paste0("Removing Chimeras at ", Sys.time()))
-seqtab.nochim <- removeBimeraDenovo(seqtab, method="consensus", multithread=cores)
+seqtab.nochim <- removeBimeraDenovo(seqtab, method = "consensus", multithread = cores)
 seqtab.print <- seqtab.nochim
-colnames(seqtab.print) <- paste0("ASV",1:length(colnames(seqtab.print)))
+colnames(seqtab.print) <- paste0("ASV", seq_len(length(colnames(seqtab.print))))
 
 ### Track sequences
 print(paste0("Tracking sequences at ", Sys.time()))
 getN <- function(x) sum(dada2::getUniques(x))
-track <- cbind(sapply(dadaFs, getN), sapply(dadaRs, getN),
-               sapply(mergers, getN), rowSums(seqtab.nochim))
-colnames(track) <- c("denoisedF", "denoisedR", "merged","nonchim")
-tryCatch({
-  rownames(out) <- gsub("_R._001.fastq.gz", "", rownames(out))
-  out <- out[names(dadaFs), ]
-  track <- cbind(out, sapply(dadaFs, getN), sapply(dadaRs, getN),
-                 sapply(mergers, getN), rowSums(seqtab.nochim))
-  colnames(track) <- c("input", "filtered", "denoisedF", "denoisedR", "merged","nonchim")
-}, error = function(err){
-  message("Had an error making tracking object")
-  message(conditionMessage(err))
-})
+track <- cbind(
+  sapply(dadaFs, getN), sapply(dadaRs, getN),
+  sapply(mergers, getN), rowSums(seqtab.nochim)
+)
+colnames(track) <- c("denoisedF", "denoisedR", "merged", "nonchim")
+tryCatch(
+  {
+    rownames(out) <- gsub("_R._001.fastq.gz", "", rownames(out))
+    out <- out[names(dadaFs), ]
+    track <- cbind(
+      out, sapply(dadaFs, getN), sapply(dadaRs, getN),
+      sapply(mergers, getN), rowSums(seqtab.nochim)
+    )
+    colnames(track) <- c("input", "filtered", "denoisedF", "denoisedR", "merged", "nonchim")
+  },
+  error = function(err) {
+    message("Had an error making tracking object")
+    message(conditionMessage(err))
+  }
+)
 
 ### Generate fasta file
 print(paste0("Generating fasta file at ", Sys.time()))
 asvseq <- colnames(seqtab.nochim)
-write.fasta(sequences = lapply(asvseq,identity),names=paste0("ASV",1:length(asvseq)),
-            file.out = file.path(results_outpath, temp, "dada2.fasta"))
+write.fasta(
+  sequences = lapply(asvseq, identity), names = paste0("ASV", seq_len(length(asvseq))),
+  file.out = file.path(results_outpath, temp, "dada2.fasta")
+)
 
 ### Save intermediate rdata file
 asvseq_to_number <- data.frame(
@@ -512,22 +558,24 @@ write.csv(index_hopping_df, file = file.path(results_outpath, temp, "index_hoppi
 
 ### Assign taxonomy
 print(paste0("Assigning taxonomy at ", Sys.time()))
-taxa_rdp <- assignTaxonomy(seqtab.nochim, pathToRDP, multithread=cores)
-rownames(taxa_rdp) <- paste0("ASV",1:length(asvseq))
+taxa_rdp <- assignTaxonomy(seqtab.nochim, pathToRDP, multithread = cores)
+rownames(taxa_rdp) <- paste0("ASV", seq_len(length(asvseq)))
 
 write.csv(taxa_rdp, file = file.path(results_outpath, temp, "taxa_rdp.csv"))
 
 print(paste0("Adding Species Level taxonomy at ", Sys.time()))
 rownames(taxa_rdp) <- colnames(seqtab.nochim)
 taxa_rdp <- addSpecies(taxa_rdp, pathToRDPSpec)
-rownames(taxa_rdp) <- paste0("ASV",1:length(asvseq))
+rownames(taxa_rdp) <- paste0("ASV", seq_len(length(asvseq)))
 
 write.csv(taxa_rdp, file = file.path(results_outpath, temp, "taxa_rdp.csv"))
 
 print(paste0("Zipping Output at", Sys.time()))
 # zip everything up
-system(paste0("zip -j ", file.path(results_outpath, "dada2_output.zip"), " ",
-              file.path(results_outpath, temp, "*")))
+system(paste0(
+  "zip -j ", file.path(results_outpath, "dada2_output.zip"), " ",
+  file.path(results_outpath, temp, "*")
+))
 # if the zip file exists then delete the temp directory
 if (file.exists(file.path(results_outpath, "dada2_output.zip"))) {
   unlink(file.path(results_outpath, temp), recursive = TRUE)
@@ -657,7 +705,7 @@ If you run out of scratch memory then you may see messages like this:
 ```
 [1] "Filtering and trimming"
 Creating output directory: /scratch/filtered
-Error in filterAndTrim(fnFs, filtFs, fnRs, filtRs, truncLen = truncLength,  : 
+Error in filterAndTrim(fnfs, filtfs, fnrs, filtrs, truncLen = truncLength,  : 
   These are the errors (up to 5) encountered in individual cores...
 Error in writeFastq(fqF, fout[[1]], "w", compress = compress) : 
   failed to write record 3937
