@@ -134,3 +134,44 @@ summary.thresh <- function(object, ...) {
   # other slots don't change
   return(x)
 }
+
+
+#' Getting intersections of thresh objects
+#'
+#' @param x thresh object
+#' @param y thresh object
+#' @param index.return Logical, should the index be returned as an element of the output list
+#' (TRUE, default) or should only subset thresh objects be returned (FALSE)?
+#'
+#' @export
+
+intersect_thresh <- function(x, y, index.return = TRUE) {
+  x_ids <- mapply(
+    function(i, thresh) {
+      paste(unlist(thresh[i][c("phenotype", "predictor")]), collapse = "_")
+    },
+    seq_along(x$phenotype),
+    MoreArgs = list(thresh = x),
+    SIMPLIFY = FALSE
+  )
+  y_ids <- mapply(
+    function(i, thresh) {
+      paste(unlist(thresh[i][c("phenotype", "predictor")]), collapse = "_")
+    },
+    seq_along(y$phenotype),
+    MoreArgs = list(thresh = y),
+    SIMPLIFY = FALSE
+  )
+  conserved_ids <- intersect(x_ids, y_ids)
+  x_index <- which(x_ids %in% conserved_ids)
+  y_index <- which(y_ids %in% conserved_ids)
+  # a little weird to return a list, but I don't have a clearer idea yet about what the 
+  out <- list( # output could be other than a list. Normally a unique vector for intersect, but since
+    x[x_index],  # the thresh objects have different slopes/p-values/changepoints that we do want
+    y[y_index] # to keep I don't think that would make a lot of sense.
+  )
+  if (index.return) {
+    out$ix <- list(x = x_index, y = y_index)
+  }
+  return(out)
+}
