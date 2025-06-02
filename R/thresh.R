@@ -144,6 +144,7 @@ thresh.scbnet <- function(x, phenoCols, predCols = NULL, model = "hinge",
       names_thresh_pheno <- phenoCols[which(!unlist(lapply(thresh_pheno, is.null)))]
       thresh_pheno <- thresh_pheno[which(!unlist(lapply(thresh_pheno, is.null)))]
       unpacked_pheno <- .unpack_chngptm_proto_thresh(thresh_pheno, names = names_thresh_pheno)
+      unpacked_pheno$predictor <- pred_col
       if (keep_models) {
         unpacked_pheno$model <- thresh_pheno
       }
@@ -162,7 +163,6 @@ thresh.scbnet <- function(x, phenoCols, predCols = NULL, model = "hinge",
     full_proto_thresh$slope[[i]]$padj <- adj_pvals[i]
   }
   #* add other slots
-  full_proto_thresh[["predictor"]] <- rep(unname(unlist(clusterColumns)), each = length(phenoCols))
   full_proto_thresh[["data"]] <- clust_ag[, c(phenoCols, unname(unlist(clusterColumns)))]
   full_proto_thresh[["type"]] <- "chngptm"
   full_proto_thresh[["unit"]] <- "cluster"
@@ -225,6 +225,7 @@ thresh.data.frame <- function(x, phenoCols, predCols = NULL, model = "hinge",
     names_thresh_pheno <- phenoCols[which(!unlist(lapply(thresh_pheno, is.null)))]
     thresh_pheno <- thresh_pheno[which(!unlist(lapply(thresh_pheno, is.null)))]
     unpacked_pheno <- .unpack_chngptm_proto_thresh(thresh_pheno, names = names_thresh_pheno)
+    unpacked_pheno$predictor <- pred_col
     if (keep_models) {
       unpacked_pheno$model <- thresh_pheno
     }
@@ -240,7 +241,6 @@ thresh.data.frame <- function(x, phenoCols, predCols = NULL, model = "hinge",
     thresh$slope[[i]]$padj <- adj_pvals[i]
   }
   #* assign other thresh slots
-  thresh[["predictor"]] <- rep(predCols, each = length(phenoCols))
   thresh[["data"]] <- x[, c(phenoCols, predCols)] # also stored in model$best.fit$data
   thresh[["type"]] <- "chngptm"
   thresh[["unit"]] <- "individual"
