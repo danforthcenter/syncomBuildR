@@ -165,7 +165,7 @@ intersect_thresh <- function(x, y, index.return = TRUE) {
   conserved_ids <- intersect(x_ids, y_ids)
   x_index <- which(x_ids %in% conserved_ids)
   y_index <- which(y_ids %in% conserved_ids)
-  # a little weird to return a list, but I don't have a clearer idea yet about what the 
+  # a little weird to return a list, but I don't have a clearer idea yet about what the
   out <- list( # output could be other than a list. Normally a unique vector for intersect, but since
     x[x_index],  # the thresh objects have different slopes/p-values/changepoints that we do want
     y[y_index] # to keep I don't think that would make a lot of sense.
