@@ -119,9 +119,6 @@ plot.thresh <- function(x, predictors = NULL, outcomes = NULL, ...) {
 #' @keywords internal
 
 .mcp_plotter <- function(x_iter, d, pheno, microbe) {
-  postCptCol <- if (x_iter$post_prob > 0.95) {
-    viridis::plasma(1, begin = 0.7)
-  }
   p <- plot(x_iter$model[[1]]) +
     ggplot2::labs(
       y = paste0(
@@ -138,22 +135,15 @@ plot.thresh <- function(x, predictors = NULL, outcomes = NULL, ...) {
     )
   if (x_iter$post_prob > 0.95) {
     p <- p +
-      ggplot2::geom_point(data = p$data[p$data[[1]] > x_iter$post_means[[1]][1], ],
-                 ggplot2::aes(x = .data[[colnames(p$data)[1]]],
-                              y = .data[[colnames(p$data)[2]]]),
-                 color = viridis::plasma(1, begin = 0.7),
-                 shape = 1)
+      ggplot2::geom_point(
+        data = p$data[p$data[[1]] > x_iter$post_means[[1]][1], ],
+        ggplot2::aes(
+          x = .data[[colnames(p$data)[1]]],
+          y = .data[[colnames(p$data)[2]]]
+        ),
+        color = viridis::plasma(1, begin = 0.7),
+        shape = 1
+      )
   }
   return(p)
 }
-
-
-
-
-
-
-
-
-
-
-
