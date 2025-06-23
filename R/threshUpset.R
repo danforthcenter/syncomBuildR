@@ -24,17 +24,24 @@
 threshUpset <- function(thresh, cutoff = 0.05) {
   sig <- unlist(lapply(unique(thresh$predictor), function(pred) {
     sub <- thresh[thresh$predictor == pred]
-    sig_index <- which(sub$pval < cutoff)
+    if (sub$type == "chngptm") {
+      sig_index <- which(sub$pval < cutoff)
+    } else if (sub$type == "mcp") {
+      sig_index <- which(sub$post_prob > cutoff)
+    }
     if (length(sig_index) > 0) {
       return(pred)
     }
   }))
   if (is.null(sig)) {
-    stop("No data with p.values below cutoff")
+    stop("No data with p past cutoff")
   }
   d <- as.data.frame(thresh[thresh$predictor %in% sig][c("predictor", "phenotype")])
-  d$sig <- thresh[thresh$predictor %in% sig]$pval
-  d$sig <- ifelse(d$sig < cutoff, TRUE, FALSE)
+  if (thresh$type == "chngptm") {
+    d$sig <- thresh[thresh$predictor %in% sig]$pval < cutoff
+  } else if (thresh$type == "mcp") {
+    d$sig <- thresh[thresh$predictor %in% sig]$post_prob > cutoff
+  }
   data.table::setDT(d)
   upsetPlotData <- as.data.frame(data.table::dcast(d,
     predictor ~ phenotype,
@@ -44,12 +51,14 @@ threshUpset <- function(thresh, cutoff = 0.05) {
   p[[2]] <- p[[2]] +
     ggplot2::labs(
       title = paste0("ASV ~ Phenotype Correlations"),
-      subtitle = paste0("With P.value < ", cutoff)
+      subtitle = paste0(
+        ifelse(thresh$type == "chngptm", "With P.value < ", "With Post. Prob > "),
+        cutoff
+      )
     ) +
     ggplot2::theme(
       legend.title.align = NULL,
       legend.text.align = NULL
     )
-  return(p)
   return(p)
 }
