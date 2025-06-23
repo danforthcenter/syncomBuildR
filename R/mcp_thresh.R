@@ -141,7 +141,8 @@ mcp_thresh.scbnet <- function(
             fit <- mcp::mcp(
               model = model_iter,
               data = sub,
-              cores = cores, chains = cores,
+              cores = cores,
+              chains = max(c(2, cores)),
               iter = 2000, adapt = 1000
             )
             fit <- fit[names(fit) != "mcmc_loglik"] # drop loglik, not using it and it's huge.
@@ -162,6 +163,11 @@ mcp_thresh.scbnet <- function(
       unpacked_pheno$predictor <- pred_col
       if (keep_models) {
         unpacked_pheno$model <- thresh_pheno
+      } else {
+        unpacked_pheno$model <- lapply(thresh_pheno, function(tp) {
+          tp$mcmc_post <- utils::head(tp$mcmc_post, n = 25)
+          return(tp)
+        })
       }
       return(unpacked_pheno)
     })
@@ -227,7 +233,8 @@ mcp_thresh.data.frame <- function(x, phenoCols, predCols = NULL,
           fit <- mcp::mcp(
             model = model_iter,
             data = sub,
-            cores = cores, chains = cores,
+            cores = cores,
+            chains = max(c(2, cores)),
             iter = 2000, adapt = 1000
           )
           fit <- fit[names(fit) != "mcmc_loglik"] # drop loglik, not using it and it's huge.
@@ -246,6 +253,11 @@ mcp_thresh.data.frame <- function(x, phenoCols, predCols = NULL,
     )
     if (keep_models) {
       unpacked_pheno$model <- thresh_pheno
+    } else {
+      unpacked_pheno$model <- lapply(thresh_pheno, function(tp) {
+        tp$mcmc_post <- utils::head(tp$mcmc_post, n = 25)
+        return(tp)
+      })
     }
     return(unpacked_pheno)
   }, mc.cores = cores)
