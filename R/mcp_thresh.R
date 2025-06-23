@@ -15,8 +15,6 @@
 #' This should generally correspond to those used in `cal` if the ASV table has been calibrated or
 #' just represent confounders that you wish to remove effects from in the changepoint regression.
 #' \code{lm} is used to get residuals of the phenotype after these effects are regressed out.
-#' @param p.adjust.method A method to adjust for multiple testing, defaults to "none". Available options
-#' are shown with \code{stats::p.adjust.methods}.
 #' @param keep_models Should full model objects be kept? This can make thresh objects much larger.
 #' Defaults to FALSE.
 #' @param ... Additional arguments passed to methods.
@@ -32,6 +30,7 @@
 #' model = list(
 #' Y ~ 1,  # intercept,
 #' ~ 0 + X # joined slope after first changepoint
+#' )
 #' )
 #' tm
 #'
@@ -70,7 +69,7 @@ mcp_thresh <- function(x, phenoCols, predCols = NULL,
 #' ))
 #' asv$biomass_z <- rnorm(nrow(asv))
 #' tn <- mcp_thresh(net_data, phenoCols = "biomass_z", asvTab = asv)
-#'
+#' tn
 #'
 #' @method mcp_thresh scbnet
 #' @export
@@ -171,7 +170,6 @@ mcp_thresh.scbnet <- function(x, phenoCols, predCols = NULL, model = list(Y ~ 1,
   full_proto_thresh[["unit"]] <- "cluster"
   full_proto_thresh[["control"]] <- list(
     "call" = match.call(),
-    "p.adjust.method" = p.adjust.method,
     "subsettable" = c(
       "post_means", "slope", "post_probs", "hypotheses",
       "phenotype", "model", "predictor"
@@ -182,7 +180,7 @@ mcp_thresh.scbnet <- function(x, phenoCols, predCols = NULL, model = list(Y ~ 1,
   return(thresh)
 }
 
-#' @method thresh data.frame
+#' @method mcp_thresh data.frame
 #' @export
 mcp_thresh.data.frame <- function(x, phenoCols, predCols = NULL,
                                   model = list(Y ~ 1, ~ 0 + X),
@@ -244,15 +242,12 @@ mcp_thresh.data.frame <- function(x, phenoCols, predCols = NULL,
   #* `Parse output into thresh object`
   names(threshOut) <- predCols
   thresh <- Reduce(.merge_proto_thresh, threshOut)
-  #* p-value adjustment
-  thresh$pval <- p.adjust(thresh$pval, method = p.adjust.method)
   #* assign other thresh slots
   thresh[["data"]] <- x[, c(phenoCols, predCols)]
   thresh[["type"]] <- "mcp"
   thresh[["unit"]] <- "individual"
-  full_proto_thresh[["control"]] <- list(
+  thresh[["control"]] <- list(
     "call" = match.call(),
-    "p.adjust.method" = p.adjust.method,
     "subsettable" = c(
       "post_means", "slope", "post_probs", "hypotheses",
       "phenotype", "model", "predictor"

@@ -76,6 +76,7 @@ model = list(
 Y ~ 1,  # intercept,
 ~ 0 + X # joined slope after first changepoint
 )
+)
 tm
 
 taxa <- c(
