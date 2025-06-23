@@ -38,6 +38,7 @@ Imports:
 Suggests:
     knitr,
     brms,
+    mcp,
     NetCoMi,
     Biostrings,
     seqinr,
