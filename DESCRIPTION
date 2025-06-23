@@ -33,12 +33,12 @@ Imports:
     ComplexUpset,
     plotly,
     Hmisc,
+    mcp,
     compositions,
     ShortRead
 Suggests:
     knitr,
     brms,
-    mcp,
     NetCoMi,
     Biostrings,
     seqinr,
