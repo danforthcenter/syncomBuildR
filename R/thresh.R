@@ -143,7 +143,8 @@ thresh.scbnet <- function(x, phenoCols, predCols = NULL, model = "hinge",
       # unpack models of each phenotype per a cluster within a clustering scheme
       names_thresh_pheno <- phenoCols[which(!unlist(lapply(thresh_pheno, is.null)))]
       thresh_pheno <- thresh_pheno[which(!unlist(lapply(thresh_pheno, is.null)))]
-      unpacked_pheno <- .unpack_chngptm_proto_thresh(thresh_pheno, names = names_thresh_pheno)
+      unpacked_pheno <- .unpack_chngptm_proto_thresh(thresh_pheno, names = names_thresh_pheno,
+                                                     pred = pred_col)
       unpacked_pheno$predictor <- pred_col
       if (keep_models) {
         unpacked_pheno$model <- thresh_pheno
