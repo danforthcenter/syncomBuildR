@@ -27,19 +27,20 @@
 #'
 #' asv$biomass_z <- rnorm(nrow(asv))
 #' tm <- mcp_thresh(asv, "biomass_z",
-#' model = list(
-#' Y ~ 1,  # intercept,
-#' ~ 0 + X # joined slope after first changepoint
-#' )
+#'   model = list(
+#'     Y ~ 1, # intercept,
+#'     ~ 0 + X # joined slope after first changepoint
+#'   )
 #' )
 #' tm
 #'
 #' @export
 
-mcp_thresh <- function(x, phenoCols, predCols = NULL,
-                       model = list(Y ~ 1, ~ 0 + X),
-                   cores = getOption("mc.cores", 1), calibratePheno = NULL,
-                   keep_models = FALSE, hypothesis = "X > 0", ...) {
+mcp_thresh <- function(
+    x, phenoCols, predCols = NULL,
+    model = list(Y ~ 1, ~ 0 + X),
+    cores = getOption("mc.cores", 1), calibratePheno = NULL,
+    keep_models = FALSE, hypothesis = "X > 0", ...) {
   UseMethod("mcp_thresh")
 }
 
@@ -73,11 +74,12 @@ mcp_thresh <- function(x, phenoCols, predCols = NULL,
 #'
 #' @method mcp_thresh scbnet
 #' @export
-mcp_thresh.scbnet <- function(x, phenoCols, predCols = NULL, model = list(Y ~ 1, ~ 0 + X),
-                          cores = getOption("mc.cores", 1), calibratePheno = NULL,
-                          keep_models = FALSE,
-                          hypothesis = "X > 0",
-                          asvTab = NULL, ...) {
+mcp_thresh.scbnet <- function(
+    x, phenoCols, predCols = NULL, model = list(Y ~ 1, ~ 0 + X),
+    cores = getOption("mc.cores", 1), calibratePheno = NULL,
+    keep_models = FALSE,
+    hypothesis = "X > 0",
+    asvTab = NULL, ...) {
   nodes <- x[["nodes"]]
   if (is.null(predCols)) {
     predCols <- colnames(nodes)[grepl("cluster", colnames(nodes), ignore.case = TRUE)]
@@ -112,9 +114,12 @@ mcp_thresh.scbnet <- function(x, phenoCols, predCols = NULL, model = list(Y ~ 1,
   if (!is.null(calibratePheno)) {
     for (phenotype in phenoCols) {
       formString <- paste0(phenotype, "~", paste0(calibratePheno, collapse = "+"))
-      clust_ag[[phenotype]] <- residuals(lm(as.formula(formString),
-                                            data = clust_ag, na.action = na.exclude
-      ))
+      clust_ag[[phenotype]] <- residuals(
+        lm(
+          as.formula(formString),
+          data = clust_ag, na.action = na.exclude
+        )
+      )
     }
   }
   proto_thresh <- parallel::mclapply(names(clusterColumns), function(pred_col) {
@@ -149,10 +154,11 @@ mcp_thresh.scbnet <- function(x, phenoCols, predCols = NULL, model = list(Y ~ 1,
       # unpack models of each phenotype per a cluster within a clustering scheme
       names_thresh_pheno <- phenoCols[which(!unlist(lapply(thresh_pheno, is.null)))]
       thresh_pheno <- thresh_pheno[which(!unlist(lapply(thresh_pheno, is.null)))]
-      unpacked_pheno <- .unpack_chngptm_proto_mcp_thresh(thresh_pheno,
-                                                         names = names_thresh_pheno,
-                                                         pred = pred_col,
-                                                         hyp = hypothesis)
+      unpacked_pheno <- .unpack_chngptm_mcp_thresh(thresh_pheno,
+        names = names_thresh_pheno,
+        pred = pred_col,
+        hyp = hypothesis
+      )
       unpacked_pheno$predictor <- pred_col
       if (keep_models) {
         unpacked_pheno$model <- thresh_pheno
@@ -195,9 +201,12 @@ mcp_thresh.data.frame <- function(x, phenoCols, predCols = NULL,
   if (!is.null(calibratePheno)) {
     for (phenotype in phenoCols) {
       formString <- paste0(phenotype, "~", paste0(calibratePheno, collapse = "+"))
-      x[[phenotype]] <- residuals(lm(as.formula(formString),
-                                     data = x, na.action = na.exclude
-      ))
+      x[[phenotype]] <- residuals(
+        lm(
+          as.formula(formString),
+          data = x, na.action = na.exclude
+        )
+      )
     }
   }
   threshOut <- parallel::mclapply(predCols, function(pred_col) {
@@ -230,10 +239,11 @@ mcp_thresh.data.frame <- function(x, phenoCols, predCols = NULL,
     })
     names_thresh_pheno <- phenoCols[which(!unlist(lapply(thresh_pheno, is.null)))]
     thresh_pheno <- thresh_pheno[which(!unlist(lapply(thresh_pheno, is.null)))]
-    unpacked_pheno <- .unpack_chngptm_proto_mcp_thresh(thresh_pheno,
-                                                       names = names_thresh_pheno,
-                                                       pred = pred_col,
-                                                       hyp = hypothesis)
+    unpacked_pheno <- .unpack_chngptm_mcp_thresh(thresh_pheno,
+      names = names_thresh_pheno,
+      pred = pred_col,
+      hyp = hypothesis
+    )
     if (keep_models) {
       unpacked_pheno$model <- thresh_pheno
     }
@@ -272,7 +282,7 @@ mcp_thresh.data.frame <- function(x, phenoCols, predCols = NULL,
 #' @keywords internal
 #' @noRd
 
-.unpack_chngptm_proto_mcp_thresh <- function(proto_thresh, names, pred, hyp) {
+.unpack_chngptm_mcp_thresh <- function(proto_thresh, names, pred, hyp) {
   means <- lapply(proto_thresh, function(pt) {
     summary(pt$mcmc_post)[[1]][, 1]
   })
@@ -284,7 +294,7 @@ mcp_thresh.data.frame <- function(x, phenoCols, predCols = NULL,
     hyp1 <- gsub("\\bX\\b", outcome_var, hyp)
     return(
       mcp::hypothesis(pt, hyp1)
-      )
+    )
   })
   post_probs <- unlist(lapply(hypotheses, function(h) {
     h$p
