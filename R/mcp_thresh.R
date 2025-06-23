@@ -73,6 +73,7 @@ mcp_thresh <- function(
 #' tn
 #'
 #' @method mcp_thresh scbnet
+#' @importFrom mcp mcp
 #' @export
 mcp_thresh.scbnet <- function(
     x, phenoCols, predCols = NULL, model = list(Y ~ 1, ~ 0 + X),
@@ -193,6 +194,7 @@ mcp_thresh.scbnet <- function(
 }
 
 #' @method mcp_thresh data.frame
+#' @importFrom mcp mcp
 #' @export
 mcp_thresh.data.frame <- function(x, phenoCols, predCols = NULL,
                                   model = list(Y ~ 1, ~ 0 + X),

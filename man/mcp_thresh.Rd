@@ -57,9 +57,6 @@ Defaults to FALSE.}
 \item{...}{Additional arguments passed to methods.}
 
 \item{asvTab}{An ASV table used in making the \code{scbnet} object.}
-
-\item{p.adjust.method}{A method to adjust for multiple testing, defaults to "none". Available options
-are shown with \code{stats::p.adjust.methods}.}
 }
 \value{
 A \code{thresh} object.
@@ -72,10 +69,10 @@ communities/clusters vs phenotypes.
 
 asv$biomass_z <- rnorm(nrow(asv))
 tm <- mcp_thresh(asv, "biomass_z",
-model = list(
-Y ~ 1,  # intercept,
-~ 0 + X # joined slope after first changepoint
-)
+  model = list(
+    Y ~ 1, # intercept,
+    ~ 0 + X # joined slope after first changepoint
+  )
 )
 tm
 
@@ -102,7 +99,7 @@ net_data <- netClust(net = net_data, pullNode(net_data,
 ))
 asv$biomass_z <- rnorm(nrow(asv))
 tn <- mcp_thresh(net_data, phenoCols = "biomass_z", asvTab = asv)
-
+tn
 
 }
 \keyword{changepoint,}
