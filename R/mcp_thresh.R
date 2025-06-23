@@ -17,6 +17,8 @@
 #' \code{lm} is used to get residuals of the phenotype after these effects are regressed out.
 #' @param keep_models Should full model objects be kept? This can make thresh objects much larger.
 #' Defaults to FALSE.
+#' @param hypothesis A hypothesis to test, defaults to "X > 0" which uses the same logic as
+#' the model formula to test phenoCols.
 #' @param ... Additional arguments passed to methods.
 #'
 #' @keywords changepoint, threshold, regression, phenotype

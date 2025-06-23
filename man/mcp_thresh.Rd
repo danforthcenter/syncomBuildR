@@ -54,6 +54,9 @@ just represent confounders that you wish to remove effects from in the changepoi
 \item{keep_models}{Should full model objects be kept? This can make thresh objects much larger.
 Defaults to FALSE.}
 
+\item{hypothesis}{A hypothesis to test, defaults to "X > 0" which uses the same logic as
+the model formula to test phenoCols.}
+
 \item{...}{Additional arguments passed to methods.}
 
 \item{asvTab}{An ASV table used in making the \code{scbnet} object.}
