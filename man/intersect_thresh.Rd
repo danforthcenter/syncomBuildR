@@ -4,12 +4,15 @@
 \alias{intersect_thresh}
 \title{Getting intersections of thresh objects}
 \usage{
-intersect_thresh(x, y)
+intersect_thresh(x, y, index.return = TRUE)
 }
 \arguments{
 \item{x}{thresh object}
 
 \item{y}{thresh object}
+
+\item{index.return}{Logical, should the index be returned as an element of the output list
+(TRUE, default) or should only subset thresh objects be returned (FALSE)?}
 }
 \description{
 Getting intersections of thresh objects

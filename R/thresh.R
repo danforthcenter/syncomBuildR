@@ -143,7 +143,8 @@ thresh.scbnet <- function(x, phenoCols, predCols = NULL, model = "hinge",
       # unpack models of each phenotype per a cluster within a clustering scheme
       names_thresh_pheno <- phenoCols[which(!unlist(lapply(thresh_pheno, is.null)))]
       thresh_pheno <- thresh_pheno[which(!unlist(lapply(thresh_pheno, is.null)))]
-      unpacked_pheno <- .unpack_chngptm_proto_thresh(thresh_pheno, names = names_thresh_pheno)
+      unpacked_pheno <- .unpack_chngptm_proto_thresh(thresh_pheno, names = names_thresh_pheno,
+                                                     pred = pred_col)
       unpacked_pheno$predictor <- pred_col
       if (keep_models) {
         unpacked_pheno$model <- thresh_pheno
@@ -157,11 +158,7 @@ thresh.scbnet <- function(x, phenoCols, predCols = NULL, model = "hinge",
   }, mc.cores = min(length(clusterColumns), cores))
   full_proto_thresh <- Reduce(.merge_proto_thresh, proto_thresh)
   #* p-value adjustment
-  pvals <- unlist(lapply(full_proto_thresh$slope, function(x) x$pval))
-  adj_pvals <- p.adjust(pvals, method = p.adjust.method)
-  for (i in seq_along(adj_pvals)) {
-    full_proto_thresh$slope[[i]]$padj <- adj_pvals[i]
-  }
+  full_proto_thresh$pval <- p.adjust(full_proto_thresh$pval, method = p.adjust.method)
   #* add other slots
   full_proto_thresh[["data"]] <- clust_ag[, c(phenoCols, unname(unlist(clusterColumns)))]
   full_proto_thresh[["type"]] <- "chngptm"
@@ -170,7 +167,7 @@ thresh.scbnet <- function(x, phenoCols, predCols = NULL, model = "hinge",
     "call" = match.call(),
     "p.adjust.method" = p.adjust.method,
     "subsettable" = c(
-      "intercept", "changepoint", "slope",
+      "intercept", "changepoint", "slope", "pval",
       "phenotype", "model", "predictor"
     ),
     "calibration" = calibratePheno
@@ -235,11 +232,7 @@ thresh.data.frame <- function(x, phenoCols, predCols = NULL, model = "hinge",
   names(threshOut) <- predCols
   thresh <- Reduce(.merge_proto_thresh, threshOut)
   #* p-value adjustment
-  pvals <- unlist(lapply(thresh$slope, function(x) x$pval))
-  adj_pvals <- p.adjust(pvals, method = p.adjust.method)
-  for (i in seq_along(adj_pvals)) {
-    thresh$slope[[i]]$padj <- adj_pvals[i]
-  }
+  thresh$pval <- p.adjust(thresh$pval, method = p.adjust.method)
   #* assign other thresh slots
   thresh[["data"]] <- x[, c(phenoCols, predCols)] # also stored in model$best.fit$data
   thresh[["type"]] <- "chngptm"
@@ -248,7 +241,7 @@ thresh.data.frame <- function(x, phenoCols, predCols = NULL, model = "hinge",
     "call" = match.call(),
     "p.adjust.method" = p.adjust.method,
     "subsettable" = c(
-      "intercept", "changepoint", "slope",
+      "intercept", "changepoint", "slope", "pval",
       "phenotype", "model", "predictor"
     ),
     "calibration" = calibratePheno
@@ -286,7 +279,8 @@ thresh.data.frame <- function(x, phenoCols, predCols = NULL, model = "hinge",
   out <- list(
     intercept = intercepts,
     changepoint = changepoints,
-    slope = slopes,
+    slope = unlist(lapply(slopes, function(s) {s$est})),
+    pval = unlist(lapply(slopes, function(s) {s$pval})),
     phenotype = names,
     predictor = rep(pred, length(names))
   )

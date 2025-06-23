@@ -24,7 +24,7 @@
 threshUpset <- function(thresh, cutoff = 0.05) {
   sig <- unlist(lapply(unique(thresh$predictor), function(pred) {
     sub <- thresh[thresh$predictor == pred]
-    sig_index <- which(unlist(lapply(sub$slope, function(x) x$padj)) < cutoff)
+    sig_index <- which(sub$pval < cutoff)
     if (length(sig_index) > 0) {
       return(pred)
     }
@@ -33,9 +33,7 @@ threshUpset <- function(thresh, cutoff = 0.05) {
     stop("No data with p.values below cutoff")
   }
   d <- as.data.frame(thresh[thresh$predictor %in% sig][c("predictor", "phenotype")])
-  d$sig <- unlist(lapply(thresh[thresh$predictor %in% sig]$slope, function(i) {
-    i$padj
-  }))
+  d$sig <- thresh[thresh$predictor %in% sig]$pval
   d$sig <- ifelse(d$sig < cutoff, TRUE, FALSE)
   data.table::setDT(d)
   upsetPlotData <- as.data.frame(data.table::dcast(d,

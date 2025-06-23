@@ -34,7 +34,7 @@ plot.thresh <- function(x, predictors = NULL, outcomes = NULL, ...) {
     }
     phenoPlots <- lapply(outcomes_iter, function(pheno) {
       x_iter <- x_iter[x_iter$phenotype == pheno]
-      postCptCol <- if (x_iter$slope[[1]]$padj < 0.05) {
+      postCptCol <- if (x_iter$pval < 0.05) {
         viridis::plasma(1, begin = 0.7)
       } else {
         "black"
@@ -62,7 +62,7 @@ plot.thresh <- function(x, predictors = NULL, outcomes = NULL, ...) {
           x = x_iter$changepoint[[1]],
           xend = max(d[[x_iter$predictor]]),
           y = x_iter$intercept[[1]],
-          yend = x_iter$intercept[[1]] + x_iter$slope[[1]]$est *
+          yend = x_iter$intercept[[1]] + x_iter$slope *
             (max(d[[x_iter$predictor]]) - x_iter$changepoint[[1]]),
           color = postCptCol
         ) +
@@ -72,7 +72,7 @@ plot.thresh <- function(x, predictors = NULL, outcomes = NULL, ...) {
           ),
           x = microbe,
           title = x_iter$predictor,
-          subtitle = paste0("P-value of slope: ", round(x_iter$slope[[1]]$padj, 3))
+          subtitle = paste0("P-value of slope: ", round(x_iter$pval, 3))
         ) +
         theme_light() +
         theme(

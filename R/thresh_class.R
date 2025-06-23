@@ -61,9 +61,7 @@ summary.thresh <- function(object, ...) {
   #* `Main Points`
   has_adj <- is.null(object$control$p.adjust.method) || object$control$p.adjust.method == "none"
   n_significant <- sum(
-    unlist(lapply(object$slope, function(s) {
-      s$padj < 0.05
-    }))
+    object$pval < 0.05
   )
   cat(
     paste0(
@@ -90,12 +88,8 @@ summary.thresh <- function(object, ...) {
             summary(unlist(x))
           }
         ),
-        summary(unlist(lapply(sub$slope, function(x) {
-          x$est
-        }))),
-        summary(unlist(lapply(sub$slope, function(x) {
-          x$padj
-        })))
+        summary(sub$slope),
+        summary(sub$pval)
       )
       colnames(sum_mat)[3:4] <- c("slope", "pval")
       print(sum_mat)
