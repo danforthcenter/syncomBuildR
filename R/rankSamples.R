@@ -32,7 +32,7 @@ rankSamples.thresh <- function(x, cutoff = 0.05, asvTab = NULL, ...) {
     asvTab <- x$data
   }
   #* find significant pvalues from thresh
-  sig_pvals <- which(unlist(lapply(x$slope, function(o) o$padj)) < cutoff)
+  sig_pvals <- which(x$pval < cutoff)
   if (length(sig_pvals) < 1) {
     stop("No models had p-values below p.cutoff")
   }
