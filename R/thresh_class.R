@@ -61,7 +61,7 @@ summary.thresh <- function(object, ...) {
   #* `Main Points`
   has_adj <- is.null(object$control$p.adjust.method) || object$control$p.adjust.method == "none"
   n_significant <- sum(
-    object$pval < 0.05
+    object$pval < 0.05 | object$post_prob > 0.95
   )
   cat(
     paste0(
@@ -80,7 +80,7 @@ summary.thresh <- function(object, ...) {
   for (p in phenos) {
     cat(paste0("\n\n", p, "\n"))
     sub <- object[object$phenotype == p]
-    if (length(sub$intercept) > 1) {
+    if (length(sub$intercept) > 1 && object$type == "chngptm") {
       sum_mat <- cbind(
         sapply(
           sub[c("intercept", "changepoint")],
@@ -92,6 +92,11 @@ summary.thresh <- function(object, ...) {
         summary(sub$pval)
       )
       colnames(sum_mat)[3:4] <- c("slope", "pval")
+      print(sum_mat)
+    } else if (length(sub$post_means) > 1) {
+      sum_mat <- apply(do.call(rbind, sub$post_means), 2, summary)
+      sum_mat <- cbind(sum_mat, summary(sub$post_probs))
+      colnames(sum_mat)[ncol(sum_mat)] <- "post_prob"
       print(sum_mat)
     }
   }
