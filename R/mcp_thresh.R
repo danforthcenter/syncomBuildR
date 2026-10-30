@@ -144,9 +144,8 @@ mcp_thresh.scbnet <- function(
             fit <- mcp::mcp(
               model = model_iter,
               data = sub,
-              cores = cores,
               chains = max(c(2, cores)),
-              iter = 2000, adapt = 1000
+              iter = 2000, warmup = 1000
             )
             fit <- fit[names(fit) != "mcmc_loglik"] # drop loglik, not using it and it's huge.
             class(fit) <- "mcpfit"
@@ -237,9 +236,8 @@ mcp_thresh.data.frame <- function(x, phenoCols, predCols = NULL,
           fit <- mcp::mcp(
             model = model_iter,
             data = sub,
-            cores = cores,
             chains = max(c(2, cores)),
-            iter = 2000, adapt = 1000
+            iter = 2000, warmup = 1000
           )
           fit <- fit[names(fit) != "mcmc_loglik"] # drop loglik, not using it and it's huge.
           class(fit) <- "mcpfit"
@@ -313,7 +311,7 @@ mcp_thresh.data.frame <- function(x, phenoCols, predCols = NULL,
     )
   })
   post_probs <- unlist(lapply(hypotheses, function(h) {
-    h$p
+    h$prob
   }))
   hypotheses_string <- unlist(lapply(hypotheses, function(h) {
     h$hypothesis
