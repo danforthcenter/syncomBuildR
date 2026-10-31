@@ -33,7 +33,7 @@ Imports:
     ComplexUpset,
     plotly,
     Hmisc,
-    mcp,
+    mcp (>= 0.4.0),
     compositions,
     ShortRead
 Suggests:
